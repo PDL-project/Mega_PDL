@@ -1,0 +1,5 @@
+(gotoobject robot1 reservoirsierra)
+(getsupply robot1 reservoirsierra sand)
+(gotoobject robot1 moorfire_region_1)
+(usesupply robot1 moorfire_region_1 sand)
+; cost = 4 (unit cost)
