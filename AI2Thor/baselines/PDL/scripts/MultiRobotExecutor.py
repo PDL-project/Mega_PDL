@@ -190,6 +190,8 @@ class MultiRobotExecutor:
         # 리소스 디렉토리 (DAG 결과 및 PDDL Plan 저장 위치)
         self.resources_path = os.path.join(base_path, "resources")
         self.dag_output_path = os.path.join(self.resources_path, "dag_outputs")
+        self.dag_assignment_path = os.path.join(self.dag_output_path, "assignment")
+        self.dag_dag_path = os.path.join(self.dag_output_path, "dag")
         self.plans_path = os.path.join(self.resources_path, "subtask_pddl_plans")
 
         # 각 서브태스크를 어떤 로봇이 수행할지에 대한 할당 정보
@@ -229,6 +231,10 @@ class MultiRobotExecutor:
         self._dropped_subtasks: set = set()
         # 실시간 상태 반영용 (execute_in_ai2thor_with_feedback 호출 시에만 설정)
         self._feedback_state_store: Optional[Any] = None
+        # 그룹별 GroupAgent (개별 AgentMemory 포함): {group_id: GroupAgent}
+        self._group_agents: Dict[int, Any] = {}
+        # subtask_id -> group_id 역매핑 (AgentMemory 업데이트용)
+        self._subtask_to_group: Dict[int, int] = {}
 
         # Checker (Execution 평가 모듈)
         self.checker = None # Scene 내 Object를 사람이 읽을 수 있는 형태로 변환하기 위한 Dictionary
@@ -516,7 +522,7 @@ class MultiRobotExecutor:
     # -----------------------------
     def load_assignment(self, task_idx: int = 0) -> Dict[int, int]:
         """"어떤 서브태스크를 어떤 로봇이 맡을지" 기록된 JSON 파일 읽어오는 함수"""
-        assignment_file = os.path.join(self.dag_output_path, f"task_{task_idx}_assignment.json")
+        assignment_file = os.path.join(self.dag_assignment_path, f"task_{task_idx}_assignment.json")
         if not os.path.exists(assignment_file):
             raise FileNotFoundError(f"Assignment file not found: {assignment_file}")
 
@@ -542,7 +548,7 @@ class MultiRobotExecutor:
 
     def load_subtask_dag(self, task_name: str = "task") -> Dict[int, List[int]]:
         """"어떤 서브태스크들이 동시에 실행 가능한지(Parallel Groups)" 기록된 DAG 결과 파일 읽어오는 함수"""
-        dag_file = os.path.join(self.dag_output_path, f"{task_name}_SUBTASK_DAG.json")
+        dag_file = os.path.join(self.dag_dag_path, f"{task_name}_SUBTASK_DAG.json")
         if not os.path.exists(dag_file):
             raise FileNotFoundError(f"Subtask DAG file not found: {dag_file}")
 
@@ -2603,6 +2609,12 @@ class MultiRobotExecutor:
         if store is not None:
             store.set_running(plan.subtask_id)
 
+        # 해당 그룹의 AgentMemory에도 동시 반영
+        _gid = self._subtask_to_group.get(plan.subtask_id)
+        _agent = self._group_agents.get(_gid) if _gid is not None else None
+        if _agent is not None and getattr(_agent, "memory", None) is not None:
+            _agent.memory.set_running(plan.subtask_id)
+
         agent_id = plan.robot_id - 1  # 1-기반 ID를 0-기반 인덱스로 변환
 
         # 로봇별 Lock 획득 (같은 로봇에 여러 서브태스크 할당 시 순차 보장)
@@ -2661,6 +2673,15 @@ class MultiRobotExecutor:
                     success=success,
                     error_message=err or None,
                     effects=None,
+                    completed_actions=completed if completed else None,
+                )
+
+            # GroupAgent 개별 메모리에도 동시 반영
+            if _agent is not None and getattr(_agent, "memory", None) is not None:
+                _agent.memory.update_subtask_on_completion(
+                    plan.subtask_id,
+                    success=success,
+                    error_message=err or None,
                     completed_actions=completed if completed else None,
                 )
             if not success and completed:
@@ -2779,10 +2800,13 @@ class MultiRobotExecutor:
         task_description: Optional[str] = None,
         state_store: Optional[Any] = None,
         on_subtask_failed: Optional[Any] = None,
+        group_agents: Optional[Dict[int, Any]] = None,
     ) -> Dict[int, SubTaskExecutionResult]:
         """피드백 루프용: 서브태스크를 그룹별·순차 실행하고, 서브태스크별 성공/실패 결과를 반환.
         on_subtask_failed: 실패 즉시 호출되는 콜백. signature: fn(result) -> bool
         state_store가 주어지면 개별 서브태스크 완료 시마다 즉시 상태를 반영(실시간 스토어 반영).
+        group_agents: {group_id: GroupAgent} — 실행 전 미리 생성된 그룹별 에이전트.
+                      제공 시 subtask 완료마다 해당 GroupAgent.memory도 함께 업데이트.
         """
         if not self.assignment or not self.parallel_groups or not self.subtask_plans:
             raise RuntimeError("Load assignment/DAG/plans first.")
@@ -2800,6 +2824,16 @@ class MultiRobotExecutor:
             self._feedback_state_store = state_store
         else:
             self._feedback_state_store = None
+
+        # 그룹별 에이전트 + subtask→group 역매핑 초기화
+        # _group_agents는 component root ID로 키잉되므로, _subtask_to_group도
+        # 동일한 키 공간(component root)을 사용해야 올바르게 agent를 조회할 수 있음
+        self._group_agents = group_agents or {}
+        self._subtask_to_group = {
+            sid: agent_key
+            for agent_key, agent in self._group_agents.items()
+            for sid in getattr(getattr(agent, 'memory', None), 'subtask_ids', [])
+        }
 
         # configured_agent_count 우선 사용 (--num-agents 값); 없으면 assignment 최댓값 fallback
         agent_count = getattr(self, 'configured_agent_count', None) \

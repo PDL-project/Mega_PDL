@@ -80,15 +80,15 @@ class SharedTaskStateStore:
 
     def _state_file_path(self) -> str:
         resources = os.path.join(self.base_path, "resources")
-        dag_out = os.path.join(resources, "dag_outputs")
-        os.makedirs(dag_out, exist_ok=True)
-        return os.path.join(dag_out, f"{self.task_name}_FEEDBACK_STATE.json")
+        state_dir = os.path.join(resources, "dag_outputs", "state")
+        os.makedirs(state_dir, exist_ok=True)
+        return os.path.join(state_dir, f"{self.task_name}_FEEDBACK_STATE.json")
 
     def init_from_dag(self, parallel_groups: Dict[int, List[int]]) -> None:
         """DAG parallel_groups로 모든 서브태스크를 PENDING으로 초기화."""
         with self._lock:
             self._store.clear()
-            for _gid, sids in parallel_groups.items():
+            for sids in parallel_groups.values():
                 for sid in sids:
                     if not isinstance(sid, int) or sid <= 0:
                         continue
@@ -215,6 +215,157 @@ class SharedTaskStateStore:
 
 
 # ---------------------------------------------------------------------------
+# Agent Memory (그룹별 개별 메모리)
+# ---------------------------------------------------------------------------
+
+class AgentMemory:
+    """
+    GroupAgent 하나에 귀속된 그룹 전용 메모리.
+    해당 그룹의 서브태스크 상태만 추적하며, 그룹별 개별 JSON 파일에 저장한다.
+      {task_name}_group_{group_id}_MEMORY.json
+
+    SharedTaskStateStore와 동일한 read/write 인터페이스를 제공하되,
+    자신의 group_id/subtask_ids 범위로 스코프를 제한한다.
+    """
+
+    def __init__(
+        self,
+        group_id: int,
+        subtask_ids: List[int],
+        base_path: str,
+        task_name: str = "task",
+    ):
+        self.group_id = group_id
+        self.subtask_ids: List[int] = list(subtask_ids)
+        self.base_path = base_path
+        self.task_name = task_name
+        self._path = self._memory_file_path()
+        self._store: Dict[int, Dict[str, Any]] = {}
+        self._lock = threading.Lock()
+        self._init_store()
+
+    def _memory_file_path(self) -> str:
+        memory_dir = os.path.join(self.base_path, "resources", "dag_outputs", "memory")
+        os.makedirs(memory_dir, exist_ok=True)
+        return os.path.join(memory_dir, f"{self.task_name}_group_{self.group_id}_MEMORY.json")
+
+    def _init_store(self) -> None:
+        """담당 서브태스크를 PENDING으로 초기화."""
+        with self._lock:
+            for sid in self.subtask_ids:
+                self._store[sid] = {
+                    "state": SubtaskState.PENDING.value,
+                    "error_message": None,
+                    "effects": None,
+                }
+            self._persist_locked()
+
+    # ---- write ----
+
+    def update_subtask_on_completion(
+        self,
+        subtask_id: int,
+        success: bool,
+        error_message: Optional[str] = None,
+        effects: Optional[List[str]] = None,
+        completed_actions: Optional[List[str]] = None,
+    ) -> None:
+        """서브태스크 완료 시 상태 갱신 후 개별 파일에 저장."""
+        if subtask_id not in self.subtask_ids:
+            return  # 이 그룹 소관이 아닌 서브태스크는 무시
+        state = _state_from_success(success)
+        with self._lock:
+            if subtask_id not in self._store:
+                self._store[subtask_id] = {"state": SubtaskState.PENDING.value, "error_message": None, "effects": None}
+            self._store[subtask_id]["state"] = state.value
+            self._store[subtask_id]["error_message"] = error_message if not success else None
+            if success and effects is not None:
+                self._store[subtask_id]["effects"] = list(effects)
+            if completed_actions is not None:
+                self._store[subtask_id]["completed_actions"] = list(completed_actions)
+            self._persist_locked()
+
+    def set_running(self, subtask_id: int) -> None:
+        if subtask_id not in self.subtask_ids:
+            return
+        with self._lock:
+            if subtask_id in self._store:
+                self._store[subtask_id]["state"] = SubtaskState.RUNNING.value
+                self._persist_locked()
+
+    # ---- read ----
+
+    def get_state(self, subtask_id: int) -> SubtaskState:
+        with self._lock:
+            s = self._store.get(subtask_id, {}).get("state", SubtaskState.PENDING.value)
+        try:
+            return SubtaskState(s)
+        except ValueError:
+            return SubtaskState.PENDING
+
+    def get_success_effects_immutable(self) -> Dict[int, FrozenSet[str]]:
+        """성공한 서브태스크의 effects를 frozenset으로 반환 (불변)."""
+        with self._lock:
+            out = {}
+            for sid, rec in self._store.items():
+                if rec.get("state") != SubtaskState.SUCCESS.value:
+                    continue
+                eff = rec.get("effects")
+                out[sid] = frozenset(eff) if eff else frozenset()
+            return out
+
+    def get_failed_ids(self) -> List[int]:
+        with self._lock:
+            return [sid for sid, rec in self._store.items() if rec.get("state") == SubtaskState.FAILED.value]
+
+    def get_pending_ids(self) -> List[int]:
+        with self._lock:
+            return [sid for sid, rec in self._store.items() if rec.get("state") == SubtaskState.PENDING.value]
+
+    def get_failure_info(self, subtask_id: int) -> Tuple[Optional[str], Optional[str]]:
+        with self._lock:
+            rec = self._store.get(subtask_id, {})
+            return rec.get("error_message"), rec.get("state")
+
+    def get_completed_actions(self, subtask_id: int) -> Optional[List[str]]:
+        with self._lock:
+            return self._store.get(subtask_id, {}).get("completed_actions")
+
+    def get_group_state(self) -> Tuple[List[int], List[int], List[int]]:
+        """(success_ids, failed_ids, pending_ids) for this group."""
+        success_ids, failed_ids, pending_ids = [], [], []
+        for sid in self.subtask_ids:
+            s = self.get_state(sid)
+            if s == SubtaskState.SUCCESS:
+                success_ids.append(sid)
+            elif s == SubtaskState.FAILED:
+                failed_ids.append(sid)
+            else:
+                pending_ids.append(sid)
+        return success_ids, failed_ids, pending_ids
+
+    # ---- persistence ----
+
+    def _persist_locked(self) -> None:
+        try:
+            with open(self._path, "w") as f:
+                json.dump(self._store, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"[AgentMemory] group {self.group_id}: Failed to persist: {e}")
+
+    def load(self) -> None:
+        with self._lock:
+            if os.path.exists(self._path):
+                try:
+                    with open(self._path, "r") as f:
+                        raw = json.load(f)
+                    # 자신의 subtask_ids에 해당하는 것만 로드
+                    self._store = {int(k): v for k, v in raw.items() if int(k) in self.subtask_ids}
+                except Exception as e:
+                    print(f"[AgentMemory] group {self.group_id}: Failed to load: {e}")
+
+
+# ---------------------------------------------------------------------------
 # Central Failure Detection
 # ---------------------------------------------------------------------------
 
@@ -246,11 +397,45 @@ class CentralFailureDetector:
 class GroupAgent:
     """
     그룹당 하나의 전담 에이전트. 해당 그룹 내 서브태스크 실패 시 로컬 피드백(재계획).
+    memory: 이 에이전트 전용 개별 메모리 (AgentMemory). bind_memory()로 주입하거나
+            생성 시 group_id/subtask_ids/base_path를 넘겨 즉시 생성 가능.
     """
 
-    def __init__(self, llm_handler: Any, gpt_version: str = "gpt-4o"):
+    def __init__(
+        self,
+        llm_handler: Any,
+        gpt_version: str = "gpt-4o",
+        group_id: Optional[int] = None,
+        subtask_ids: Optional[List[int]] = None,
+        base_path: Optional[str] = None,
+        task_name: str = "task",
+    ):
         self.llm = llm_handler
         self.gpt_version = gpt_version
+        self.memory: Optional[AgentMemory] = None
+        if group_id is not None and subtask_ids is not None and base_path is not None:
+            self.memory = AgentMemory(
+                group_id=group_id,
+                subtask_ids=subtask_ids,
+                base_path=base_path,
+                task_name=task_name,
+            )
+
+    def bind_memory(
+        self,
+        group_id: int,
+        subtask_ids: List[int],
+        base_path: str,
+        task_name: str = "task",
+    ) -> "GroupAgent":
+        """실행 직전 메모리를 주입. 체이닝 가능: agent.bind_memory(...).replan_subtask(...)"""
+        self.memory = AgentMemory(
+            group_id=group_id,
+            subtask_ids=subtask_ids,
+            base_path=base_path,
+            task_name=task_name,
+        )
+        return self
 
     def replan_subtask(
         self,
@@ -512,7 +697,7 @@ Answer with exactly one word: full_replan or subtask_only.
 def load_subtask_dag_edges(base_path: str, task_name: str = "task") -> List[Tuple[int, int]]:
     """서브태스크 DAG JSON에서 의존성 간선 리스트 (from_id, to_id) 반환."""
     resources = os.path.join(base_path, "resources")
-    dag_path = os.path.join(resources, "dag_outputs", f"{task_name}_SUBTASK_DAG.json")
+    dag_path = os.path.join(resources, "dag_outputs", "dag", f"{task_name}_SUBTASK_DAG.json")
     if not os.path.exists(dag_path):
         return []
     with open(dag_path, "r") as f:
@@ -536,7 +721,7 @@ def load_subtask_dag_edges(base_path: str, task_name: str = "task") -> List[Tupl
 def load_subtask_dag_parallel_groups(base_path: str, task_name: str = "task") -> Dict[int, List[int]]:
     """서브태스크 DAG JSON에서 parallel_groups 로드. group_id -> [subtask_ids]."""
     resources = os.path.join(base_path, "resources")
-    dag_path = os.path.join(resources, "dag_outputs", f"{task_name}_SUBTASK_DAG.json")
+    dag_path = os.path.join(resources, "dag_outputs", "dag", f"{task_name}_SUBTASK_DAG.json")
     if not os.path.exists(dag_path):
         return {}
     with open(dag_path, "r") as f:

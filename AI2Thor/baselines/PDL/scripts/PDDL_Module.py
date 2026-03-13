@@ -37,7 +37,7 @@ import actions # resources/actions.py (로봇 액션 정의 등)
 import robots  # resources/robots.py (로봇 스킬/질량 정보 등)
 
 from DAG_Module import DAGGenerator # plan 기반 DAG(병렬성) 생성 모듈
-from LP_Module import assign_subtasks_cp_sat, binding_pairs_from_subtask_dag
+from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
 
 from MultiRobotExecutor import MultiRobotExecutor, SubTaskExecutionResult, _TASK_NAME_MAP, _TASK_NAME_MAP_LOWER # 멀티 로봇 실행 코드 생성/실행 관리
 from AI2Thor.Tasks.get_scene_init import get_scene_initializer  # preinit용
@@ -629,15 +629,11 @@ class TaskManager:
                 sub_path = os.path.join(plan_action_pddl_dir, file_name)
                 shutil.copy(main_path, sub_path)
         
-        # 5) DAG 산출물 저장(json/png 복사)
+        # 5) DAG 산출물 저장(dag_outputs 하위 폴더 구조 통째로 복사)
         dag_output_folder = os.path.join(log_folder, "dag_outputs")
-        os.makedirs(dag_output_folder, exist_ok=True)
         source_dag_folder = os.path.join(self.resources_path, "dag_outputs")
         if os.path.exists(source_dag_folder):
-            for file_name in os.listdir(source_dag_folder):
-                full_file_name = os.path.join(source_dag_folder, file_name)
-                if os.path.isfile(full_file_name):
-                    shutil.copy(full_file_name, dag_output_folder)
+            shutil.copytree(source_dag_folder, dag_output_folder, dirs_exist_ok=True)
 
         try:
             # decomposed_plan, validated_plan 텍스트 저장
@@ -815,12 +811,14 @@ class TaskManager:
                 if self.subtask_dag and hasattr(self.subtask_dag, 'parallel_groups'):
                     pg_for_lp = {str(k): v for k, v in self.subtask_dag.parallel_groups.items()}
 
-                assignment = assign_subtasks_cp_sat(
+                assignment = assign_subtasks_llm(
                     subtasks=parsed_subtasks,  # _decomposed_plan_to_subtasks() 결과 (id, skills 들어있어야 함)
                     robot_ids=task_robot_ids,  # 예: [1,2,3]
                     robots_db=robots.robots,   # robots.py의 robots 리스트
                     plan_actions_by_subtask=plan_actions_by_sid,
                     objects_ai=self.objects_ai,  # 저장해둔 objects_ai 문자열/리스트
+                    llm=self.llm,
+                    gpt_version=self.gpt_version,
                     binding_pairs=binding_pairs,
                     robot_positions=robot_positions,
                     object_positions=object_positions,
@@ -829,7 +827,7 @@ class TaskManager:
 
                 # 작업 할당 결과 출력
                 print("\n" + "="*50)
-                print("✓ LP Task Allocation Result")
+                print("✓ LLM Task Allocation Result")
                 print("="*50)
                 for sid, rid in sorted(assignment.items()):
                     subtask_title = next((st["title"] for st in parsed_subtasks if st["id"] == sid), f"Subtask {sid}")
@@ -849,7 +847,8 @@ class TaskManager:
                     assignment_output["robot_spawn_positions"] = {
                         str(k): list(v) for k, v in robot_positions.items()
                     }
-                assignment_path = os.path.join(self.resources_path, "dag_outputs", f"task_{task_idx}_assignment.json")
+                assignment_path = os.path.join(self.resources_path, "dag_outputs", "assignment", f"task_{task_idx}_assignment.json")
+                os.makedirs(os.path.dirname(assignment_path), exist_ok=True)
                 with open(assignment_path, "w") as f:
                     json.dump(assignment_output, f, indent=2, ensure_ascii=False)
                 print(f"✓ Assignment Done")
@@ -870,7 +869,7 @@ class TaskManager:
                     task_idx=task_idx,
                     task_name="task",
                     task_description=task,
-                    output_path=os.path.join(self.resources_path, "dag_outputs", f"task_{task_idx}_execution.py")
+                    output_path=os.path.join(self.resources_path, "dag_outputs", "assignment", f"task_{task_idx}_execution.py")
                 )
                 print("✓ Multi-robot execution code generated")
 
@@ -921,6 +920,7 @@ class TaskManager:
                             task_robot_ids=task_robot_ids,
                             floor_plan=floor_plan,
                             executor=executor,
+                            group_agents=group_agents,
                         )
 
                         if replan_result == "no_change":
@@ -940,12 +940,47 @@ class TaskManager:
                             return bool(success)
                         return False
 
+                    # DAG 엣지 기반 연결 컴포넌트로 그룹 구성
+                    # (엣지로 연결된 서브태스크 = 한 그룹, 고립된 서브태스크 = 단독 그룹)
+                    _dag_edges_fb = load_subtask_dag_edges(self.base_path, task_name_fb)
+                    _all_sids_fb = [sid for sids in executor.parallel_groups.values() for sid in sids]
+                    _parent_fb = {sid: sid for sid in _all_sids_fb}
+
+                    def _find_fb(x):
+                        while _parent_fb[x] != x:
+                            _parent_fb[x] = _parent_fb[_parent_fb[x]]
+                            x = _parent_fb[x]
+                        return x
+
+                    for _frm, _to in _dag_edges_fb:
+                        if _frm in _parent_fb and _to in _parent_fb:
+                            _ra, _rb = _find_fb(_frm), _find_fb(_to)
+                            if _ra != _rb:
+                                _parent_fb[_rb] = _ra
+
+                    _component_groups_fb: Dict[int, List[int]] = {}
+                    for _sid in _all_sids_fb:
+                        _root = _find_fb(_sid)
+                        _component_groups_fb.setdefault(_root, []).append(_sid)
+
+                    # 연결 컴포넌트별 GroupAgent 미리 생성 (실행 중 메모리 실시간 업데이트)
+                    group_agents = {
+                        gid: GroupAgent(self.llm, self.gpt_version).bind_memory(
+                            group_id=gid,
+                            subtask_ids=sorted(sids),
+                            base_path=self.base_path,
+                            task_name=task_name_fb,
+                        )
+                        for gid, sids in _component_groups_fb.items()
+                    }
+
                     results = executor.execute_in_ai2thor_with_feedback(
                         floor_plan,
                         task_name=task_name_fb,
                         task_description=task,
                         state_store=state_store,
                         on_subtask_failed=_on_subtask_failed,
+                        group_agents=group_agents,
                     )
                     # 종료 동기화도 status 중심으로 반영 (sid remap 이후 효과 오염 방지)
                     sync_execution_results_to_store(state_store, results)
@@ -1545,7 +1580,7 @@ class TaskManager:
                             f"{raw_block}\n\n"
                         )
 
-                    # 6) 리셉터클 수납 상태: PDDL 이름 명시 (drawer1, drawer2 ...)
+                    # 6) PDDL 이름 명시 (drawer1, drawer2 ...)
                     ctx_executor = getattr(context, "executor", None) if context else None
                     if ctx_executor is not None and ctx_executor.controller is not None:
                         try:
@@ -1937,61 +1972,10 @@ class TaskManager:
             precond_dir = self.file_processor.precondition_subtasks_path
 
             # DAG 출력 폴더 생성
-            dag_output_dir = os.path.join(self.resources_path, "dag_outputs")
+            dag_output_dir = os.path.join(self.resources_path, "dag_outputs", "dag")
             os.makedirs(dag_output_dir, exist_ok=True)
 
             plan_files = [f for f in os.listdir(plans_dir) if f.endswith("_actions.txt")]
-
-            self.plan_dags = []  # DAG 저장
-
-            for plan_file in sorted(plan_files):
-                #print(f"[DAG] Processing: {plan_file}")
-
-                # plan 읽기
-                plan_path = os.path.join(plans_dir, plan_file)
-                with open(plan_path, 'r') as f:
-                    plan_actions = [line.strip() for line in f.readlines() if line.strip()]
-
-                if not plan_actions:
-                    continue
-
-                # 매칭 파일 찾기: subtask_01_xxx_actions.txt -> subtask_01_xxx.pddl, pre_01_xxx.txt
-                base_name = plan_file.replace("_actions.txt", "")
-                problem_path = os.path.join(problems_dir, f"{base_name}.pddl")
-                precond_path = os.path.join(precond_dir, base_name.replace("subtask_", "pre_") + ".txt")
-
-                problem_content = ""
-                precond_content = ""
-
-                if os.path.exists(problem_path):
-                    with open(problem_path, 'r') as f:
-                        problem_content = f.read()
-
-                if os.path.exists(precond_path):
-                    with open(precond_path, 'r') as f:
-                        precond_content = f.read()
-
-                # DAG 생성
-                dag = dag_generator.build_dag(base_name, plan_actions, problem_content, precond_content)
-                self.plan_dags.append(dag)
-
-                # JSON 저장
-                json_path = os.path.join(dag_output_dir, f"{base_name}_dag.json")
-                dag_generator.save_dag_json(dag, json_path)
-
-                # 시각화 저장
-                img_path = os.path.join(dag_output_dir, f"{base_name}_dag.png")
-                dag_generator.visualize_dag(dag, img_path)
-
-                # 병렬 그룹 출력
-                # print(f"[DAG] Parallel groups for {base_name}:")
-                # for group_idx, node_ids in dag.parallel_groups.items():
-                    # actions_in_group = [dag.nodes[nid].action for nid in node_ids if nid < len(dag.nodes)]
-                    # print(f"  Step {group_idx}: {actions_in_group}")
-            # -----------------------------
-            # Subtask-level DAG 생성
-            # -----------------------------
-            
 
             summaries = []
 
@@ -2352,6 +2336,7 @@ class TaskManager:
         floor_plan: Optional[int] = None,
         max_subtask_replan_attempts: int = 2,
         executor: Optional[Any] = None,
+        group_agents: Optional[Dict[int, Any]] = None,
     ) -> str:
         """
         재계획: decomposition → DAG 통합 → LP 재할당 → 재실행 준비
@@ -2381,14 +2366,21 @@ class TaskManager:
         # 현재 subtask dependency graph를 불러오기
         edges = load_subtask_dag_edges(self.base_path, task_name)
         
-        # GroupAgent 생성
-        group_agent = GroupAgent(self.llm, self.gpt_version)
-        
+        # subtask_id → group_id 역방향 맵 (pre-created agents의 메모리에서 직접 구성)
+        _subtask_to_gid: Dict[int, int] = {}
+        if group_agents:
+            for _gid, _agent in group_agents.items():
+                for _sid in getattr(getattr(_agent, 'memory', None), 'subtask_ids', []):
+                    _subtask_to_gid[_sid] = _gid
+
+        # fallback용 기본 GroupAgent (decomposition_callback 미사용 시 사용)
+        _default_group_agent = GroupAgent(self.llm, self.gpt_version)
+
         # decomposition_callback을 포함한 PartialReplanner 생성
         if state_store is not None:
             partial_replanner = self.create_partial_replanner(
                 state_store=state_store,
-                group_agent=group_agent,
+                group_agent=_default_group_agent,
                 executor=executor,
                 task_robot_ids=task_robot_ids,
             )
@@ -2468,7 +2460,17 @@ class TaskManager:
                     continue
                 
                 self._fb_log_line("Action: group-level redecomposition")
-                
+
+                # pre-created GroupAgent 조회 (실행 중 메모리가 채워진 상태)
+                _gid_for_failed = _subtask_to_gid.get(failed_id)
+                _current_agent = (
+                    group_agents.get(_gid_for_failed)
+                    if (group_agents and _gid_for_failed is not None)
+                    else None
+                )
+                if _current_agent is not None and partial_replanner is not None:
+                    partial_replanner.group_agent = _current_agent
+
                 # 현재 문제/액션 정보 수집
                 plans_dir = self.file_processor.subtask_pddl_plans_path
                 problems_dir = self.file_processor.subtask_pddl_problems_path
@@ -3138,14 +3140,18 @@ class TaskManager:
                             fpath = os.path.join(val_dir, fname)
                             content = self.file_processor.read_file(fpath)
                             new_content = content
-                            for ht in all_held_lower:
-                                # (not (holding robot1 <obj>)) → (holding robot1 <obj>)
-                                # case-insensitive 매칭, 원본 대소문자 유지
-                                pat = re.compile(
-                                    r'\(\s*not\s+\(\s*holding\s+robot1\s+(' + re.escape(ht) + r')\s*\)\s*\)',
-                                    re.IGNORECASE,
-                                )
-                                new_content = pat.sub(r'(holding robot1 \1)', new_content)
+                            # :init 섹션만 패치 (goal까지 바꾸면 (not (holding ...)) → (holding ...) 로 goal이 모순됨)
+                            init_match = re.search(r'(:init\b.*?)(\(:goal\b)', content, re.DOTALL | re.IGNORECASE)
+                            if init_match:
+                                init_section = init_match.group(1)
+                                patched_init = init_section
+                                for ht in all_held_lower:
+                                    pat = re.compile(
+                                        r'\(\s*not\s+\(\s*holding\s+robot1\s+(' + re.escape(ht) + r')\s*\)\s*\)',
+                                        re.IGNORECASE,
+                                    )
+                                    patched_init = pat.sub(r'(holding robot1 \1)', patched_init)
+                                new_content = content[:init_match.start(1)] + patched_init + content[init_match.start(2):]
                             if new_content != content:
                                 self.file_processor.write_file(fpath, new_content)
                                 print(f"  [Patch] holding state fixed in {fname}")
@@ -3280,8 +3286,11 @@ class TaskManager:
                 sid for sid in replanned_subtask_ids if isinstance(sid, int) and sid > 0
             )
             
-            dag_output_dir = os.path.join(self.resources_path, "dag_outputs")
-            
+            dag_output_dir = os.path.join(self.resources_path, "dag_outputs", "dag")
+            replan_dag_dir = os.path.join(self.resources_path, f"replan_{self._replan_counter}", "dag")
+            os.makedirs(dag_output_dir, exist_ok=True)
+            os.makedirs(replan_dag_dir, exist_ok=True)
+
             # 1. 기존 DAG 로드
             dag_path = os.path.join(dag_output_dir, f"{task_name}_SUBTASK_DAG.json")
             
@@ -3480,8 +3489,8 @@ class TaskManager:
                 "parallel_groups": parallel_groups
             }
             
-            # 백업 (원본 보존)
-            backup_path = os.path.join(dag_output_dir, f"{task_name}_SUBTASK_DAG_BACKUP.json")
+            # 백업: replan_N/dag/ 에 replan 전 DAG 스냅샷 저장
+            backup_path = os.path.join(replan_dag_dir, f"{task_name}_SUBTASK_DAG_before.json")
             if not os.path.exists(backup_path):
                 with open(backup_path, "w") as f:
                     json.dump(original_dag, f, indent=2, ensure_ascii=False)
@@ -3495,7 +3504,7 @@ class TaskManager:
             
             # 시각화
             try:
-                img_path = os.path.join(dag_output_dir, f"{task_name}_SUBTASK_DAG_INTEGRATED.png")
+                img_path = os.path.join(replan_dag_dir, f"{task_name}_SUBTASK_DAG_after.png")
                 dag_generator.visualize_subtask_dag(new_subtask_dag, img_path)
                 #print(f"  ✓ Visualization saved: {img_path}")
             except Exception as e:
@@ -3613,8 +3622,8 @@ class TaskManager:
             print(f"{'='*60}")
             
             # 1. 새 통합 DAG 로드
-            dag_path = os.path.join(self.resources_path, "dag_outputs", f"{task_name}_SUBTASK_DAG.json")
-            
+            dag_path = os.path.join(self.resources_path, "dag_outputs", "dag", f"{task_name}_SUBTASK_DAG.json")
+
             with open(dag_path, "r") as f:
                 integrated_dag = json.load(f)
             
@@ -3664,7 +3673,7 @@ class TaskManager:
             plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
             
             # 4. Binding pairs 계산
-            from LP_Module import binding_pairs_from_subtask_dag
+            from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
             
             # subtask_dag 객체 형태로 변환 (간단한 래퍼)
             class SubtaskDAGWrapper:
@@ -3691,8 +3700,7 @@ class TaskManager:
                 )
                 #print(f"  ✓ Robot positions (new scene): {robot_positions}")
             
-            # 6. LP 작업 할당 실행
-            from LP_Module import assign_subtasks_cp_sat
+            # 6. LLM 작업 할당 실행
             import robots
 
             # parallel_groups를 LP에 전달
@@ -3756,21 +3764,23 @@ class TaskManager:
                 #if forced_assignments:
                     #print(f"  ✓ Forced assignments (holding constraint): {forced_assignments}")
 
-            assignment = assign_subtasks_cp_sat(
+            assignment = assign_subtasks_llm(
                 subtasks=parsed_subtasks,
                 robot_ids=task_robot_ids,
                 robots_db=robots.robots,
                 plan_actions_by_subtask=plan_actions_by_sid,
                 objects_ai=self.objects_ai,
+                llm=self.llm,
+                gpt_version=self.gpt_version,
                 binding_pairs=binding_pairs,
                 robot_positions=robot_positions,
                 object_positions=object_positions,
                 parallel_groups=pg_for_lp,
                 forced_assignments=forced_assignments if forced_assignments else None,
             )
-            
+
             # 7. 할당 결과 출력 및 저장
-            print(f"\n  [LP Result]")
+            print(f"\n  [LLM Result]")
             for sid, rid in sorted(assignment.items()):
                 subtask_title = next((st["title"] for st in parsed_subtasks if st["id"] == sid), f"Subtask {sid}")
                 print(f"    Subtask {sid} ({subtask_title}) → Robot {rid}")
@@ -3789,7 +3799,9 @@ class TaskManager:
                     str(k): list(v) for k, v in robot_positions.items()
                 }
             
-            assignment_path = os.path.join(self.resources_path, "dag_outputs", f"task_{task_idx}_assignment_REPLANNED.json")
+            replan_assignment_dir = os.path.join(self.resources_path, f"replan_{self._replan_counter}", "assignment")
+            os.makedirs(replan_assignment_dir, exist_ok=True)
+            assignment_path = os.path.join(replan_assignment_dir, f"task_{task_idx}_assignment.json")
             with open(assignment_path, "w") as f:
                 json.dump(assignment_output, f, indent=2, ensure_ascii=False)
             
@@ -3828,8 +3840,9 @@ class TaskManager:
             # 1. 새 할당 로드
             assignment_path = os.path.join(
                 self.resources_path,
-                "dag_outputs",
-                f"task_{task_idx}_assignment_REPLANNED.json"
+                f"replan_{self._replan_counter}",
+                "assignment",
+                f"task_{task_idx}_assignment.json"
             )
             
             if os.path.exists(assignment_path):

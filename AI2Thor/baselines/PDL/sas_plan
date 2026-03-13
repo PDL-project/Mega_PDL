@@ -1,7 +1,1 @@
-(gotoobject robot1 butterknife)
-(pickupobject robot1 butterknife diningtable)
-(gotoobject robot1 drawer1)
-(openobject robot1 drawer1)
-(drophandobject robot1 butterknife drawer1)
-(closeobject robot1 drawer1)
-; cost = 6 (general cost)
+; cost = 0 (general cost)

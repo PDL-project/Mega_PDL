@@ -1,9 +1,10 @@
-# 작업할당 모듈
+# 작업할당 모듈 (LLM 기반)
 from __future__ import annotations
 from typing import Dict, List, Any, Tuple, Optional, Set
-from ortools.sat.python import cp_model
 import ast
+import json
 import math
+import re
 
 # ----------------------------
 # 로봇들의 능력 추출 함수 모음 부분
@@ -127,9 +128,17 @@ def binding_pairs_from_subtask_dag(subtask_dag: Any) -> List[Tuple[int, int]]:
         return pairs
 
     for e in getattr(subtask_dag, "edges", []) or []:
-        t = (getattr(e, "dependency_type", "") or "").lower().strip()
-        if t == "binding":
-            pairs.append((int(e.from_id), int(e.to_id)))
+        # edges는 SubtaskEdge 객체일 수도 있고, JSON 로드된 dict일 수도 있음
+        if isinstance(e, dict):
+            t = (e.get("dependency_type", "") or "").lower().strip()
+            from_id = e.get("from_id")
+            to_id = e.get("to_id")
+        else:
+            t = (getattr(e, "dependency_type", "") or "").lower().strip()
+            from_id = getattr(e, "from_id", None)
+            to_id = getattr(e, "to_id", None)
+        if t == "binding" and from_id is not None and to_id is not None:
+            pairs.append((int(from_id), int(to_id)))
 
     # 중복 제거
     pairs = sorted(list({(a, b) for (a, b) in pairs}))
@@ -177,58 +186,76 @@ def first_target_object_from_plan(plan_actions: List[str]) -> Optional[str]:
 
 
 # ======================================================
-# 메인 프로세스 부분, 할당 실행 함수 (현재 기준: mass 능력이 충분한가? binding 포함 관계인가?)
+# LLM 응답 파싱 헬퍼
 # ======================================================
 
-def assign_subtasks_cp_sat(
+def _parse_assignment_from_llm(text: str, sids: List[int], robot_ids: List[int]) -> Dict[int, int]:
+    """
+    LLM 응답 텍스트에서 {subtask_id: robot_id} 딕셔너리를 추출한다.
+
+    여러 JSON 블록이 있을 수 있으므로 가장 마지막 JSON 객체를 사용한다.
+    키·값은 정수로 변환하며, 유효하지 않은 항목은 무시한다.
+    """
+    # 모든 JSON 객체 후보를 뒤에서부터 탐색
+    candidates = list(re.finditer(r'\{[^{}]+\}', text, re.DOTALL))
+    for m in reversed(candidates):
+        try:
+            raw = json.loads(m.group())
+            result: Dict[int, int] = {}
+            for k, v in raw.items():
+                try:
+                    sid = int(k)
+                    rid = int(v)
+                    if sid in sids and rid in robot_ids:
+                        result[sid] = rid
+                except (ValueError, TypeError):
+                    continue
+            if result:
+                return result
+        except json.JSONDecodeError:
+            continue
+
+    raise ValueError(f"LLM 응답에서 유효한 할당 JSON을 파싱할 수 없습니다.\n응답:\n{text}")
+
+
+# ======================================================
+# 메인 프로세스 — LLM 기반 작업할당 함수
+# ======================================================
+
+def assign_subtasks_llm(
     subtasks: List[dict],
     robot_ids: List[int],
     robots_db: List[dict],
     plan_actions_by_subtask: Dict[int, List[str]],
     objects_ai: Any,
+    llm,           # LLMHandler (PDDL_Module.LLMHandler)
+    gpt_version: str,
     binding_pairs: Optional[List[Tuple[int, int]]] = None,
-    cost_by_subtask: Optional[Dict[int, int]] = None,
-    time_limit_s: float = 10.0,
-    # ↓↓↓ 거리 기반 비용 파라미터
     robot_positions: Optional[Dict[int, Tuple[float, float, float]]] = None,
     object_positions: Optional[Dict[str, Tuple[float, float, float]]] = None,
-    distance_weight: int = 1,
-    # ↓↓↓ 로드 밸런싱 파라미터
-    balance_mode: str = "sumsq",  # "max" or "sumsq"
-    balance_weight: int = 200,
-    # ↓↓↓ 병렬 그룹 인식 파라미터
     parallel_groups: Optional[Dict[str, List[int]]] = None,
-    parallel_penalty_weight: int = 500,
-    # ↓↓↓ 강제 할당 (예: 로봇이 이미 물건을 들고 있어 해당 서브태스크를 반드시 맡아야 하는 경우)
-    forced_assignments: Optional[Dict[int, int]] = None,  # {subtask_id: robot_id}
+    forced_assignments: Optional[Dict[int, int]] = None,
 ) -> Dict[int, int]:
     """
-    CP-SAT 기반 subtask -> robot assignment.
+    LLM에게 subtask → robot 할당을 요청한다.
 
     Returns:
         {subtask_id: robot_id}
 
-    Constraints (hard):
-      1) Each subtask assigned to exactly one robot
-      2) Mass feasibility (required_mass <= capacity)
-      3) Binding pairs: same robot must do both subtasks
-      4) Forced assignments: specific subtask → specific robot (e.g., holding constraint)
+    Hard constraints (프롬프트에 명시):
+      1) 로봇은 한 번에 한 가지 일만 할 수 있음
+      2) 무게 제약 (required_mass <= robot capacity)
+      3) Binding 쌍: 두 서브태스크는 반드시 같은 로봇
+      4) Forced assignment: 특정 서브태스크는 반드시 특정 로봇 (물건을 이미 들고 있는 경우)
 
-    Objective (우선순위):
-      0순위) 병렬 그룹 분산 — 같은 그룹 내 subtask을 서로 다른 로봇에 배정 (weight=500)
-      1순위) 로드 밸런싱 — 로봇 간 작업량 균등 분배 (sumsq, weight=200)
-      2순위) 거리 비용 — 로봇→대상 오브젝트 거리, 0.0~1.0 정규화 (weight=1)
+    Soft preferences (프롬프트에 명시):
+      - 병렬 그룹 내 서브태스크는 가능한 한 다른 로봇에 분산
+      - 로봇 간 작업 수 균등 분배 (로드 밸런싱)
+      - 로봇↔대상 오브젝트 거리가 짧은 로봇 우선
     """
-    model = cp_model.CpModel()
-
-    # ---- ids ----
     sids = [int(st["id"]) for st in subtasks]
 
-    # ---- costs ----
-    if cost_by_subtask is None:
-        cost_by_subtask = {sid: 1 for sid in sids}
-
-    # ---- mass ----
+    # ---- 무게 정보 계산 ----
     mass_map = build_mass_map(objects_ai)
     cap = robot_capacity_map(robot_ids, robots_db)
 
@@ -237,144 +264,121 @@ def assign_subtasks_cp_sat(
         plan = plan_actions_by_subtask.get(sid, [])
         req_mass[sid] = required_mass_from_plan(plan, mass_map)
 
-    # ---- decision vars: x[sid,rid] ----
-    x: Dict[Tuple[int, int], cp_model.IntVar] = {}
-    for sid in sids:
-        for rid in robot_ids:
-            x[(sid, rid)] = model.NewBoolVar(f"x_s{sid}_r{rid}")
-
-    # 1) each subtask exactly one robot
-    for sid in sids:
-        model.Add(sum(x[(sid, rid)] for rid in robot_ids) == 1)
-
-    # 2) mass feasibility
-    for sid in sids:
-        for rid in robot_ids:
-            if req_mass[sid] > cap[rid] + 1e-9:
-                model.Add(x[(sid, rid)] == 0)
-
-    # 3) binding (same robot)
-    if binding_pairs is None:
-        binding_pairs = []
-    for (a, b) in binding_pairs:
-        a = int(a); b = int(b)
-        if a not in sids or b not in sids:
-            continue
-        for rid in robot_ids:
-            model.Add(x[(a, rid)] == x[(b, rid)])
-
-    # 4) forced assignments (예: 로봇이 이미 물건을 들고 있어 반드시 해당 서브태스크를 맡아야 함)
-    if forced_assignments:
-        for sid, forced_rid in forced_assignments.items():
-            sid = int(sid)
-            if sid not in sids or forced_rid not in robot_ids:
-                continue
-            model.Add(x[(sid, forced_rid)] == 1)
-
-    # ---- distance cost (거리 비용) ----
-    # 로봇 위치 → 서브태스크 첫 번째 대상 오브젝트 위치까지의 유클리드 거리를 soft cost로 반영
-    # 정규화: 최대 거리 대비 비율로 0.0~1.0 스케일링 (CP-SAT 정수 제약으로 ×1000 → 0~1000)
-    dist_cost_map: Dict[Tuple[int, int], int] = {}
+    # ---- 거리 정보 계산 ----
+    dist_info: Dict[int, Dict[int, float]] = {}  # dist_info[sid][rid] = distance
     if robot_positions and object_positions:
-        raw_dists: Dict[Tuple[int, int], float] = {}
         for sid in sids:
             plan = plan_actions_by_subtask.get(sid, [])
             target_obj = first_target_object_from_plan(plan)
             obj_pos = object_positions.get(target_obj) if target_obj else None
+            dist_info[sid] = {}
             for rid in robot_ids:
                 if obj_pos and rid in robot_positions:
-                    raw_dists[(sid, rid)] = _euclidean_dist(robot_positions[rid], obj_pos)
+                    dist_info[sid][rid] = round(_euclidean_dist(robot_positions[rid], obj_pos), 2)
                 else:
-                    raw_dists[(sid, rid)] = 0.0
+                    dist_info[sid][rid] = 0.0
 
-        max_dist = max(raw_dists.values()) if raw_dists else 1.0
-        if max_dist < 1e-9:
-            max_dist = 1.0  # 모든 거리가 0인 경우 방지
+    # ---- 프롬프트 구성 ----
+    lines: List[str] = []
 
-        for key, d in raw_dists.items():
-            # 0~10 정수 스케일 (×1000 대신 ×10 사용)
-            # 이유: balance_cost 한 단계 개선 최솟값(200×2=400) > distance 최대 총합(10×N)
-            # → 밸런싱이 항상 거리보다 수학적으로 우선순위를 가짐
-            dist_cost_map[key] = int((d / max_dist) * 10)
-
-    # ---- parallel group penalty ----
-    # 같은 병렬 그룹 내에서 한 로봇이 여러 subtask을 맡으면 패널티
-    # 원리: 그룹 g에서 로봇 r이 받은 subtask 수 = pg_load[g,r]
-    #       pg_load가 2 이상이면 초과분(pg_load - 1)^2 만큼 패널티
-    pg_penalty_terms: List[cp_model.IntVar] = []
-    if parallel_groups:
-        for gk, group_sids in parallel_groups.items():
-            # 이 그룹에 속한 subtask 중 실제로 존재하는 것만 필터
-            valid_sids = [s for s in group_sids if s in sids]
-            if len(valid_sids) <= 1:
-                continue
-            for rid in robot_ids:
-                # 이 그룹에서 이 로봇이 맡은 subtask 수
-                pg_load = model.NewIntVar(0, len(valid_sids), f"pg_load_g{gk}_r{rid}")
-                model.Add(pg_load == sum(x[(sid, rid)] for sid in valid_sids))
-                # 초과분: max(0, pg_load - 1)
-                excess = model.NewIntVar(0, len(valid_sids), f"pg_excess_g{gk}_r{rid}")
-                model.AddMaxEquality(excess, [pg_load - 1, model.NewConstant(0)])
-                # 초과분 제곱 -> 2개 초과보다 3개 초과가 훨씬 큰 패널티
-                excess_sq = model.NewIntVar(0, len(valid_sids) ** 2, f"pg_exsq_g{gk}_r{rid}")
-                model.AddMultiplicationEquality(excess_sq, excess, excess)
-                pg_penalty_terms.append(excess_sq)
-
-    pg_penalty = sum(pg_penalty_terms) if pg_penalty_terms else 0
-
-    # ---- load balancing vars ----
-    load_by_robot: Dict[int, cp_model.IntVar] = {}
+    # 1) 로봇 정보
+    lines.append("## Robots")
     for rid in robot_ids:
-        load_by_robot[rid] = model.NewIntVar(0, len(sids), f"load_r{rid}")
-        model.Add(load_by_robot[rid] == sum(x[(sid, rid)] for sid in sids))
-
-    max_load = None
-    if balance_mode == "max":
-        max_load = model.NewIntVar(0, len(sids), "max_load")
-        model.AddMaxEquality(max_load, [load_by_robot[rid] for rid in robot_ids])
-
-    # ---- objective ----
-    # distance cost: 로봇-오브젝트 거리 비용
-    distance_cost = sum(dist_cost_map.get((sid, rid), 0) * x[(sid, rid)] for sid in sids for rid in robot_ids)
-
-    # balance cost (1순위)
-    if balance_mode == "sumsq":
-        # sum of squared loads (convex) -> more even distribution
-        sq_terms: List[cp_model.IntVar] = []
-        for rid in robot_ids:
-            sq = model.NewIntVar(0, len(sids) * len(sids), f"load_sq_r{rid}")
-            model.AddMultiplicationEquality(sq, load_by_robot[rid], load_by_robot[rid])
-            sq_terms.append(sq)
-        balance_cost = sum(sq_terms)
-    else:
-        # default: minimize maximum load
-        balance_cost = max_load if max_load is not None else 0
-
-    # 0순위: 병렬 그룹 분산 (weight=500), 1순위: 로드 밸런싱 (weight=200), 2순위: 거리 (weight=1)
-    model.Minimize(
-        parallel_penalty_weight * pg_penalty
-        + balance_weight * balance_cost
-        + distance_weight * distance_cost
-    )
-
-    # ---- solve ----
-    solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = float(time_limit_s)
-
-    status = solver.Solve(model)
-    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-        raise RuntimeError(
-            "No feasible assignment. "
-            "Check: (1) mass/capacity too small, (2) binding chain impossible. "
-            "If parallel is hard, consider enabling soft parallel."
+        robot_info = robots_db[rid - 1]
+        skills = robot_info.get("skills", [])
+        skills_str = ", ".join(skills) if skills else "general"
+        lines.append(
+            f"- Robot {rid}: mass_capacity={cap[rid]:.2f}kg, skills=[{skills_str}]"
         )
 
-    # ---- extract assignment ----
-    assignment: Dict[int, int] = {}
-    for sid in sids:
-        for rid in robot_ids:
-            if solver.Value(x[(sid, rid)]) == 1:
-                assignment[sid] = rid
-                break
+    # 2) 서브태스크 정보
+    lines.append("\n## Subtasks")
+    for st in subtasks:
+        sid = int(st["id"])
+        title = st.get("title", f"Subtask_{sid}")
+        plan = plan_actions_by_subtask.get(sid, [])
+        actions_preview = "; ".join(plan[:5]) + ("..." if len(plan) > 5 else "")
+
+        # 무게 제약 적용 가능한 로봇 목록
+        feasible_robots = [rid for rid in robot_ids if req_mass[sid] <= cap[rid] + 1e-9]
+
+        dist_str = ""
+        if sid in dist_info:
+            dist_parts = [f"Robot{rid}={d:.2f}m" for rid, d in dist_info[sid].items()]
+            dist_str = f"  distances=[{', '.join(dist_parts)}]"
+
+        lines.append(
+            f"- Subtask {sid} ({title}): required_mass={req_mass[sid]:.2f}kg"
+            f"  feasible_robots={feasible_robots}"
+            f"  actions=[{actions_preview}]"
+            f"{dist_str}"
+        )
+
+    # 3) Hard constraints
+    lines.append("\n## Hard Constraints")
+
+    if binding_pairs:
+        lines.append(
+            "- Binding pairs (MUST be assigned to the SAME robot): "
+            + str(binding_pairs)
+        )
+    else:
+        lines.append("- Binding pairs: none")
+
+    if forced_assignments:
+        fa_str = ", ".join(f"subtask {sid} → Robot {rid}" for sid, rid in forced_assignments.items())
+        lines.append(f"- Forced assignments (robot already holding object): {fa_str}")
+    else:
+        lines.append("- Forced assignments: none")
+
+    # 4) Soft preferences
+    lines.append("\n## Soft Preferences (apply in this priority order)")
+    lines.append("1. [HIGHEST] Distribute parallel-group subtasks across different robots when possible.")
+    if parallel_groups:
+        for gk, gsids in parallel_groups.items():
+            lines.append(f"   Group '{gk}': subtasks {gsids}")
+    else:
+        lines.append("   No parallel groups defined.")
+    lines.append("2. Balance workload evenly across robots (minimize max load).")
+    lines.append("3. Prefer assigning a subtask to the robot closest to its first target object.")
+
+    # 5) 출력 형식
+    lines.append("\n## Output")
+    lines.append(
+        "Return ONLY a single JSON object (no explanation, no code block) "
+        "mapping each subtask_id (string key) to robot_id (integer value). "
+        "All subtasks must be assigned. Example: "
+        '{"1": 1, "2": 2, "3": 1}'
+    )
+    lines.append(f"Subtask IDs to assign: {sids}")
+    lines.append(f"Valid robot IDs: {robot_ids}")
+
+    user_content = "\n".join(lines)
+
+    system_content = (
+        "You are a Robot Task Allocation Expert. "
+        "Each robot can work on only one subtask at a time. Assign each subtask to one robot while strictly satisfying all hard constraints. "
+        "Among all feasible assignments, optimise for the soft preferences in the stated priority order. "
+        "Output only the JSON assignment object — no additional text."
+    )
+
+    messages = [
+        {"role": "system", "content": system_content},
+        {"role": "user", "content": user_content},
+    ]
+
+    # ---- LLM 호출 ----
+    _, text = llm.query_model(messages, gpt_version, max_tokens=512, temperature=0, frequency_penalty=0.0)
+
+    # ---- 응답 파싱 ----
+    assignment = _parse_assignment_from_llm(text, sids, robot_ids)
+
+    # 누락된 서브태스크 확인
+    missing = [sid for sid in sids if sid not in assignment]
+    if missing:
+        raise RuntimeError(
+            f"LLM이 다음 서브태스크에 대한 할당을 반환하지 않았습니다: {missing}\n"
+            f"LLM 응답:\n{text}"
+        )
 
     return assignment

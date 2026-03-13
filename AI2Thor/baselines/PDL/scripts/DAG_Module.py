@@ -1,61 +1,18 @@
 """
 DAG Module for PDDL Plan Parallelism Analysis
-LLM을 사용하여 PDDL plan의 액션, 서브테스크들 간 의존성을 분석하고 DAG를 생성
+LLM을 사용하여 서브태스크들 간 의존성을 분석하고 Subtask-level DAG를 생성
 """
 
 import os
 import json
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, field, asdict
 import openai
 
 
-# 1. Action-level DAG 생성 부분
-
-@dataclass
-class ActionNode: #그래프의 정점
-    id: int
-    action: str
-    action_type: str
-    robot: str
-    objects: List[str]
-    parallel_group: int = 0
-
-
-@dataclass
-class DAGEdge: #그래프의 엣지(간선) 클래스
-    from_id: int
-    to_id: int
-    dependency_type: str  # "causal": 원인과 결과 (A가 끝나야 B의 조건을 만족함), "resource": 같은 물체나 장소를 사용함 (충돌 방지), "binding": 같은 로봇이 수행해야 함 (물건을 들고 이동하는 경우 등)
-
-
-@dataclass
-class PlanDAG:
-    """하나의 서브태스크 내 액션들의 전체 DAG 구조"""
-    subtask_name: str
-    nodes: List[ActionNode] = field(default_factory=list)
-    edges: List[DAGEdge] = field(default_factory=list)
-    parallel_groups: Dict[int, List[int]] = field(default_factory=dict)
-
-    def to_dict(self) -> Dict:
-        """JSON 저장을 위한 딕셔너리 변환 (Binding 엣지 별도 추출 포함)"""
-        binding_edges = [
-            {"from": e.from_id, "to": e.to_id}
-            for e in self.edges
-            if (e.dependency_type or "").lower() == "binding"
-        ]
-        return {
-            "subtask_name": self.subtask_name,
-            "nodes": [asdict(n) for n in self.nodes],
-            "edges": [asdict(e) for e in self.edges],
-            "parallel_groups": self.parallel_groups,
-            "binding_edges": binding_edges
-        }
-
-
-# 2. 서브태스크 레벨(Subtask-level) 데이터 구조
+# Subtask-level DAG 데이터 구조
 
 @dataclass
 class SubtaskSummary:
@@ -71,7 +28,7 @@ class SubtaskEdge:
     """서브태스크 간의 의존성 간선"""
     from_id: int
     to_id: int
-    dependency_type: str 
+    dependency_type: str
     reason: str = ""
 
 @dataclass
@@ -92,7 +49,7 @@ class SubtaskDAG:
 
 
 class DAGGenerator:
-    """LLM 기반 DAG 생성기 (Action DAG + Subtask DAG)"""
+    """LLM 기반 Subtask DAG 생성기"""
 
     def __init__(self, api_key_file: str = "api_key", gpt_version: str = "gpt-4o"):
         self.gpt_version = gpt_version
@@ -109,16 +66,15 @@ class DAGGenerator:
         pdl_dir = here.parent                   # .../AI2Thor/baselines/PDL
 
         candidates = [
-            Path(api_key_file).expanduser(),                 # 혹시 절대/상대경로로 넘겼을 때
+            Path(api_key_file).expanduser(),
             Path(api_key_file + ".txt").expanduser(),
-            pdl_dir / api_key_file,                          
+            pdl_dir / api_key_file,
             pdl_dir / (api_key_file + ".txt"),
         ]
 
         for c in candidates:
             if c.exists() and c.is_file():
                 openai.api_key = c.read_text().strip()
-                #print(f"[DAG] Loaded API key from: {c}")
                 return
 
         raise FileNotFoundError(f"[DAG] api key file not found. Tried: {[str(c) for c in candidates]}")
@@ -134,244 +90,8 @@ class DAGGenerator:
         objects = parts[2:] if len(parts) > 2 else []
         return (action_type, robot, objects)
 
-    # -------------------------
-    # 1) Action-level DAG 프롬프트 및 분석
-    # -------------------------
-    def _create_action_dag_prompt(self, plan_actions: List[str], problem_content: str, precondition_content: str) -> str:
-        actions_numbered = "\n".join([f"{i}: {a}" for i, a in enumerate(plan_actions)])
-
-        # few-shot 예시를 prompt에 포함 (바인딩 잘 뽑게)
-        fewshot = (
-            "### Example 1\n"
-            "Actions:\n"
-            "0: gotoobject robot? apple\n"
-            "1: pickupobject robot? apple countertop\n"
-            "2: gotoobject robot? fridge\n"
-            "3: openfridge robot? fridge\n"
-            "4: putobjectinfridge robot? apple fridge\n"
-            "Correct dependencies:\n"
-            "- causal: 0 -> 1\n"
-            "- causal: 1 -> 2\n"
-            "- causal: 2 -> 3\n"
-            "- causal: 3 -> 4\n"
-            "- binding: 1 -> 4 (apple is held and must be carried by the same robot)\n\n"
-            "### Example 2\n"
-            "Actions:\n"
-            "0: gotoobject robot? fridge\n"
-            "1: openfridge robot? fridge\n"
-            "2: closefridge robot? fridge\n"
-            "Correct dependencies:\n"
-            "- causal: 0 -> 1\n"
-            "- causal: 1 -> 2\n"
-            "- No binding\n\n"
-        )
-
-        prompt = (
-            "You are a PDDL plan dependency analyzer.\n\n"
-            "IMPORTANT CONTEXT:\n"
-            "- This plan is generated BEFORE task-to-robot assignment.\n"
-            "- Robot labels (e.g., robot1) are PLACEHOLDERS and must NOT constrain parallelism.\n"
-            "- However, some dependencies require SAME ROBOT due to robot-bound state (holding/carrying).\n\n"
-            f"{fewshot}"
-            f"## PDDL Problem:\n{problem_content}\n\n"
-            f"## Precondition Information:\n{precondition_content}\n\n"
-            f"## Plan Actions (numbered):\n{actions_numbered}\n\n"
-            "## Task:\n"
-            "Return ALL necessary dependencies between actions. Each dependency MUST be labeled as one of:\n"
-            "1) causal: an action produces a precondition required by another action.\n"
-            "2) resource: actions manipulate the same physical object so they cannot be parallel.\n"
-            "3) binding: SAME ROBOT REQUIRED because holding/carrying state must persist.\n"
-            "   - Typical: pickupobject -> putobject/putobjectinfridge/throwobject/drophandobject for SAME object.\n"
-            "   - Even if not adjacent, if object must remain held across intermediate actions, add a binding edge.\n\n"
-            "## Output Format (JSON only):\n"
-            "{\n"
-            '  "dependencies": [\n'
-            '    {"from": <int>, "to": <int>, "type": "<causal|resource|binding>", "reason": "<brief>"}\n'
-            "  ]\n"
-            "}\n\n"
-            "IMPORTANT:\n"
-            "- Output ONLY valid JSON. No markdown.\n"
-        )
-        return prompt
-
-    def analyze_action_dependencies(self, plan_actions: List[str], problem_content: str = "", precondition_content: str = "") -> Dict:
-        """LLM을 호출하여 액션 간 의존성을 JSON으로 받아옴"""
-        prompt = self._create_action_dag_prompt(plan_actions, problem_content, precondition_content)
-        try:
-            response = openai.chat.completions.create(
-                model=self.gpt_version,
-                messages=[
-                    {"role": "system", "content": "You are a PDDL expert. Output ONLY valid JSON."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=2000,
-                temperature=0
-            )
-            result_text = response.choices[0].message.content.strip()
-
-            if "```json" in result_text:
-                result_text = re.search(r'```json\s*(.*?)\s*```', result_text, re.DOTALL).group(1)
-            elif "```" in result_text:
-                result_text = re.search(r'```\s*(.*?)\s*```', result_text, re.DOTALL).group(1)
-
-            return json.loads(result_text)
-        except Exception as e:
-            print(f"[DAG] LLM action analysis error: {e}")
-            return {"dependencies": []}
-
-    def compute_parallel_groups(self, n_nodes: int, edges: List[DAGEdge]) -> Dict[int, List[int]]:
-        """위상 정렬(Topological Sort)을 기반으로 동시에 실행 가능한 그룹(레벨) 계산"""
-        preds = {i: set() for i in range(n_nodes)}
-        succs = {i: set() for i in range(n_nodes)}
-
-        for e in edges:
-            # 모든 의존성 타입(causal, resource, binding)을 순서 제약으로 반영
-            u, v = e.from_id, e.to_id
-            if 0 <= u < n_nodes and 0 <= v < n_nodes:
-                preds[v].add(u)
-                succs[u].add(v)
-
-        from collections import deque
-        indeg = {i: len(preds[i]) for i in range(n_nodes)}
-        level = {i: 0 for i in range(n_nodes)}
-        q = deque([i for i in range(n_nodes) if indeg[i] == 0])
-
-        while q:
-            u = q.popleft()
-            for v in succs[u]:
-                level[v] = max(level[v], level[u] + 1)
-                indeg[v] -= 1
-                if indeg[v] == 0:
-                    q.append(v)
-
-        groups: Dict[int, List[int]] = {}
-        for i in range(n_nodes):
-            g = level[i]
-            groups.setdefault(g, []).append(i)
-        return groups
-
-    def build_dag(self, subtask_name: str, plan_actions: List[str],
-                  problem_content: str = "", precondition_content: str = "") -> PlanDAG:
-        """실제 액션 노드와 간선을 생성하여 PlanDAG 객체 구축"""
-        # 1. 노드 생성
-        nodes: List[ActionNode] = []
-        for i, action in enumerate(plan_actions):
-            action_type, robot, objects = self.parse_action(action)
-            nodes.append(ActionNode(
-                id=i, action=action, action_type=action_type, robot=robot, objects=objects
-            ))
-
-        n = len(nodes)
-
-        # 2. LLM 의존성 분석 호출
-        analysis = self.analyze_action_dependencies(plan_actions, problem_content, precondition_content)
-
-        # 3. 간선(Edge) 생성
-        edges: List[DAGEdge] = []
-        seen = set()  # (from,to,type)
-        dropped = 0
-
-        for dep in analysis.get("dependencies", []):
-            try:
-                u = int(dep.get("from"))
-                v = int(dep.get("to"))
-            except Exception:
-                dropped += 1
-                continue
-
-            dep_type = (dep.get("type") or "").lower().strip()
-            if dep_type not in ("causal", "resource", "binding"):
-                dep_type = "causal"
-
-            # 범위 밖이면 버림 (유령 노드 제거)
-            if not (0 <= u < n and 0 <= v < n):
-                dropped += 1
-                continue
-
-            key = (u, v, dep_type)
-            if key in seen:
-                continue
-            seen.add(key)
-
-            edges.append(DAGEdge(from_id=u, to_id=v, dependency_type=dep_type))
-
-
-        # 4. 병렬 그룹(단계) 계산
-        parallel_groups = self.compute_parallel_groups(len(nodes), edges)
-        for g, node_ids in parallel_groups.items():
-            for nid in node_ids:
-                nodes[nid].parallel_group = g
-
-        return PlanDAG(
-            subtask_name=subtask_name,
-            nodes=nodes,
-            edges=edges,
-            parallel_groups=parallel_groups
-        )
-
-    def save_dag_json(self, dag: PlanDAG, output_path: str) -> None:
-        with open(output_path, 'w') as f:
-            json.dump(dag.to_dict(), f, indent=2, ensure_ascii=False)
-        #print(f"[DAG] Saved JSON to {output_path}")
-
-    def visualize_dag(self, dag: PlanDAG, output_path: str) -> None:
-        """pydot(Graphviz)을 사용하여 DAG를 PNG/PDF 이미지로 시각화"""
-        try:
-            import pydot
-        except ImportError:
-            print("[DAG] pydot not installed. Try: pip install pydot graphviz")
-            return
-
-        graph = pydot.Dot(graph_type="digraph", rankdir="TB", splines="spline", bgcolor="white")
-        graph.set_node_defaults(shape="box", style="rounded,filled", fillcolor="white",
-                                fontname="Helvetica", fontsize="10", margin="0.08,0.05")
-        graph.set_edge_defaults(color="#555555", arrowsize="0.7", penwidth="1.2")
-
-        group_nodes: Dict[int, List[str]] = {}
-        for node in dag.nodes:
-            label = f"{node.id}. {node.action_type}\\n[{', '.join(node.objects)}]"
-            graph.add_node(pydot.Node(str(node.id), label=label))
-            group_nodes.setdefault(node.parallel_group, []).append(str(node.id))
-
-        for g, ids in sorted(group_nodes.items()):
-            sg = pydot.Cluster(
-                graph_name=f"cluster_g{g}",
-                label=f"병렬실행 그룹 {g}",
-                color="#DDDDDD",
-                style="rounded",
-                fontname="Helvetica",
-                fontsize="11",
-                penwidth="1"
-            )
-            sg.add_node(pydot.Node("rank_dummy_" + str(g), style="invis"))
-            for nid in ids:
-                sg.add_node(pydot.Node(nid))
-            sg.set_rank("same")
-            graph.add_subgraph(sg)
-
-        for edge in dag.edges:
-            et = (edge.dependency_type or "").lower()
-            if et == "resource":
-                style, color, penwidth = "dashed", "#757575", "1.2"
-            elif et == "binding":
-                style, color, penwidth = "bold", "#E53935", "2.5"
-            else:
-                style, color, penwidth = "solid", "#333333", "1.2"
-
-            graph.add_edge(pydot.Edge(
-                str(edge.from_id), str(edge.to_id),
-                style=style, color=color, penwidth=penwidth
-            ))
-
-        ext = os.path.splitext(output_path)[1].lower()
-        if ext == ".pdf":
-            graph.write_pdf(output_path)
-        else:
-            graph.write_png(output_path)
-
-
     # ==========================================================
-    # 2) Subtask-level DAG (서브태스크 간 관계 분석)
+    # Subtask-level DAG (서브태스크 간 관계 분석)
     # ==========================================================
 
     def _create_subtask_summary_prompt(self, subtask_name: str, plan_actions: List[str],
@@ -401,8 +121,8 @@ class DAGGenerator:
 
     def build_subtask_summary(self, subtask_id: int, subtask_name: str,
                              plan_actions: List[str], problem_content: str, precondition_content: str) -> SubtaskSummary:
-        prompt = self._create_subtask_summary_prompt(subtask_name, plan_actions, problem_content, precondition_content)
         """LLM을 통해 서브태스크가 '무엇을 위해 하는 일인지' 요약 정보를 추출"""
+        prompt = self._create_subtask_summary_prompt(subtask_name, plan_actions, problem_content, precondition_content)
         try:
             response = openai.chat.completions.create(
                 model=self.gpt_version,
@@ -438,7 +158,6 @@ class DAGGenerator:
             return SubtaskSummary(id=subtask_id, name=subtask_name, objects=objs, preconds=[], effects=[])
 
     def _create_subtask_dag_prompt(self, task_name: str, summaries: List[SubtaskSummary]) -> str:
-        # summaries를 텍스트로 풀어서 제공
         lines = []
         for s in summaries:
             lines.append(
@@ -449,7 +168,6 @@ class DAGGenerator:
             )
         summaries_txt = "\n".join(lines)
 
-        # few-shot: subtask dependency 예시 (ID는 1-based, 실제 subtask ID와 일치)
         fewshot = (
             "### Example A (HAS dependency: clear causal link)\n"
             "1: preconds=['container is closed'], effects=['container is open']\n"
@@ -528,8 +246,8 @@ class DAGGenerator:
         return prompt
 
     def build_subtask_dag(self, task_name: str, summaries: List[SubtaskSummary]) -> SubtaskDAG:
-        prompt = self._create_subtask_dag_prompt(task_name, summaries)
         """서브태스크 요약본을 비교하여 전체적인 실행 순서(Subtask DAG) 구축"""
+        prompt = self._create_subtask_dag_prompt(task_name, summaries)
         try:
             response = openai.chat.completions.create(
                 model=self.gpt_version,
@@ -560,7 +278,6 @@ class DAGGenerator:
                     reason=d.get("reason", "")
                 ))
 
-            # parallel_groups: LLM 반환값은 0-based/1-based 혼동 위험 → 항상 edges에서 계산
             node_ids = [s.id for s in summaries]
             pg = self._compute_subtask_parallel_groups(node_ids, edges)
 
@@ -572,18 +289,14 @@ class DAGGenerator:
             )
         except Exception as e:
             print(f"[Subtask] DAG LLM error: {e}")
-            # fallback: 빈 DAG
             return SubtaskDAG(task_name=task_name, nodes=summaries, edges=[], parallel_groups={0: [s.id for s in summaries]})
 
     def _compute_subtask_parallel_groups(self, node_ids: List[int], edges: List[SubtaskEdge]) -> Dict[int, List[int]]:
-        # causal/order만 순서 제약으로 사용
-        # node_ids는 실제 subtask ID 리스트 (1-based일 수 있음)
         id_set = set(node_ids)
         preds = {i: set() for i in node_ids}
         succs = {i: set() for i in node_ids}
 
         for e in edges:
-            # 모든 의존성 타입(causal, resource, binding, ordering)을 순서 제약으로 반영
             u, v = e.from_id, e.to_id
             if u in id_set and v in id_set:
                 preds[v].add(u)
@@ -610,7 +323,6 @@ class DAGGenerator:
     def save_subtask_dag_json(self, dag: SubtaskDAG, output_path: str) -> None:
         with open(output_path, "w") as f:
             json.dump(dag.to_dict(), f, indent=2, ensure_ascii=False)
-        #print(f"[Subtask] Saved Subtask DAG JSON to {output_path}")
 
     def visualize_subtask_dag(self, dag: SubtaskDAG, output_path: str) -> None:
         try:
@@ -674,22 +386,19 @@ class DAGGenerator:
         else:
             graph.write_png(output_path)
 
-        #print(f"[Subtask] Saved Subtask DAG visualization to {output_path}")
-
 
 class DAGProcessor:
-    """프로젝트 폴더 내의 모든 PDDL 계획 파일을 읽어 DAG를 생성하는 메인 프로세서"""
+    """프로젝트 폴더 내의 모든 PDDL 계획 파일을 읽어 Subtask DAG를 생성하는 메인 프로세서"""
 
     def __init__(self, base_path: str, api_key_file: str = "api_key", gpt_version: str = "gpt-4o"):
         self.base_path = base_path
         self.generator = DAGGenerator(api_key_file, gpt_version)
 
-        # 모든 생성 파일 주소 연결
         self.resources_path = os.path.join(base_path, "resources")
         self.plans_path = os.path.join(self.resources_path, "subtask_pddl_plans")
         self.problems_path = os.path.join(self.resources_path, "subtask_pddl_problems")
         self.preconditions_path = os.path.join(self.resources_path, "precondition_subtasks")
-        self.output_path = os.path.join(self.resources_path, "dag_outputs")
+        self.output_path = os.path.join(self.resources_path, "dag_outputs", "dag")
 
         os.makedirs(self.output_path, exist_ok=True)
 
@@ -701,18 +410,14 @@ class DAGProcessor:
         precond_path = precond_file if os.path.exists(precond_file) else None
         return problem_path, precond_path
 
-    def process_all_plans(self, task_name: str = "task") -> Tuple[List[PlanDAG], SubtaskDAG]:
-        """모든 서브태스크 계획에 대해 Action DAG와 Subtask DAG를 일괄 생성"""
+    def process_all_plans(self, task_name: str = "task") -> SubtaskDAG:
+        """모든 서브태스크 계획에 대해 Subtask DAG를 생성"""
 
-        action_dags: List[PlanDAG] = []
         summaries: List[SubtaskSummary] = []
 
-        #모든 PDDL plan 불러오기
         plan_files = [f for f in os.listdir(self.plans_path) if f.endswith("_actions.txt")]
 
-        for idx, plan_file in enumerate(sorted(plan_files)):
-            #print(f"\n[DAG] Processing: {plan_file}")
-
+        for plan_file in sorted(plan_files):
             plan_path = os.path.join(self.plans_path, plan_file)
             with open(plan_path, 'r') as f:
                 plan_actions = [line.strip() for line in f.readlines() if line.strip()]
@@ -733,25 +438,9 @@ class DAGProcessor:
                 with open(precond_path, 'r') as f:
                     precond_content = f.read()
 
-            subtask_name = plan_file.replace("_actions.txt", "")
-
-            # 1) Action DAG 만들기
-            dag = self.generator.build_dag(subtask_name, plan_actions, problem_content, precond_content)
-            action_dags.append(dag)
-
-            json_output = os.path.join(self.output_path, f"{subtask_name}_dag.json")
-            self.generator.save_dag_json(dag, json_output)
-
-            img_output = os.path.join(self.output_path, f"{subtask_name}_dag.png")
-            self.generator.visualize_dag(dag, img_output)
-
-            # 2) Subtask Summary (LLM) 생성
             m_sid = re.search(r"subtask_(\d+)", plan_file)
-            if m_sid:
-                subtask_id = int(m_sid.group(1))
-            else:
-                # Fallback: keep 1-based IDs to avoid invalid subtask 0.
-                subtask_id = len(summaries) + 1
+            subtask_id = int(m_sid.group(1)) if m_sid else len(summaries) + 1
+            subtask_name = plan_file.replace("_actions.txt", "")
 
             s = self.generator.build_subtask_summary(
                 subtask_id=subtask_id,
@@ -762,7 +451,6 @@ class DAGProcessor:
             )
             summaries.append(s)
 
-        # 3) Subtask DAG (LLM) 만들기
         subtask_dag = self.generator.build_subtask_dag(task_name=task_name, summaries=summaries)
 
         subtask_json = os.path.join(self.output_path, f"{task_name}_SUBTASK_DAG.json")
@@ -771,20 +459,12 @@ class DAGProcessor:
         subtask_img = os.path.join(self.output_path, f"{task_name}_SUBTASK_DAG.png")
         self.generator.visualize_subtask_dag(subtask_dag, subtask_img)
 
-        return action_dags, subtask_dag
-
-    def get_execution_schedule(self, dag: PlanDAG) -> List[List[str]]:
-        schedule = []
-        for group_idx in sorted(dag.parallel_groups.keys()):
-            node_ids = dag.parallel_groups[group_idx]
-            actions = [dag.nodes[nid].action for nid in node_ids if nid < len(dag.nodes)]
-            schedule.append(actions)
-        return schedule
+        return subtask_dag
 
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Generate DAG from PDDL plans")
+    parser = argparse.ArgumentParser(description="Generate Subtask DAG from PDDL plans")
     parser.add_argument("--base-path", type=str, default=os.getcwd(), help="Base path of the project")
     parser.add_argument("--api-key-file", type=str, default="api_key", help="OpenAI API key file")
     parser.add_argument("--gpt-version", type=str, default="gpt-4o", help="GPT model version")
@@ -793,16 +473,12 @@ def main():
 
     processor = DAGProcessor(base_path=args.base_path, api_key_file=args.api_key_file, gpt_version=args.gpt_version)
 
-    action_dags, subtask_dag = processor.process_all_plans(task_name=args.task_name)
+    subtask_dag = processor.process_all_plans(task_name=args.task_name)
 
-    #print(f"\n[DAG] Processed {len(action_dags)} subtasks")
-    #print(f"[Subtask] Built subtask DAG with {len(subtask_dag.nodes)} nodes and {len(subtask_dag.edges)} edges")
-
-    for dag in action_dags:
-        print(f"\n=== {dag.subtask_name} ===")
-        schedule = processor.get_execution_schedule(dag)
-        for i, group in enumerate(schedule):
-            print(f"  Step {i} (parallel): {group}")
+    print(f"\n[SubtaskDAG] {len(subtask_dag.nodes)} nodes, {len(subtask_dag.edges)} edges")
+    for g, ids in sorted(subtask_dag.parallel_groups.items()):
+        names = [n.name for n in subtask_dag.nodes if n.id in ids]
+        print(f"  Group {g} (parallel): {names}")
 
 
 if __name__ == "__main__":
