@@ -1,0 +1,48 @@
+{
+  "task_idx": 0,
+  "agent_count": 5,
+  "assignment": {
+    "1": 4,
+    "4": 3
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "subtask_01_Place_the_Mug_on_the_CoffeeMachine",
+      "robot": 4
+    },
+    {
+      "id": 4,
+      "title": "subtask_04_Place_the_Spoon_in_the_Drawer_REPLAN",
+      "robot": 3
+    }
+  ],
+  "replanned": true,
+  "robot_spawn_positions": {
+    "1": [
+      -2.75,
+      0.9009997844696045,
+      3.25
+    ],
+    "2": [
+      -2.0,
+      0.9009997844696045,
+      1.0
+    ],
+    "3": [
+      -0.3396034240722656,
+      0.9009997844696045,
+      1.1365187168121338
+    ],
+    "4": [
+      -1.25,
+      0.9009997844696045,
+      2.75
+    ],
+    "5": [
+      -3.5,
+      0.9009997844696045,
+      1.25
+    ]
+  }
+}

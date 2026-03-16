@@ -1,0 +1,55 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 box1 (1)",
+      "openobject robot1 box1 (1)",
+      "drophandobject robot1 keychain box1 (1)",
+      "closeobject robot1 box1 (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 pencil (1)",
+      "pickupobject robot1 pencil sofa (1)",
+      "gotoobject robot1 drawer1 (1)",
+      "openobject robot1 drawer1 (1)",
+      "drophandobject robot1 pencil drawer1 (1)",
+      "closeobject robot1 drawer1 (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 pen (1)",
+      "pickupobject robot1 pen sofa1 (1)",
+      "gotoobject robot1 drawer2 (1)",
+      "openobject robot1 drawer2 (1)",
+      "drophandobject robot1 pen drawer2 (1)",
+      "closeobject robot1 drawer2 (1)"
+    ]
+  },
+  "4": {
+    "state": "FAILED",
+    "error_message": "ArmChair|-04.38|+00.00|+06.02 is not an Openable object",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 armchair1 (1)"
+    ]
+  },
+  "5": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 armchair1 (1)"
+    ]
+  }
+}

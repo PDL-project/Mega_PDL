@@ -1,0 +1,7 @@
+{
+  "4": {
+    "state": "FAILED",
+    "error_message": "GoToObject: navigation timeout for 'drawer2' (dist=1.53)",
+    "effects": null
+  }
+}

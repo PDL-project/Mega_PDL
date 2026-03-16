@@ -1,0 +1,2 @@
+gotoobject robot2 pen (1)
+pickupobject robot2 pen sofa (1)

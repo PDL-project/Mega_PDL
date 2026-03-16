@@ -1,0 +1,49 @@
+# Task Description: Move the Pillow to the SideTable.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at pillow location
+#2. Robot not holding pillow
+
+# SubTask 4: Move the Pillow to the SideTable.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Pillow(Location=Sofa), SideTable(Location=Floor)
+
+GoToObject(robot1, Pillow)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Pillow)
+
+PickupObject(robot1, Pillow, Sofa)
+   Preconditions:
+     (at-location Pillow Sofa)
+     (at robot1 Pillow)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Pillow)
+
+GoToObject(robot1, SideTable)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 SideTable)
+
+PutObject(robot1, Pillow, SideTable)
+   Preconditions:
+     (holding robot1 Pillow)
+     (at robot1 SideTable)
+     (not (inaction robot1))
+     (not (object-close robot1 SideTable))
+   Effects:
+     (at-location Pillow SideTable)
+     (not (holding robot1 Pillow))
+     (not (inaction robot1))
+
+Goal condition:
+(at-location Pillow SideTable)
+
+# Task Move the Pillow to the SideTable is done.

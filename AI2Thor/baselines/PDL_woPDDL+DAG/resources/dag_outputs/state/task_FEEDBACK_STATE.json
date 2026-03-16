@@ -1,0 +1,56 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 fork1 (1)",
+      "pickupobject robot1 fork1 countertop1 (1)",
+      "gotoobject robot1 drawer1 (1)",
+      "openobject robot1 drawer1 (1)",
+      "putobject robot1 fork1 drawer1 (1)",
+      "closeobject robot1 drawer1 (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 spoon1 (1)",
+      "pickupobject robot1 spoon1 countertop1 (1)",
+      "gotoobject robot1 drawer1 (1)",
+      "openobject robot1 drawer1 (1)",
+      "putobject robot1 spoon1 drawer1 (1)",
+      "closeobject robot1 drawer1 (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 knife1 (1)",
+      "pickupobject robot1 knife1 countertop1 (1)",
+      "gotoobject robot1 drawer1 (1)",
+      "openobject robot1 drawer1 (1)",
+      "putobject robot1 knife1 drawer1 (1)",
+      "closeobject robot1 drawer1 (1)"
+    ]
+  },
+  "4": {
+    "state": "FAILED",
+    "error_message": "GoToObject: navigation timeout for 'drawer2' (dist=1.53)",
+    "effects": null
+  },
+  "5": {
+    "state": "RUNNING",
+    "error_message": null,
+    "effects": null
+  },
+  "6": {
+    "state": "PENDING",
+    "error_message": null,
+    "effects": null
+  }
+}
