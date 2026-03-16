@@ -1,0 +1,126 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Store_the_Fork",
+      "objects": [
+        "robot1",
+        "fork1",
+        "countertop1",
+        "drawer1"
+      ],
+      "preconds": [
+        "Fork is on the countertop.",
+        "Drawer is closed."
+      ],
+      "effects": [
+        "Fork is stored inside the drawer.",
+        "Drawer is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Store_the_Spoon",
+      "objects": [
+        "robot1",
+        "spoon1",
+        "countertop1",
+        "drawer1"
+      ],
+      "preconds": [
+        "The robot is near the spoon on the countertop."
+      ],
+      "effects": [
+        "The spoon is stored inside the drawer."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Store_the_Knife",
+      "objects": [
+        "robot1",
+        "knife1",
+        "countertop1",
+        "drawer1"
+      ],
+      "preconds": [
+        "Knife is on the countertop.",
+        "Drawer is closed."
+      ],
+      "effects": [
+        "Knife is stored in the drawer.",
+        "Drawer is closed."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Store_the_ButterKnife",
+      "objects": [
+        "robot1",
+        "butterknife1",
+        "drawer1"
+      ],
+      "preconds": [
+        "The butterknife is accessible to the robot.",
+        "The drawer is reachable by the robot."
+      ],
+      "effects": [
+        "The butterknife is stored inside the drawer.",
+        "The drawer is closed."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 1,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 2,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ]
+  }
+}

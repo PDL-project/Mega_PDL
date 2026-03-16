@@ -2909,6 +2909,22 @@ class TaskManager:
             # 6. 재분해 프롬프트 생성
             redecompose_prompt = "You are redecomposing a failed group of subtasks in a multi-robot collaborative task.\n\n"
 
+            # 담당 범위 명시: 이 subtask들만 다시 계획
+            _plans_dir_scope = self.file_processor.subtask_pddl_plans_path
+            _scope_lines = []
+            for _sid in tasks_to_replan:
+                _title = f"subtask_{_sid}"
+                for _fname in os.listdir(_plans_dir_scope):
+                    _m = re.match(rf"subtask_{_sid:02d}_(.+)_actions\.txt$", _fname)
+                    if _m:
+                        _title = f"subtask_{_sid:02d}_{_m.group(1)}"
+                        break
+                _scope_lines.append(f"  - Subtask {_sid}: {_title}")
+            redecompose_prompt += "## YOUR SCOPE (STRICT)\n"
+            redecompose_prompt += "You are responsible for ONLY the following subtask(s).\n"
+            redecompose_prompt += "DO NOT plan for any other subtasks — other robots/agents are handling them separately.\n"
+            redecompose_prompt += "\n".join(_scope_lines) + "\n\n"
+
             redecompose_prompt += "## CRITICAL RULE: DISTINGUISH IMPOSSIBLE vs RECOVERABLE FAILURES\n"
             redecompose_prompt += "Before doing anything, read the Failure Information below carefully.\n"
             redecompose_prompt += "Classify the failure into one of TWO categories:\n\n"

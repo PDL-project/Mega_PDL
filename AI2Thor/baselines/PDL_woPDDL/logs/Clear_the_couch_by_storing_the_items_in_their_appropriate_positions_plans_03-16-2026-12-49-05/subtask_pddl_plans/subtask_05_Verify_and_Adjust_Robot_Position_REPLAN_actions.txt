@@ -1,0 +1,1 @@
+gotoobject robot1 armchair1 (1)

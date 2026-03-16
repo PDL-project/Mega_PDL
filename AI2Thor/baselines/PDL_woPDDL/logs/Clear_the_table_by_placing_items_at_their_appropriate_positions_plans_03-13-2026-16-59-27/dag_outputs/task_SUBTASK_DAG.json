@@ -1,0 +1,53 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Place_the_Mug_on_the_CoffeeMachine",
+      "objects": [
+        "robot1",
+        "mug",
+        "coffeemachine",
+        "diningtable"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Mug is on the dining table",
+        "CoffeeMachine is on the dining table",
+        "Robot is not holding the mug"
+      ],
+      "effects": [
+        "Mug is on the CoffeeMachine",
+        "Robot is not holding the mug"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Place_the_Spoon_in_the_Drawer_REPLAN",
+      "objects": [
+        "robot1",
+        "spoon",
+        "drawer1",
+        "diningtable1"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Spoon is on the dining table.",
+        "Drawer is closed.",
+        "Robot is at the spoon's location."
+      ],
+      "effects": [
+        "Spoon is placed in the drawer.",
+        "Drawer is closed.",
+        "Robot is not holding the spoon."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      4
+    ]
+  }
+}
