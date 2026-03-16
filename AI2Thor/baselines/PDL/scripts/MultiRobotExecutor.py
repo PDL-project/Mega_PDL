@@ -2895,47 +2895,58 @@ class MultiRobotExecutor:
                 for p in to_run:
                     robot_plans[p.robot_id].append(p)
 
+                # 리플랜 직렬화 락: DAG 통합/executor reload는 동시 실행 불가
+                replan_lock = threading.Lock()
+                replan_threads: List[threading.Thread] = []
+                replan_threads_lock = threading.Lock()
+                replanned = False
+
+                def _trigger_replan_for(plan: SubtaskPlan):
+                    nonlocal replanned
+                    result = self._subtask_results.get(plan.subtask_id)
+                    if not result or result.success or on_subtask_failed is None:
+                        return
+                    try:
+                        # DAG 통합/executor reload 직렬화 (LLM 호출은 각 그룹이 병렬 가능하나
+                        # 파일 쓰기/executor 상태 변경은 한 번에 하나씩)
+                        with replan_lock:
+                            replan_success = on_subtask_failed(result)
+                        if replan_success:
+                            replanned = True
+                    except Exception as cb_e:
+                        print(f"[Feedback] on_subtask_failed callback error: {cb_e}")
+
                 def _run_robot_seq(plan_list: List[SubtaskPlan]):
                     for p in plan_list:
                         self._run_subtask(p)
+                    # 로봇 완료 즉시 실패 서브태스크 리플랜 트리거 (다른 로봇 기다리지 않음)
+                    for p in plan_list:
+                        result = self._subtask_results.get(p.subtask_id)
+                        if result and not result.success:
+                            rt = threading.Thread(target=_trigger_replan_for, args=(p,), daemon=True)
+                            rt.start()
+                            with replan_threads_lock:
+                                replan_threads.append(rt)
 
                 threads = []
                 for robot_id, plan_list in robot_plans.items():
                     # 로봇마다 하나의 스레드: 같은 로봇의 서브태스크는 해당 스레드 내에서 순차 처리
                     t = threading.Thread(target=_run_robot_seq, args=(plan_list,), daemon=True)
                     t.start()
-                    threads.append((t, plan_list))
+                    threads.append(t)
 
-                # 모든 스레드 완료 대기
-                for t, _ in threads:
+                # 모든 로봇 스레드 완료 대기
+                for t in threads:
                     t.join()
-                # threads를 (t, p) 형식으로 변환 (이후 failed_plans 수집에 사용)
-                threads = [(t, p) for t, plan_list in threads for p in plan_list]
+
+                # 모든 리플랜 스레드 완료 대기 (로봇 스레드 종료 후 리플랜 스레드는 모두 시작된 상태)
+                with replan_threads_lock:
+                    pending_replan = list(replan_threads)
+                for rt in pending_replan:
+                    rt.join()
 
                 # 남은 액션 큐 소진 대기
                 self._drain_action_queue()
-
-                # ── 그룹 완료 후 실패 서브태스크 처리 ──
-                failed_plans = []
-                for _, p in threads:
-                    result = self._subtask_results.get(p.subtask_id)
-                    if result and not result.success:
-                        failed_plans.append(p)
-
-                replanned = False
-                for p in failed_plans:
-                    if on_subtask_failed is None:
-                        continue
-                    try:
-                        replan_success = on_subtask_failed(self._subtask_results[p.subtask_id])
-                    except Exception as cb_e:
-                        print(f"[Feedback] on_subtask_failed callback error: {cb_e}")
-                        replan_success = False
-
-                    if replan_success:
-                        replanned = True
-                        # 즉시 재실행 제거: DAG 의존성 순서 유지하며 외부 루프에서 자동 재실행
-                        # (in-place 재실행 시 동일 subtask 이중 시도 문제 방지)
 
                 print(f"[Group {gid}] Completed")
 

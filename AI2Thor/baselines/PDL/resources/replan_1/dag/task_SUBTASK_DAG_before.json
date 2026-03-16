@@ -1,0 +1,97 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Move_the_KeyChain_to_its_appropriate_position",
+      "objects": [
+        "robot1",
+        "keychain",
+        "sofa",
+        "sidetable",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Keychain is at the sofa",
+        "Robot is not holding the keychain"
+      ],
+      "effects": [
+        "Keychain is at the sidetable",
+        "Robot is not holding the keychain"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Move_the_Pen_to_its_appropriate_position",
+      "objects": [
+        "robot1",
+        "pen",
+        "sofa",
+        "sidetable"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Pen is on the sofa",
+        "Robot is not holding the pen"
+      ],
+      "effects": [
+        "Pen is on the sidetable",
+        "Robot is not holding the pen"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Move_the_Pencil_to_its_appropriate_position",
+      "objects": [
+        "robot1",
+        "pencil",
+        "sofa",
+        "sidetable"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Pencil is on the sofa.",
+        "Robot is not holding the pencil."
+      ],
+      "effects": [
+        "Pencil is on the sidetable.",
+        "Robot is not holding the pencil."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both place objects on the same sidetable"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Both place objects on the same sidetable"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Both place objects on the same sidetable"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ]
+  }
+}

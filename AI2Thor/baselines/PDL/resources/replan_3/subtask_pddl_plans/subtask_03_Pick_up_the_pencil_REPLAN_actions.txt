@@ -1,0 +1,6 @@
+gotoobject robot1 pencil (1)
+pickupobject robot1 pencil sofa1 (1)
+gotoobject robot1 drawer2 (1)
+openobject robot1 drawer2 (1)
+drophandobject robot1 pen drawer2 (1)
+closeobject robot1 drawer2 (1)

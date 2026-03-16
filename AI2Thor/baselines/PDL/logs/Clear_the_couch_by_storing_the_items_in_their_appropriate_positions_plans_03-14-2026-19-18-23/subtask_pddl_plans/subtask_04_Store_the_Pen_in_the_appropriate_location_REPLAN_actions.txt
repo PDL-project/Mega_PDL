@@ -1,0 +1,4 @@
+gotoobject robot2 armchair1 (1)
+openobject robot2 armchair1 (1)
+drophandobject robot2 pen armchair1 (1)
+closeobject robot2 armchair1 (1)

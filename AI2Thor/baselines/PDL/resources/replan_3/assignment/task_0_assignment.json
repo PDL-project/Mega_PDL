@@ -1,0 +1,54 @@
+{
+  "task_idx": 0,
+  "agent_count": 5,
+  "assignment": {
+    "1": 1,
+    "2": 5,
+    "3": 5
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "subtask_01_Store_the_KeyChain_in_a_Suitable_Location_REPLAN",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "subtask_02_Place_the_pen_in_drawer2_REPLAN",
+      "robot": 5
+    },
+    {
+      "id": 3,
+      "title": "subtask_03_Pick_up_the_pencil_REPLAN",
+      "robot": 5
+    }
+  ],
+  "replanned": true,
+  "robot_spawn_positions": {
+    "1": [
+      -0.75,
+      0.9026566743850708,
+      1.5
+    ],
+    "2": [
+      -3.5,
+      0.9026566743850708,
+      5.75
+    ],
+    "3": [
+      -3.5,
+      0.9026566743850708,
+      0.5
+    ],
+    "4": [
+      -0.7584103345870972,
+      0.9026566743850708,
+      3.156397819519043
+    ],
+    "5": [
+      -2.085510730743408,
+      0.9026566743850708,
+      4.216933250427246
+    ]
+  }
+}

@@ -562,27 +562,25 @@ class PartialReplanner:
 
     def build_context_for_replan(
         self,
-        group_id: int,
-        subtask_ids_in_group: List[int],
+        agent_memory,  # AgentMemory — 항상 이 인스턴스에서만 상태를 읽음
         local_env: str,
     ) -> Optional[ReplanContext]:
         """
-        재계획 주입 정보 구성.
+        재계획 주입 정보 구성. AgentMemory를 단일 소스로 사용.
         ① 로컬 환경, ② 성공 데이터(Effects, 불변), ③ 실패 분석, ④ 미수행 과제.
         """
-        success_ids, failed_ids, pending_ids = self.store.get_group_state(group_id, subtask_ids_in_group)
+        _, failed_ids, pending_ids = agent_memory.get_group_state()
         if not failed_ids:
             return None
         failed_id = failed_ids[0]
-        err, _ = self.store.get_failure_info(failed_id)
-        success_effects = self.store.get_success_effects_immutable()
-        completed_actions = self.store.get_completed_actions(failed_id)
-        # 그룹 내 모든 subtask의 completed_actions 수집
-        completed_actions_by_subtask: Dict[int, List[str]] = {}
-        for sid in subtask_ids_in_group:
-            acts = self.store.get_completed_actions(sid)
-            if acts:
-                completed_actions_by_subtask[sid] = acts
+        err, _ = agent_memory.get_failure_info(failed_id)
+        success_effects = agent_memory.get_success_effects_immutable()
+        completed_actions = agent_memory.get_completed_actions(failed_id)
+        completed_actions_by_subtask = {
+            sid: acts
+            for sid in agent_memory.subtask_ids
+            if (acts := agent_memory.get_completed_actions(sid))
+        }
         return ReplanContext(
             local_env=local_env,
             success_effects=success_effects,

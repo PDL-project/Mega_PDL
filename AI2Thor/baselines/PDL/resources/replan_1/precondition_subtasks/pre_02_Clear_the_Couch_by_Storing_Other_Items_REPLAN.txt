@@ -1,0 +1,80 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot4 (acting as robot1) is holding KeyChain
+#2. Robot4 (acting as robot1) is at SideTable
+#3. ArmChair1 is available for placement
+
+# SubTask 2: Clear the Couch by Storing Other Items.
+    Skills Required: GoToObject, PickUp, PutObject
+    Related Objects: other_items(Location=couch), storage_location(Location=unknown)
+
+GoToObject(robot1, sofa1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sofa1)
+
+PickupObject(robot1, pen, sofa1)
+   Preconditions:
+     (at-location pen sofa1)
+     (at robot1 pen)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 pen)
+     (not (at-location pen sofa1))
+
+GoToObject(robot1, armchair1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 armchair1)
+
+PutObject(robot1, pen, armchair1)
+   Preconditions:
+     (holding robot1 pen)
+     (at robot1 armchair1)
+     (not (inaction robot1))
+     (not (is-fridge armchair1))
+     (not (object-close robot1 armchair1))
+   Effects:
+     (at-location pen armchair1)
+     (not (holding robot1 pen))
+
+GoToObject(robot1, sofa1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sofa1)
+
+PickupObject(robot1, pencil, sofa1)
+   Preconditions:
+     (at-location pencil sofa1)
+     (at robot1 pencil)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 pencil)
+     (not (at-location pencil sofa1))
+
+GoToObject(robot1, armchair1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 armchair1)
+
+PutObject(robot1, pencil, armchair1)
+   Preconditions:
+     (holding robot1 pencil)
+     (at robot1 armchair1)
+     (not (inaction robot1))
+     (not (is-fridge armchair1))
+     (not (object-close robot1 armchair1))
+   Effects:
+     (at-location pencil armchair1)
+     (not (holding robot1 pencil))
+
+Goal condition: 
+(at-location pen armchair1)
+(at-location pencil armchair1)
