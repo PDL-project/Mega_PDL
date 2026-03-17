@@ -2,53 +2,71 @@
   "task_idx": 0,
   "agent_count": 5,
   "assignment": {
-    "1": 4,
-    "2": 5,
-    "3": 1
+    "1": 1,
+    "2": 3,
+    "3": 2,
+    "4": 5,
+    "5": 4,
+    "6": 2
   },
   "subtasks": [
     {
-      "id": 3,
-      "title": "subtask_03_Move_the_Pencil_to_its_appropriate_position",
+      "id": 1,
+      "title": "subtask_01_Store_the_Fork",
       "robot": 1
     },
     {
-      "id": 1,
-      "title": "subtask_01_Store_the_KeyChain_in_a_Suitable_Location_REPLAN",
+      "id": 2,
+      "title": "subtask_02_Store_the_Spoon",
+      "robot": 3
+    },
+    {
+      "id": 3,
+      "title": "subtask_03_Store_the_Knife",
+      "robot": 2
+    },
+    {
+      "id": 4,
+      "title": "subtask_04_Store_the_Ladle",
+      "robot": 5
+    },
+    {
+      "id": 5,
+      "title": "subtask_05_Store_the_Spatula_in_Drawer1_REPLAN",
       "robot": 4
     },
     {
-      "id": 2,
-      "title": "subtask_02_Clear_the_Couch_by_Storing_Other_Items_REPLAN",
-      "robot": 5
+      "id": 6,
+      "title": "subtask_06_Close_Drawer1_REPLAN",
+      "robot": 2
     }
   ],
   "replanned": true,
   "robot_spawn_positions": {
     "1": [
-      -0.75,
-      0.9026566743850708,
-      1.5
+      0.8514634966850281,
+      0.9009992480278015,
+      -0.769341230392456
     ],
     "2": [
-      -3.5,
-      0.9026566743850708,
-      5.75
+      0.7261086702346802,
+      0.9009992480278015,
+      -0.15032057464122772
     ],
     "3": [
-      -3.5,
-      0.9026566743850708,
-      0.5
+      0.3657172620296478,
+      0.9009992480278015,
+      -0.9106675982475281
     ],
     "4": [
-      -0.7567793726921082,
-      0.9026566743850708,
-      3.328131914138794
+      1.2279052734375,
+      0.9009992480278015,
+      0.3699997663497925
     ],
     "5": [
-      -3.25,
-      0.9026566743850708,
-      4.25
+      -0.06786184012889862,
+      0.9009992480278015,
+      -0.7784250378608704
     ]
   }
 }

@@ -1,0 +1,87 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Place_the_Mug_on_the_CoffeeMachine",
+      "objects": [
+        "robot1",
+        "mug",
+        "coffeemachine",
+        "diningtable"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Mug is on the dining table",
+        "CoffeeMachine is on the dining table",
+        "Robot is not holding the mug"
+      ],
+      "effects": [
+        "Mug is on the CoffeeMachine",
+        "Robot is not holding the mug"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Place_the_Fork_and_Spoon_in_a_Drawer",
+      "objects": [
+        "robot1",
+        "fork",
+        "spoon",
+        "drawer1",
+        "diningtable",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding the fork or spoon.",
+        "Fork and spoon are on the dining table.",
+        "Drawer is initially closed."
+      ],
+      "effects": [
+        "Fork is placed in the drawer.",
+        "Spoon is placed in the drawer.",
+        "Drawer is closed."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Place_the_Lettuce_and_Tomato_in_the_Fridge",
+      "objects": [
+        "lettuce",
+        "tomato",
+        "fridge",
+        "diningtable",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding any object.",
+        "Lettuce and tomato are on the dining table.",
+        "Fridge is closed."
+      ],
+      "effects": [
+        "Lettuce is in the fridge.",
+        "Tomato is in the fridge.",
+        "Fridge is closed.",
+        "Robot is not holding any object."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Both subtasks place items in the fridge, which is a shared target receptacle."
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ],
+    "1": [
+      3
+    ]
+  }
+}

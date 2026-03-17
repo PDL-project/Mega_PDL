@@ -1,0 +1,59 @@
+{
+  "task_idx": 0,
+  "agent_count": 5,
+  "assignment": {
+    "1": 4,
+    "2": 3,
+    "3": 1,
+    "4": 2
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Move the KeyChain to its appropriate position.",
+      "robot": 4
+    },
+    {
+      "id": 2,
+      "title": "Move the Pen to its appropriate position.",
+      "robot": 3
+    },
+    {
+      "id": 3,
+      "title": "Move the Pencil to its appropriate position.",
+      "robot": 1
+    },
+    {
+      "id": 4,
+      "title": "Move the Pillow to its appropriate position.",
+      "robot": 2
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      -0.75,
+      0.9026566743850708,
+      1.5
+    ],
+    "2": [
+      -3.5,
+      0.9026566743850708,
+      5.75
+    ],
+    "3": [
+      -3.5,
+      0.9026566743850708,
+      0.5
+    ],
+    "4": [
+      -0.75,
+      0.9026566743850708,
+      3.25
+    ],
+    "5": [
+      -3.25,
+      0.9026566743850708,
+      4.25
+    ]
+  }
+}

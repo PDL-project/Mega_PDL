@@ -1,4 +1,0 @@
-gotoobject robot1 armchair1 (1)
-openobject robot1 armchair1 (1)
-drophandobject robot1 keychain armchair1 (1)
-closeobject robot1 armchair1 (1)
