@@ -1,0 +1,190 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Store_the_Fork",
+      "objects": [
+        "robot1",
+        "fork",
+        "drawer1",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not holding the fork.",
+        "Robot is at the kitchen."
+      ],
+      "effects": [
+        "Fork is stored in the drawer.",
+        "Drawer is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Store_the_Spoon",
+      "objects": [
+        "robot1",
+        "spoon",
+        "drawer1",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Spoon is on the countertop",
+        "Drawer is on the floor",
+        "Robot is close to the drawer",
+        "Robot is not holding the spoon"
+      ],
+      "effects": [
+        "Spoon is stored in the drawer",
+        "Robot is close to the drawer"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Store_the_Knife",
+      "objects": [
+        "robot1",
+        "knife",
+        "drawer1",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding the knife.",
+        "Robot is at the floor.",
+        "Knife is on the countertop.",
+        "Drawer is on the floor and closed."
+      ],
+      "effects": [
+        "Knife is stored in the drawer.",
+        "Drawer is closed.",
+        "Robot is not holding the knife."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Store_the_Ladle",
+      "objects": [
+        "robot1",
+        "ladle",
+        "drawer1",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding the ladle.",
+        "Robot is at the floor.",
+        "Ladle is on the countertop.",
+        "Drawer is on the floor.",
+        "Robot is close to the drawer."
+      ],
+      "effects": [
+        "Ladle is stored in the drawer.",
+        "Robot is close to the drawer."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Store_the_Spatula",
+      "objects": [
+        "robot1",
+        "spatula",
+        "drawer1",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Spatula is on the countertop.",
+        "Drawer is closed.",
+        "Robot is not holding the spatula."
+      ],
+      "effects": [
+        "Spatula is stored in the drawer.",
+        "Drawer is closed.",
+        "Robot is not holding the spatula."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 1,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 1,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 2,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 2,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 3,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    },
+    {
+      "from_id": 4,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: drawer1"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ],
+    "4": [
+      5
+    ]
+  }
+}

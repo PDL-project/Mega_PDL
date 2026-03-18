@@ -13,10 +13,8 @@
   (:init
     (not (inaction robot1))
     (at robot1 floor)
-
     (at-location knife countertop)
     (at-location drawer1 floor)
-
     (object-close robot1 drawer1)
     (not (holding robot1 knife))
   )

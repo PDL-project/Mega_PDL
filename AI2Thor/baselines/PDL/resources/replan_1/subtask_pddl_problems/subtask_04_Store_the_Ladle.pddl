@@ -12,7 +12,7 @@
 
   (:init
     (not (inaction robot1))
-    (at robot1 floor)
+    (at robot1 kitchen)
     (at-location ladle countertop)
     (at-location drawer1 floor)
     (object-close robot1 drawer1)

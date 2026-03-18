@@ -1,2 +1,5 @@
-(closeobject robot1 drawer1)
-; cost = 1 (unit cost)
+(gotoobject robot1 cabinet1)
+(openobject robot1 cabinet1)
+(drophandobject robot1 spatula cabinet1)
+(closeobject robot1 cabinet1)
+; cost = 4 (general cost)

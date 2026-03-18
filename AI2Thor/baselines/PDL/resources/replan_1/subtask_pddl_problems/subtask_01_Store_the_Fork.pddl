@@ -1,4 +1,4 @@
-```lisp
+```pddl
 (define (problem store-the-fork)
   (:domain allactionrobot)
 
@@ -12,7 +12,7 @@
 
   (:init
     (not (inaction robot1))
-    (at robot1 kitchen)
+    (at robot1 floor)
     (at-location fork countertop)
     (at-location drawer1 floor)
     (object-close robot1 drawer1)

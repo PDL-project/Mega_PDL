@@ -1,0 +1,66 @@
+{
+  "task_idx": 0,
+  "agent_count": 5,
+  "assignment": {
+    "1": 5,
+    "2": 3,
+    "3": 1,
+    "4": 2,
+    "5": 4
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "subtask_01_Store_the_Fork",
+      "robot": 5
+    },
+    {
+      "id": 2,
+      "title": "subtask_02_Store_the_Spoon",
+      "robot": 3
+    },
+    {
+      "id": 3,
+      "title": "subtask_03_Store_the_Knife",
+      "robot": 1
+    },
+    {
+      "id": 4,
+      "title": "subtask_04_Store_the_Ladle",
+      "robot": 2
+    },
+    {
+      "id": 5,
+      "title": "subtask_05_Store_the_Spatula_in_an_Alternative_Location_REPLAN",
+      "robot": 4
+    }
+  ],
+  "replanned": true,
+  "robot_spawn_positions": {
+    "1": [
+      0.04305380582809448,
+      0.9009992480278015,
+      -0.6550137400627136
+    ],
+    "2": [
+      -0.3571922779083252,
+      0.9009992480278015,
+      -0.7540478706359863
+    ],
+    "3": [
+      0.48768389225006104,
+      0.9009992480278015,
+      -0.6948153972625732
+    ],
+    "4": [
+      1.1335604190826416,
+      0.9009992480278015,
+      0.09730803966522217
+    ],
+    "5": [
+      0.900039553642273,
+      0.9009992480278015,
+      -0.8077120780944824
+    ]
+  }
+}

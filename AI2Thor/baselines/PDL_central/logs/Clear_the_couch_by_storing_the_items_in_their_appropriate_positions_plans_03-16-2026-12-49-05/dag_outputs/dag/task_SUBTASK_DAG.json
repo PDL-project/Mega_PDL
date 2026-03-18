@@ -1,0 +1,153 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Store_the_KeyChain_in_Box1_REPLAN",
+      "objects": [
+        "robot1",
+        "keychain",
+        "box1"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is holding the keychain.",
+        "Robot1 is at the kitchen.",
+        "Box1 is on the floor.",
+        "Robot1 is close to box1."
+      ],
+      "effects": [
+        "Keychain is stored in box1.",
+        "Robot1 is not holding the keychain.",
+        "Robot1 is close to box1."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Store_the_Pencil_in_Drawer1_REPLAN",
+      "objects": [
+        "robot1",
+        "pencil",
+        "drawer1",
+        "sofa",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Pencil is at the sofa",
+        "Drawer1 is at the floor",
+        "Robot is close to Drawer1"
+      ],
+      "effects": [
+        "Pencil is stored in Drawer1",
+        "Robot is close to Drawer1",
+        "Robot is not holding the pencil"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Store_the_Pen_in_Drawer2_REPLAN",
+      "objects": [
+        "robot1",
+        "pen",
+        "drawer2",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Pen is on the floor.",
+        "Drawer2 is on the floor.",
+        "Robot is close to Drawer2.",
+        "Robot is not holding the pen."
+      ],
+      "effects": [
+        "Pen is in Drawer2.",
+        "Robot is close to Drawer2."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Store_the_Pillow_in_an_Alternative_Receptacle_REPLAN",
+      "objects": [
+        "robot1",
+        "pillow",
+        "armchair1"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is holding the pillow",
+        "Robot is at the sofa"
+      ],
+      "effects": [
+        "Pillow is at the armchair",
+        "Robot is not holding the pillow",
+        "Robot is not in action"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Verify_and_Adjust_Robot_Position_REPLAN",
+      "objects": [
+        "robot1",
+        "armchair1",
+        "sidetable"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the sidetable"
+      ],
+      "effects": [
+        "Robot1 is at the armchair1"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both subtasks involve storing the keychain"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sidetable"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sidetable"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4
+    },
+    {
+      "from_id": 1,
+      "to_id": 4
+    },
+    {
+      "from_id": 2,
+      "to_id": 4
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1,
+      5
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ]
+  }
+}

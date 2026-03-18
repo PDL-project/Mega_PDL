@@ -8,15 +8,19 @@
         "robot1",
         "fork",
         "drawer1",
-        "countertop"
+        "countertop",
+        "floor"
       ],
       "preconds": [
         "Robot is not holding the fork.",
-        "Robot is at the kitchen."
+        "Robot is at the floor.",
+        "Fork is on the countertop.",
+        "Drawer is on the floor.",
+        "Robot is close to the drawer."
       ],
       "effects": [
         "Fork is stored in the drawer.",
-        "Drawer is closed."
+        "Robot is close to the drawer."
       ]
     },
     {
@@ -30,16 +34,14 @@
         "floor"
       ],
       "preconds": [
-        "Robot is not in action",
-        "Robot is at the kitchen",
-        "Spoon is on the countertop",
-        "Drawer is on the floor",
-        "Robot is close to the drawer",
-        "Robot is not holding the spoon"
+        "Robot is not holding the spoon.",
+        "Robot is at the kitchen.",
+        "Spoon is on the countertop.",
+        "Drawer is on the floor and closed."
       ],
       "effects": [
-        "Spoon is stored in the drawer",
-        "Robot is close to the drawer"
+        "Spoon is stored in the drawer.",
+        "Drawer is closed."
       ]
     },
     {
@@ -56,12 +58,12 @@
         "Robot is not holding the knife.",
         "Robot is at the floor.",
         "Knife is on the countertop.",
-        "Drawer is on the floor and closed."
+        "Drawer is on the floor.",
+        "Robot is close to the drawer."
       ],
       "effects": [
         "Knife is stored in the drawer.",
-        "Drawer is closed.",
-        "Robot is not holding the knife."
+        "Robot is close to the drawer."
       ]
     },
     {
@@ -76,7 +78,7 @@
       ],
       "preconds": [
         "Robot is not holding the ladle.",
-        "Robot is at the floor.",
+        "Robot is at the kitchen.",
         "Ladle is on the countertop.",
         "Drawer is on the floor.",
         "Robot is close to the drawer."
@@ -93,18 +95,20 @@
         "robot1",
         "spatula",
         "drawer1",
-        "countertop"
+        "countertop",
+        "floor"
       ],
       "preconds": [
         "Robot is not in action.",
+        "Robot is at the floor.",
         "Spatula is on the countertop.",
-        "Drawer is closed.",
+        "Drawer is on the floor.",
+        "Robot is close to the drawer.",
         "Robot is not holding the spatula."
       ],
       "effects": [
         "Spatula is stored in the drawer.",
-        "Drawer is closed.",
-        "Robot is not holding the spatula."
+        "Robot is close to the drawer."
       ]
     }
   ],
@@ -113,61 +117,61 @@
       "from_id": 1,
       "to_id": 2,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 1,
       "to_id": 3,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 1,
       "to_id": 4,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 1,
       "to_id": 5,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 2,
       "to_id": 3,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 2,
       "to_id": 4,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 2,
       "to_id": 5,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 3,
       "to_id": 4,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 3,
       "to_id": 5,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     },
     {
       "from_id": 4,
       "to_id": 5,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle 'drawer1'"
     }
   ],
   "parallel_groups": {

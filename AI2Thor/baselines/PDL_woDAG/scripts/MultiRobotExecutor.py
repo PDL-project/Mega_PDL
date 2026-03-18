@@ -227,6 +227,7 @@ class MultiRobotExecutor:
         self._subtask_last_error: Dict[int, str] = {}
         self._subtask_completed_actions: Dict[int, List[str]] = {}  # 서브태스크별 성공한 액션 목록
         self._subtask_results: Dict[int, SubTaskExecutionResult] = {}
+        self._subtask_exec_counts: Dict[int, int] = {}  # makespan 계산용: subtask별 시도한 액션 수
         # 물리적으로 불가능하여 drop된 서브태스크 (더 이상 실행하지 않음)
         self._dropped_subtasks: set = set()
         # 실시간 상태 반영용 (execute_in_ai2thor_with_feedback 호출 시에만 설정)
@@ -319,6 +320,17 @@ class MultiRobotExecutor:
         if self.total_exec <= 0:
             return 0.0
         return float(self.success_exec) / float(self.total_exec)
+
+    def _compute_makespan(self) -> int:
+        """Makespan = 각 병렬 그룹에서 가장 많은 액션을 시도한 subtask의 액션 수 합계.
+        병렬 실행 효율성을 나타냄: 적을수록 병렬화가 잘 된 것."""
+        if not self.parallel_groups:
+            return self.total_exec
+        makespan = 0
+        for _, sids in sorted(self.parallel_groups.items()):
+            counts = [self._subtask_exec_counts.get(sid, 0) for sid in sids]
+            makespan += max(counts) if counts else 0
+        return makespan
 
     # -----------------------------
     # Checker helpers
@@ -746,7 +758,6 @@ class MultiRobotExecutor:
                         )
 
                     elif act['action'] == 'PickupObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="PickupObject",
                             objectId=act['objectId'],
@@ -761,7 +772,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'PutObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="PutObject",
                             objectId=act['objectId'],
@@ -789,7 +799,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'ToggleObjectOn':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="ToggleObjectOn",
                             objectId=act['objectId'],
@@ -804,7 +813,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'ToggleObjectOff':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="ToggleObjectOff",
                             objectId=act['objectId'],
@@ -819,7 +827,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'OpenObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="OpenObject",
                             objectId=act['objectId'],
@@ -834,7 +841,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'CloseObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="CloseObject",
                             objectId=act['objectId'],
@@ -849,7 +855,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'SliceObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="SliceObject",
                             objectId=act['objectId'],
@@ -864,7 +869,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'ThrowObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="ThrowObject",
                             moveMagnitude=7,
@@ -879,7 +883,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'BreakObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="BreakObject",
                             objectId=act['objectId'],
@@ -894,7 +897,6 @@ class MultiRobotExecutor:
                             self._record_agent_success(act['agent_id'])
 
                     elif act['action'] == 'CleanObject':
-                        self.total_exec += 1
                         multi_agent_event = c.step(
                             action="CleanObject",
                             objectId=act['objectId'],
@@ -2643,6 +2645,8 @@ class MultiRobotExecutor:
                 attempt = 0
                 while attempt < max_retries:
                     print(f"[Robot{plan.robot_id}] Action {i+1}/{len(plan.actions)}: {action}")
+                    self._subtask_exec_counts[plan.subtask_id] = self._subtask_exec_counts.get(plan.subtask_id, 0) + 1
+                    self.total_exec += 1
                     self._execute_pddl_action(agent_id, action)
                     # 액션 실행 후 실패가 발생하지 않았으면 완료 목록에 추가
                     if not self._subtask_failed.get(plan.subtask_id, False):
@@ -2773,6 +2777,7 @@ class MultiRobotExecutor:
                     print("\n[[ RESULT ]]\n")
                     print(
                         f"Coverage:{coverage:.3f}, Transport Rate:{transport_rate:.3f}, "
+                        f"Steps:{self.total_exec}, Makespan:{self._compute_makespan()}, "
                         f"Finished:{finished}, Balance:{balance:.3f}, Exec:{exec_rate:.3f}"
                     )
                     print("\n")
@@ -2978,6 +2983,7 @@ class MultiRobotExecutor:
                     print("\n[[ RESULT ]]\n")
                     print(
                         f"Coverage:{coverage:.3f}, Transport Rate:{transport_rate:.3f}, "
+                        f"Steps:{self.total_exec}, Makespan:{self._compute_makespan()}, "
                         f"Finished:{finished}, Balance:{balance:.3f}, Exec:{exec_rate:.3f}"
                     )
                     print("\n")

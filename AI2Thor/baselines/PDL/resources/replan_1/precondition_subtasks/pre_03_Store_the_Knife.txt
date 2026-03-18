@@ -7,7 +7,6 @@
 # Initial condition analysis due to previous subtask:
 # 1. Robot not holding knife.
 # 2. Robot not at knife location.
-# 3. Drawer is initially closed.
 
 # SubTask 3: Store the Knife.
     Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject

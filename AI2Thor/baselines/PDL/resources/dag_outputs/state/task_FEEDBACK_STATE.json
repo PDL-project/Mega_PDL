@@ -56,18 +56,10 @@
     "error_message": null,
     "effects": null,
     "completed_actions": [
-      "gotoobject robot1 drawer2 (1)",
-      "openobject robot1 drawer2 (1)",
-      "drophandobject robot1 spatula drawer2 (1)",
-      "closeobject robot1 drawer2 (1)"
-    ]
-  },
-  "6": {
-    "state": "SUCCESS",
-    "error_message": null,
-    "effects": null,
-    "completed_actions": [
-      "closeobject robot1 drawer1 (1)"
+      "gotoobject robot1 cabinet1 (1)",
+      "openobject robot1 cabinet1 (1)",
+      "drophandobject robot1 spatula cabinet1 (1)",
+      "closeobject robot1 cabinet1 (1)"
     ]
   }
 }
