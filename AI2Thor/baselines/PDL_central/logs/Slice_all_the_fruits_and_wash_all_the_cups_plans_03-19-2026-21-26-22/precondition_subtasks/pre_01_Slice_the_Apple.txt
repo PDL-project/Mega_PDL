@@ -1,0 +1,71 @@
+# Task Description: Slice the Apple.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding apple
+#2. Robot not at apple location
+#3. Robot not holding knife
+
+# SubTask 1: Slice the Apple. 
+    Skills Required: GoToObject, PickupObject, SliceObject, PutObject
+    Related Objects: apple(Location=fridge), knife(Location=counterTop)
+
+GoToObject(robot1, apple)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 apple)
+
+PickupObject(robot1, apple, fridge)
+   Preconditions:
+     (at-location apple fridge)
+     (at robot1 apple)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 apple)
+
+GoToObject(robot1, knife)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 knife)
+
+PickupObject(robot1, knife, counterTop)
+   Preconditions:
+     (at-location knife counterTop)
+     (at robot1 knife)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 knife)
+
+GoToObject(robot1, counterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 counterTop)
+
+SliceObject(robot1, apple, counterTop)
+   Preconditions:
+     (at-location apple counterTop)
+     (at robot1 apple)
+     (not (inaction robot1))
+   Effects:
+     (sliced apple)
+
+PutObject(robot1, apple, counterTop)
+   Preconditions:
+     (holding robot1 apple)
+     (at robot1 counterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location apple counterTop)
+     (not (holding robot1 apple))
+
+Goal condition:
+(sliced apple)
+(at-location apple counterTop)
+
+# Task Slice the Apple is done.

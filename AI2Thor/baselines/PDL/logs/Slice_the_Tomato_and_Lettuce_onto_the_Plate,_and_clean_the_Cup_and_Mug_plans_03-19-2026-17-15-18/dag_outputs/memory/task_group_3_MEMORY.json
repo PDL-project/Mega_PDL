@@ -1,0 +1,17 @@
+{
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 faucet (1)",
+      "switchon robot1 faucet (1)",
+      "gotoobject robot1 cup (1)",
+      "pickupobject robot1 cup floor (1)",
+      "gotoobject robot1 sink (1)",
+      "cleanobject robot1 cup sink (1)",
+      "gotoobject robot1 floor (1)",
+      "drophandobject robot1 cup floor (1)"
+    ]
+  }
+}

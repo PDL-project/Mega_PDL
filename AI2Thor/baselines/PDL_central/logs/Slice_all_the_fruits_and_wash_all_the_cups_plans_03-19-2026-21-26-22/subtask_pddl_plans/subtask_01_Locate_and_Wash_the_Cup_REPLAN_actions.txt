@@ -1,0 +1,2 @@
+gotoobject robot1 cup (1)
+cleanobject robot1 cup (1)

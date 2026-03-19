@@ -1,0 +1,4 @@
+gotoobject robot1 pillow (1)
+pickupobject robot1 pillow sofa (1)
+gotoobject robot1 armchair (1)
+drophandobject robot1 pillow armchair (1)

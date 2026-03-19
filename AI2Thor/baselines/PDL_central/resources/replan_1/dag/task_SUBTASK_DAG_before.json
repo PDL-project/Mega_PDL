@@ -3,108 +3,76 @@
   "nodes": [
     {
       "id": 1,
-      "name": "subtask_01_Store_the_Fork",
+      "name": "subtask_01_Move_the_KeyChain_from_the_Sofa_to_the_SideTable",
       "objects": [
         "robot1",
-        "fork",
-        "drawer1",
-        "countertop"
+        "keychain",
+        "sofa",
+        "sidetable"
       ],
       "preconds": [
-        "Robot is not holding the fork.",
-        "Robot is at the kitchen."
+        "Robot is not holding any object.",
+        "Robot is in the kitchen."
       ],
       "effects": [
-        "Fork is stored in the drawer.",
-        "Drawer is closed."
+        "Keychain is on the sidetable.",
+        "Robot is not holding the keychain."
       ]
     },
     {
       "id": 2,
-      "name": "subtask_02_Store_the_Spoon",
+      "name": "subtask_02_Move_the_Pen_from_the_Sofa_to_the_SideTable",
       "objects": [
         "robot1",
-        "spoon",
-        "drawer1",
-        "countertop",
-        "floor"
+        "pen",
+        "sofa",
+        "sidetable"
       ],
       "preconds": [
-        "Robot is not in action",
-        "Robot is at the kitchen",
-        "Spoon is on the countertop",
-        "Drawer is on the floor",
-        "Robot is close to the drawer",
-        "Robot is not holding the spoon"
+        "Robot is not holding any object.",
+        "Robot is at the kitchen.",
+        "Pen is on the sofa."
       ],
       "effects": [
-        "Spoon is stored in the drawer",
-        "Robot is close to the drawer"
+        "Pen is on the sidetable.",
+        "Robot is not holding the pen."
       ]
     },
     {
       "id": 3,
-      "name": "subtask_03_Store_the_Knife",
+      "name": "subtask_03_Move_the_Pencil_from_the_Sofa_to_the_SideTable",
       "objects": [
         "robot1",
-        "knife",
-        "drawer1",
-        "countertop",
-        "floor"
+        "pencil",
+        "sofa",
+        "sidetable"
       ],
       "preconds": [
-        "Robot is not holding the knife.",
-        "Robot is at the floor.",
-        "Knife is on the countertop.",
-        "Drawer is on the floor and closed."
+        "Robot is not holding any object.",
+        "Robot is at the kitchen.",
+        "Pencil is on the sofa."
       ],
       "effects": [
-        "Knife is stored in the drawer.",
-        "Drawer is closed.",
-        "Robot is not holding the knife."
+        "Pencil is on the sidetable.",
+        "Robot is not holding the pencil."
       ]
     },
     {
       "id": 4,
-      "name": "subtask_04_Store_the_Ladle",
+      "name": "subtask_04_Move_the_Pillow_from_the_Sofa_to_the_ArmChair",
       "objects": [
         "robot1",
-        "ladle",
-        "drawer1",
-        "countertop",
-        "floor"
+        "pillow",
+        "sofa",
+        "armchair"
       ],
       "preconds": [
-        "Robot is not holding the ladle.",
-        "Robot is at the floor.",
-        "Ladle is on the countertop.",
-        "Drawer is on the floor.",
-        "Robot is close to the drawer."
+        "Robot is not holding the pillow",
+        "Robot is at the kitchen"
       ],
       "effects": [
-        "Ladle is stored in the drawer.",
-        "Robot is close to the drawer."
-      ]
-    },
-    {
-      "id": 5,
-      "name": "subtask_05_Store_the_Spatula",
-      "objects": [
-        "robot1",
-        "spatula",
-        "drawer1",
-        "countertop"
-      ],
-      "preconds": [
-        "Robot is not in action.",
-        "Spatula is on the countertop.",
-        "Drawer is closed.",
-        "Robot is not holding the spatula."
-      ],
-      "effects": [
-        "Spatula is stored in the drawer.",
-        "Drawer is closed.",
-        "Robot is not holding the spatula."
+        "Pillow is at the armchair",
+        "Robot is not holding the pillow"
       ]
     }
   ],
@@ -113,78 +81,31 @@
       "from_id": 1,
       "to_id": 2,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle: sidetable"
     },
     {
       "from_id": 1,
       "to_id": 3,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
-    },
-    {
-      "from_id": 1,
-      "to_id": 4,
-      "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
-    },
-    {
-      "from_id": 1,
-      "to_id": 5,
-      "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle: sidetable"
     },
     {
       "from_id": 2,
       "to_id": 3,
       "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
-    },
-    {
-      "from_id": 2,
-      "to_id": 4,
-      "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
-    },
-    {
-      "from_id": 2,
-      "to_id": 5,
-      "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
-    },
-    {
-      "from_id": 3,
-      "to_id": 4,
-      "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
-    },
-    {
-      "from_id": 3,
-      "to_id": 5,
-      "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
-    },
-    {
-      "from_id": 4,
-      "to_id": 5,
-      "dependency_type": "resource",
-      "reason": "Shared target receptacle: drawer1"
+      "reason": "Shared target receptacle: sidetable"
     }
   ],
   "parallel_groups": {
     "0": [
-      1
+      1,
+      4
     ],
     "1": [
       2
     ],
     "2": [
       3
-    ],
-    "3": [
-      4
-    ],
-    "4": [
-      5
     ]
   }
 }

@@ -62,6 +62,7 @@ _TASK_NAME_MAP = {
     "Put all school supplies in the sofa": "3_put_all_school_supplies_sofa",   # config_type3 variant
     "Move everything on the table to the sofa": "3_clear_table_to_sofa",
     "Put all kitchenware in the cardboard box": "3_put_all_kitchenware_box",
+    "Clear the kitchen floor by placing items at their appropriate positions": "4_clear_floor_kitchen",
     "Clear the table by placing items at their appropriate positions": "4_clear_table_kitchen",
     "Clear the kitchen central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",
     "Clear the central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",  # config_type4 variant
@@ -70,6 +71,9 @@ _TASK_NAME_MAP = {
     "Make the living room dark": "4_make_livingroom_dark",
     "Slice all sliceable objects": "4_slice_all_sliceable",
     "Put appropriate utensils in storage": "4_put_appropriate_storage",
+    # type 5 tasks
+    "Slice all the fruits and wash all the cups": "5_slice_fruits_wash_cups",
+    "Slice the Tomato and Lettuce onto the Plate, and clean the Cup and Mug": "5_prepare_salad_wash_dishes",
 }
 _TASK_NAME_MAP_LOWER = {k.lower(): v for k, v in _TASK_NAME_MAP.items()}
 
@@ -228,6 +232,8 @@ class MultiRobotExecutor:
         self._subtask_completed_actions: Dict[int, List[str]] = {}  # 서브태스크별 성공한 액션 목록
         self._subtask_results: Dict[int, SubTaskExecutionResult] = {}
         self._subtask_exec_counts: Dict[int, int] = {}  # makespan 계산용: subtask별 시도한 액션 수
+        self._task_wall_start: float = 0.0  # wall-clock makespan 계산용: 태스크 시작 시각
+        self._task_wall_end: float = 0.0    # wall-clock makespan 계산용: 태스크 종료 시각
         # 물리적으로 불가능하여 drop된 서브태스크 (더 이상 실행하지 않음)
         self._dropped_subtasks: set = set()
         # 실시간 상태 반영용 (execute_in_ai2thor_with_feedback 호출 시에만 설정)
@@ -331,6 +337,15 @@ class MultiRobotExecutor:
             counts = [self._subtask_exec_counts.get(sid, 0) for sid in sids]
             makespan += max(counts) if counts else 0
         return makespan
+
+    def _compute_wall_makespan(self) -> float:
+        """Wall-clock Makespan = 태스크 시작부터 종료까지 실제 경과 시간(초).
+        병렬 실행 시 두 로봇이 동시에 작업해도 1회만 카운트되므로,
+        total_exec 기반 makespan보다 실제 병렬화 이득을 직접 반영함."""
+        end = self._task_wall_end if self._task_wall_end > 0 else time.time()
+        if self._task_wall_start <= 0:
+            return 0.0
+        return end - self._task_wall_start
 
     # -----------------------------
     # Checker helpers
@@ -900,7 +915,7 @@ class MultiRobotExecutor:
                             action="CleanObject",
                             objectId=act['objectId'],
                             agentId=act['agent_id'],
-                            forceAction=True
+                            forceAction=False
                         )
                         if multi_agent_event.metadata['errorMessage'] != "":
                             action_success = False
@@ -2106,16 +2121,23 @@ class MultiRobotExecutor:
         readable = self._convert_object_id_to_readable(obj_id)
         self._checker_report(agent_id, "SliceObject", readable, success)
 
-    def CleanObject(self, agent_id: int, obj_pattern: str):
-        """Clean (wash) object via AI2Thor CleanObject action."""
+    def CleanObject(self, agent_id: int, obj_pattern: str, sink_pattern: str = None):
+        """Clean (wash) object via AI2Thor CleanObject action.
+        If sink_pattern is provided, navigates to sink before cleaning (realistic mode).
+        Otherwise navigates to the object directly (legacy forceAction mode).
+        """
         obj_id, _ = self._find_object_with_center(obj_pattern, agent_id=agent_id)
         if not obj_id:
             print(f"[Robot{agent_id+1}] Cannot find {obj_pattern}")
             self._fail_current_subtask(f"CleanObject: cannot find object '{obj_pattern}'")
             return
 
-        if not self.GoToObject(agent_id, obj_pattern):
-            return
+        if sink_pattern:
+            if not self.GoToObject(agent_id, sink_pattern):
+                return
+        else:
+            if not self.GoToObject(agent_id, obj_pattern):
+                return
 
         success = self._enqueue_and_wait({
             'action': 'CleanObject',
@@ -2220,7 +2242,8 @@ class MultiRobotExecutor:
             self.SwitchOff(agent_id, objs[0])
 
         elif atype == "cleanobject" and len(objs) >= 1:
-            self.CleanObject(agent_id, objs[0])
+            sink = objs[1] if len(objs) >= 2 else None
+            self.CleanObject(agent_id, objs[0], sink_pattern=sink)
 
         elif atype == "sliceobject" and len(objs) >= 1:
             self.SliceObject(agent_id, objs[0])
@@ -2730,6 +2753,8 @@ class MultiRobotExecutor:
         print("[EXEC] Starting Multi-Robot Execution")
         print("=" * 60)
 
+        self._task_wall_start = time.time()
+        self._task_wall_end = 0.0
         try:
             for gid in sorted(groups_to_plans.keys()):
                 plans = groups_to_plans[gid]
@@ -2761,6 +2786,7 @@ class MultiRobotExecutor:
             # 모든 액션 큐가 비워질 때까지 대기
             print("\n[EXEC] Waiting for action queue to empty...")
             self._drain_action_queue()
+            self._task_wall_end = time.time()
 
             # 종료 전 확인을 위해 잠시 대기
             print("[EXEC] All done! Press 'q' in any window to close.")
@@ -2777,6 +2803,7 @@ class MultiRobotExecutor:
                     print(
                         f"Coverage:{coverage:.3f}, Transport Rate:{transport_rate:.3f}, "
                         f"Steps:{self.total_exec}, Makespan:{self._compute_makespan()}, "
+                        f"WallMakespan:{self._compute_wall_makespan():.1f}s, "
                         f"Finished:{finished}, Balance:{balance:.3f}, Exec:{exec_rate:.3f}"
                     )
                     print("\n")
@@ -2860,6 +2887,8 @@ class MultiRobotExecutor:
             print("[EXEC] Immediate replan callback: ON")
         print("=" * 60)
 
+        self._task_wall_start = time.time()
+        self._task_wall_end = 0.0
         try:
             completed_groups = set()
             while True:
@@ -2971,7 +3000,8 @@ class MultiRobotExecutor:
                 else:
                     completed_groups.add(gid)
             self._drain_action_queue()
-            
+            self._task_wall_end = time.time()
+
             if self.checker is not None:
                 try:
                     coverage = self.checker.get_coverage()
@@ -2983,6 +3013,7 @@ class MultiRobotExecutor:
                     print(
                         f"Coverage:{coverage:.3f}, Transport Rate:{transport_rate:.3f}, "
                         f"Steps:{self.total_exec}, Makespan:{self._compute_makespan()}, "
+                        f"WallMakespan:{self._compute_wall_makespan():.1f}s, "
                         f"Finished:{finished}, Balance:{balance:.3f}, Exec:{exec_rate:.3f}"
                     )
                     print("\n")

@@ -1,0 +1,88 @@
+# Task Description: Slice the Lettuce onto the Plate.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding cup.
+# 2. Robot not at cup location.
+
+# SubTask 2: Slice the Lettuce onto the Plate.
+    Skills Required: GoToObject, PickupObject, SliceObject, PutObject
+    Related Objects: knife(Location=CounterTop), lettuce(Location=Fridge), plate(Location=CounterTop)
+
+GoToObject(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 fridge)
+
+OpenFridge(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 fridge)
+     (is-fridge fridge)
+   Effects:
+     (object-open robot1 fridge)
+     (fridge-open fridge)
+
+PickupObject(robot1, lettuce, fridge)
+   Preconditions:
+     (at-location lettuce fridge)
+     (at robot1 fridge)
+     (not (inaction robot1))
+     (fridge-open fridge)
+   Effects:
+     (holding robot1 lettuce)
+     (not (at-location lettuce fridge))
+
+GoToObject(robot1, plate)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 plate)
+
+PutObject(robot1, lettuce, plate)
+   Preconditions:
+     (holding robot1 lettuce)
+     (at robot1 plate)
+     (not (inaction robot1))
+   Effects:
+     (at-location lettuce plate)
+     (not (holding robot1 lettuce))
+
+GoToObject(robot1, knife)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 knife)
+
+PickupObject(robot1, knife, CounterTop)
+   Preconditions:
+     (at-location knife CounterTop)
+     (at robot1 knife)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 knife)
+     (not (at-location knife CounterTop))
+
+GoToObject(robot1, plate)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 plate)
+
+SliceObject(robot1, lettuce, plate)
+   Preconditions:
+     (at-location lettuce plate)
+     (at robot1 lettuce)
+     (not (inaction robot1))
+   Effects:
+     (sliced lettuce)
+
+Goal condition:
+(sliced lettuce)
+(at-location lettuce plate)
+
+# Task Slice the Lettuce onto the Plate is done.

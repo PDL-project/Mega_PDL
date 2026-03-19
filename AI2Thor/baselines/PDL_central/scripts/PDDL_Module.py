@@ -357,7 +357,10 @@ class LLMHandler:
             api_key_file (str): api_key 있는 파일
         """
         self.setup_api(api_key_file)
-    
+        self.total_tokens_used: int = 0       # 총 토큰 (prompt + completion)
+        self.prompt_tokens_used: int = 0      # 입력 토큰
+        self.completion_tokens_used: int = 0  # 출력 토큰
+
     def setup_api(self, api_key_file: str) -> None:
         """
         OpenAI API key 파일을 읽어 openai.api_key에 설정한다.
@@ -439,15 +442,23 @@ class LLMHandler:
                         logprobs=logprobs, 
                         frequency_penalty=frequency_penalty
                     )
+                    if hasattr(response, 'usage') and response.usage:
+                        self.total_tokens_used += response.usage.total_tokens
+                        self.prompt_tokens_used += response.usage.prompt_tokens
+                        self.completion_tokens_used += response.usage.completion_tokens
                     return response, response.choices[0].text.strip()
                 else: #모델명에 gpt가 없을경우 -> chat 스타일로 생성
                     response = openai.chat.completions.create(
-                        model=gpt_version, 
-                        messages=prompt, 
-                        max_tokens=max_tokens, 
-                        temperature=temperature, 
+                        model=gpt_version,
+                        messages=prompt,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
                         frequency_penalty=frequency_penalty
                     )
+                    if hasattr(response, 'usage') and response.usage:
+                        self.total_tokens_used += response.usage.total_tokens
+                        self.prompt_tokens_used += response.usage.prompt_tokens
+                        self.completion_tokens_used += response.usage.completion_tokens
                     return response, response.choices[0].message.content.strip()
                     
             except openai.RateLimitError: #ai한테 너무 빨리, 많이 요청해서 제한 걸렸을때 예외처리
@@ -967,6 +978,13 @@ class TaskManager:
                             print(f"[Feedback] Dropped (impossible): {sorted(dropped)}")
                     print("✓ Feedback loop finished.")
 
+                print(
+                    f"\n[[ LLM TOKEN USAGE ]]\n"
+                    f"  Total  : {self.llm.total_tokens_used:,}\n"
+                    f"  Prompt : {self.llm.prompt_tokens_used:,}\n"
+                    f"  Output : {self.llm.completion_tokens_used:,}\n"
+                )
+
         except Exception as e:
             print(f"\n[ERROR] Task Processing Failed:")
             print(f"Error type: {type(e).__name__}")
@@ -1463,8 +1481,16 @@ class TaskManager:
                 prompt += "\n=== EXAMPLE OUTPUT FORMAT END ===\n\n"
                 prompt += "\n\n=== SUBTASK TO SOLVE ===\n"
 
-                prompt += f"{st}\n\n"  
-                
+                prompt += f"{st}\n\n"
+
+                prompt += "=== CRITICAL GOAL GENERATION RULES ===\n"
+                prompt += "1. 'Slice X onto Y': Goal condition MUST include BOTH (sliced X) AND (at-location X Y).\n"
+                prompt += "   Correct SliceObject sequence: GoToObject(X) → SliceObject(X, current_loc) → PickupObject(X, current_loc) → GoToObject(Y) → PutObject(X, Y)\n"
+                prompt += "   NEVER pick up an object before SliceObject — PickupObject removes (at-location), making SliceObject's precondition unmet.\n"
+                prompt += "2. 'Clean X': Goal MUST include (cleaned robot1 X) AND (at-location X countertop). After cleaning, place on CounterTop (not floor).\n"
+                prompt += "3. If the subtask title names a destination (e.g., 'onto the Plate', 'into the Box'), ALWAYS include (at-location <obj> <destination>) in Goal condition.\n"
+                prompt += "4. If the fridge was opened to retrieve an object, ALWAYS close it afterwards. Include CloseFridge and add (not (fridge-open fridge)) to Goal condition.\n\n"
+
                 if "gpt" not in self.gpt_version:
                     _, text = self.llm.query_model(prompt, self.gpt_version, max_tokens=2000, stop=["def"], frequency_penalty=0.0)
                 else:
@@ -1755,6 +1781,7 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
+                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -1913,6 +1940,7 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
+                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -2069,18 +2097,30 @@ class TaskManager:
                 prompt = (
                     "You are a strict PDDL problem validator and repair system for Fast Downward.\n"
                     "The DOMAIN is the single source of truth.\n"
-                    "Your job is to REWRITE the PROBLEM so that it is consistent with the DOMAIN "
-                    "and solvable when the task intent is achievable.\n\n"
+                    "Your job is to minimally repair the PROBLEM to make it consistent with the DOMAIN "
+                    "and solvable. Do NOT rewrite from scratch — preserve the original intent.\n\n"
+
+                    "PRESERVATION RULES (do NOT override these unless clearly wrong):\n"
+                    "- PRESERVE all runtime state predicates explicitly set in the original :init:\n"
+                    "  (holding robot1 X), (at robot1 X), (faucet-on), (object-open robot1 X), (fridge-open X)\n"
+                    "  These reflect the actual world state from previous subtask execution.\n"
+                    "- PRESERVE all objects listed in the original :objects — do not remove them.\n"
+                    "- PRESERVE the original :goal conditions — do not remove or simplify them.\n\n"
 
                     "CRITICAL RULES for receptacles:\n"
                     "OPENABLE objects (Drawer, Cabinet, Safe, Microwave, Dishwasher, Toilet, ShowerDoor, Box):\n"
-                    "- Include (object-close robot1 <receptacle>) in :init (they start CLOSED)\n"
+                    "- Include (object-close robot1 <receptacle>) in :init ONLY IF the original :init does not already set them open.\n"
                     "- PutObject requires (not (object-close ?r ?loc)), so planner MUST OpenObject first\n"
                     "- If placing into them, :goal should include (object-close robot1 <receptacle>)\n"
-                    "- If the subtask is ONLY about opening, the goal should include (object-open) but NOT (object-close)"
+                    "- If the subtask is ONLY about opening, the goal should include (object-open) but NOT (object-close)\n"
                     "NON-OPENABLE objects (CounterTop, StoveBurner, CoffeeMachine, DiningTable, Shelf, SinkBasin, Plate, Bed, Sofa, Desk, GarbageCan, Bathtub):\n"
                     "- Do NOT include (object-close) for these. PutObject works directly.\n"
-                    "FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init.\n\n"
+                    "FRIDGE: use (is-fridge fridge) in :init. Use (not (fridge-open fridge)) ONLY IF fridge-open is not already set in original :init.\n\n"
+                    "SINK / FAUCET: If CleanObject is needed:\n"
+                    "- Include a SinkBasin object in :objects with (is-sink <sink>) in :init.\n"
+                    "- Include a Faucet object in :objects with (is-faucet <faucet>) in :init.\n"
+                    "- If (faucet-on) is already in the original :init, PRESERVE it — do NOT change it to (not (faucet-on)).\n"
+                    "- If (faucet-on) is NOT in the original :init, use (not (faucet-on)) as the default.\n\n"
 
                     f"precondition Description (to be check preconditions):\n{precondition_content}\n\n"
                     f"Domain Description (authoritative):\n{domain_content}\n\n"
@@ -2151,18 +2191,30 @@ class TaskManager:
             prompt = (
                 "You are a strict PDDL problem validator and repair system for Fast Downward.\n"
                 "The DOMAIN is the single source of truth.\n"
-                "Your job is to REWRITE the PROBLEM so that it is consistent with the DOMAIN "
-                "and solvable when the task intent is achievable.\n\n"
+                "Your job is to minimally repair the PROBLEM to make it consistent with the DOMAIN "
+                "and solvable. Do NOT rewrite from scratch — preserve the original intent.\n\n"
+
+                "PRESERVATION RULES (do NOT override these unless clearly wrong):\n"
+                "- PRESERVE all runtime state predicates explicitly set in the original :init:\n"
+                "  (holding robot1 X), (at robot1 X), (faucet-on), (object-open robot1 X), (fridge-open X)\n"
+                "  These reflect the actual world state from previous subtask execution.\n"
+                "- PRESERVE all objects listed in the original :objects — do not remove them.\n"
+                "- PRESERVE the original :goal conditions — do not remove or simplify them.\n\n"
 
                 "CRITICAL RULES for receptacles:\n"
                 "OPENABLE objects (Drawer, Cabinet, Safe, Microwave, Dishwasher, Toilet, ShowerDoor, Box):\n"
-                "- Include (object-close robot1 <receptacle>) in :init (they start CLOSED)\n"
+                "- Include (object-close robot1 <receptacle>) in :init ONLY IF the original :init does not already set them open.\n"
                 "- PutObject requires (not (object-close ?r ?loc)), so planner MUST OpenObject first\n"
                 "- If placing into them, :goal should include (object-close robot1 <receptacle>)\n"
-                "- If the subtask is ONLY about opening, the goal should include (object-open) but NOT (object-close)"
+                "- If the subtask is ONLY about opening, the goal should include (object-open) but NOT (object-close)\n"
                 "NON-OPENABLE objects (CounterTop, StoveBurner, CoffeeMachine, DiningTable, Shelf, SinkBasin, Plate, Bed, Sofa, Desk, GarbageCan, Bathtub):\n"
                 "- Do NOT include (object-close) for these. PutObject works directly.\n"
-                "FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init.\n\n"
+                "FRIDGE: use (is-fridge fridge) in :init. Use (not (fridge-open fridge)) ONLY IF fridge-open is not already set in original :init.\n\n"
+                "SINK / FAUCET: If CleanObject is needed:\n"
+                "- Include a SinkBasin object in :objects with (is-sink <sink>) in :init.\n"
+                "- Include a Faucet object in :objects with (is-faucet <faucet>) in :init.\n"
+                "- If (faucet-on) is already in the original :init, PRESERVE it — do NOT change it to (not (faucet-on)).\n"
+                "- If (faucet-on) is NOT in the original :init, use (not (faucet-on)) as the default.\n\n"
 
                 f"precondition Description (to be check preconditions):\n{precondition_content}\n\n"
                 f"Domain Description (authoritative):\n{domain_content}\n\n"

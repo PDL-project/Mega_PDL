@@ -1,0 +1,11 @@
+{
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 mug (1)",
+      "cleanobject robot1 mug (1)"
+    ]
+  }
+}

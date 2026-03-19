@@ -1,0 +1,10 @@
+{
+  "3": {
+    "state": "FAILED",
+    "error_message": "Cup_bb2cfefd is already Clean!",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cup (1)"
+    ]
+  }
+}

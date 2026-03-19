@@ -1,0 +1,49 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 tomato (1)",
+      "sliceobject robot1 tomato countertop (1)",
+      "pickupobject robot1 tomato countertop (1)",
+      "gotoobject robot1 plate (1)",
+      "drophandobject robot1 tomato plate (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 fridge (1)",
+      "closeobject robot1 fridge (1)",
+      "gotoobject robot1 lettuce (1)",
+      "sliceobject robot1 lettuce fridge (1)",
+      "pickupobject robot1 lettuce fridge (1)",
+      "gotoobject robot1 plate (1)",
+      "drophandobject robot1 lettuce plate (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cup (1)",
+      "cleanobject robot1 cup (1)",
+      "pickupobject robot1 cup floor (1)",
+      "gotoobject robot1 countertop (1)",
+      "drophandobject robot1 cup countertop (1)"
+    ]
+  },
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 mug (1)",
+      "cleanobject robot1 mug (1)"
+    ]
+  }
+}

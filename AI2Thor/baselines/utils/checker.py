@@ -98,21 +98,25 @@ class BaseChecker:
         denum_act = self.denumerate_action(action)
 
         # first check for independent subtasks
-        # if the action is in independent subtasks and not in subtasks_completed
-        # and the action was successful, then add it to subtasks_completed
-        # check numerated action in independent_subtasks (since it'll be numerated in list)
+        # exact numerated match first; fallback to de-numerated match to handle
+        # cases where objectId changes after interactions (e.g. SliceObject changes Tomato's position)
+        _matched_ind = action if action in self.independent_subtasks else next(
+            (s for s in self.independent_subtasks
+             if self.denumerate_action(s) == denum_act and s not in self.subtasks_completed_numerated),
+            None
+        )
 
         if (
-            action in self.independent_subtasks
-            and action not in self.subtasks_completed_numerated
+            _matched_ind is not None
+            and _matched_ind not in self.subtasks_completed_numerated
             and success
         ):
             self.subtasks_completed.append(denum_act)
-            self.subtasks_completed_numerated.append(action)
+            self.subtasks_completed_numerated.append(_matched_ind)
 
             # Give credit for NavigateTo(object) if action(object) is successful
             # Since this means the agent just happened to already be close enough
-            self.give_credit_for_navigate(action, success, inventory_object)
+            self.give_credit_for_navigate(_matched_ind, success, inventory_object)
 
         elif self.conditional_subtasks is not None:
             # elif we need to check for conditional subtasks

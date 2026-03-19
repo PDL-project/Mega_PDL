@@ -1,0 +1,58 @@
+# Task Description: Clean the Cup.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at cup location
+#2. Robot not holding cup
+
+# SubTask 3: Clean the Cup.
+    Skills Required: GoToObject, PickupObject, CleanObject, PutObject
+    Related Objects: cup(Location=Cabinet), sink(Location=Floor)
+
+GoToObject(robot1, cup)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cup)
+
+PickupObject(robot1, cup, cabinet)
+   Preconditions:
+     (at-location cup cabinet)
+     (at robot1 cup)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 cup)
+
+GoToObject(robot1, sink)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sink)
+
+CleanObject(robot1, cup)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cup)
+   Effects:
+     (cleaned robot1 cup)
+
+PutObject(robot1, cup, sink)
+   Preconditions:
+     (holding robot1 cup)
+     (at robot1 sink)
+     (not (inaction robot1))
+     (not (is-fridge sink))
+     (not (object-close robot1 sink))
+   Effects:
+     (at-location cup sink)
+     (not (holding robot1 cup))
+     (not (inaction robot1))
+
+Goal condition:
+(cleaned robot1 cup)
+(at-location cup sink)
+
+# Task Clean the Cup is done.

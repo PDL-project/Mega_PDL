@@ -73,15 +73,23 @@ Goal condition:
 #2. Robot not holding apple
 #3. Robot not holding knife
 
-# SubTask 2: Prepare Apple Slices. 
-    Skills Required: GoToObject, PickupObject, SliceObject, PutObject
-    Related Objects: apple(Location=counterTop), knife(Location=diningTable), pot(Location=stoveBurner)
+# SubTask 2: Prepare Apple Slices onto the Pot.
+    Skills Required: GoToObject, SliceObject, PickupObject, PutObject
+    Related Objects: apple(Location=counterTop), pot(Location=stoveBurner)
 
 GoToObject(robot1, apple)
    Preconditions:
      (not (inaction robot1))
    Effects:
      (at robot1 apple)
+
+SliceObject(robot1, apple, counterTop)
+   Preconditions:
+     (at-location apple counterTop)
+     (at robot1 apple)
+     (not (inaction robot1))
+   Effects:
+     (sliced apple)
 
 PickupObject(robot1, apple, counterTop)
    Preconditions:
@@ -90,20 +98,7 @@ PickupObject(robot1, apple, counterTop)
      (not (inaction robot1))
    Effects:
      (holding robot1 apple)
-
-GoToObject(robot1, cuttingboard)
-   Preconditions:
-     (not (inaction robot1))
-   Effects:
-     (at robot1 cuttingboard)
-
-SliceObject(robot1, apple, cuttingboard)
-   Preconditions:
-     (at-location apple cuttingboard)
-     (at robot1 cuttingboard)
-     (not (inaction robot1))
-   Effects:
-     (sliced apple)
+     (not (at-location apple counterTop))
 
 GoToObject(robot1, pot)
    Preconditions:

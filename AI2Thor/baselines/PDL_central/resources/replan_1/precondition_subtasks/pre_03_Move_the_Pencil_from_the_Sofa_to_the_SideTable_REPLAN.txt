@@ -1,0 +1,48 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at pencil location
+#2. Robot not holding pencil
+#3. Sofa is not openable
+#4. SideTable is occupied
+
+# SubTask 1: Move the Pencil from the Sofa to an available receptacle.
+    Skills Required: GoToObject, PickupObject, GoToObject(destination), PutObject
+    Related Objects: pencil(Location=sofa), armchair2(Location=floor)
+
+GoToObject(robot1, sofa1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sofa1)
+
+PickupObject(robot1, pencil, sofa1)
+   Preconditions:
+     (at-location pencil sofa1)
+     (at robot1 sofa1)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 pencil)
+     (not (at-location pencil sofa1))
+
+GoToObject(robot1, armchair2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 armchair2)
+
+PutObject(robot1, pencil, armchair2)
+   Preconditions:
+     (holding robot1 pencil)
+     (at robot1 armchair2)
+     (not (inaction robot1))
+   Effects:
+     (at-location pencil armchair2)
+     (not (holding robot1 pencil))
+
+Goal condition:
+(at-location pencil armchair2)
+
+# Task Move the Pencil from the Sofa to an available receptacle is done.

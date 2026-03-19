@@ -1,0 +1,30 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Place_the_Sliced_Tomato_in_the_Bowl_REPLAN",
+      "objects": [
+        "robot1",
+        "TomatoSliced",
+        "bowl1",
+        "kitchen"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the kitchen",
+        "robot1 is holding the TomatoSliced",
+        "bowl1 is at the kitchen"
+      ],
+      "effects": [
+        "TomatoSliced is at the location of bowl1",
+        "robot1 is not holding the TomatoSliced"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1
+    ]
+  }
+}

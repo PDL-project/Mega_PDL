@@ -1,6 +1,20 @@
 {
   "tasks": [
     {
+      "task_name": "4_clear_floor_kitchen",
+      "task_description": "Clear the kitchen floor by placing items at their appropriate positions",
+      "task_id": 28,
+      "task_type": "transport",
+      "task_timeout": 40,
+      "task_floorplans": [
+        "FloorPlan1",
+        "FloorPlan2",
+        "FloorPlan3",
+        "FloorPlan4",
+        "FloorPlan5"
+      ]
+    },
+    {
       "task_name": "4_clear_table_kitchen",
       "task_description": "Clear the table by placing items at their appropriate positions",
       "task_id": 22,

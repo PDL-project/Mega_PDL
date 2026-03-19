@@ -1,0 +1,84 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Slice_the_Apple",
+      "objects": [
+        "robot1",
+        "apple",
+        "knife",
+        "fridge",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is in the kitchen.",
+        "Apple is in the fridge.",
+        "Knife is on the countertop.",
+        "Fridge is closed.",
+        "Robot is not holding the apple.",
+        "Robot is not holding the knife."
+      ],
+      "effects": [
+        "Apple is sliced.",
+        "Apple is on the countertop."
+      ]
+    },
+    {
+      "id": 1,
+      "name": "subtask_01_Locate_and_Wash_the_Cup_REPLAN",
+      "objects": [
+        "robot1",
+        "cup",
+        "cabinet1",
+        "sinkbasin1",
+        "faucet1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Cup is at the cabinet",
+        "Sink is in the kitchen",
+        "Robot is close to the cabinet",
+        "Faucet is off",
+        "Robot is not holding the cup"
+      ],
+      "effects": [
+        "Cup is cleaned",
+        "Robot is not holding the cup"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Slice_the_Apple_REPLAN",
+      "objects": [
+        "robot1",
+        "apple",
+        "knife",
+        "fridge1",
+        "countertop1",
+        "cuttingboard"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Apple is in the fridge.",
+        "Knife is on the countertop.",
+        "Fridge is closed.",
+        "Robot is not holding the apple.",
+        "Robot is not holding the knife."
+      ],
+      "effects": [
+        "Apple is sliced."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ]
+  }
+}

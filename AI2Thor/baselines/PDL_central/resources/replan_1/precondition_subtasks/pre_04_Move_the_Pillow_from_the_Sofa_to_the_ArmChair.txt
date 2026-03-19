@@ -1,0 +1,47 @@
+# Task Description: Move the Pillow from the Sofa to the ArmChair.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at pillow location
+#2. Robot not holding pillow
+
+# SubTask 4: Move the Pillow from the Sofa to the ArmChair.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Pillow(Location=Sofa), ArmChair(Location=Floor)
+
+GoToObject(robot1, Pillow)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Pillow)
+
+PickupObject(robot1, Pillow, Sofa)
+   Preconditions:
+     (at-location Pillow Sofa)
+     (at robot1 Pillow)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Pillow)
+
+GoToObject(robot1, ArmChair)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 ArmChair)
+
+PutObject(robot1, Pillow, ArmChair)
+   Preconditions:
+     (holding robot1 Pillow)
+     (at robot1 ArmChair)
+     (not (inaction robot1))
+   Effects:
+     (at-location Pillow ArmChair)
+     (not (holding robot1 Pillow))
+
+Goal condition:
+(at-location Pillow ArmChair)
+
+# Task Move the Pillow from the Sofa to the ArmChair is done.

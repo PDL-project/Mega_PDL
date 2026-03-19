@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Slice_the_Tomato_onto_the_Plate",
+      "objects": [
+        "robot1",
+        "knife",
+        "tomato",
+        "plate",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the countertop.",
+        "Knife, tomato, and plate are on the countertop.",
+        "Robot is not holding the knife or tomato."
+      ],
+      "effects": [
+        "Tomato is sliced.",
+        "Tomato is on the plate."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Slice_the_Lettuce_onto_the_Plate",
+      "objects": [
+        "robot1",
+        "knife",
+        "lettuce",
+        "plate",
+        "fridge",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not holding any object.",
+        "Robot is in the kitchen.",
+        "Fridge is closed."
+      ],
+      "effects": [
+        "Lettuce is sliced.",
+        "Knife is on the countertop."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Clean_the_Cup",
+      "objects": [
+        "robot1",
+        "cup",
+        "sink",
+        "faucet",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding the cup.",
+        "Robot is at the kitchen.",
+        "Cup is on the floor.",
+        "Sink is on the floor.",
+        "Faucet is on the floor.",
+        "Faucet is off."
+      ],
+      "effects": [
+        "Cup is cleaned.",
+        "Cup is on the floor."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Clean_the_Mug_REPLAN",
+      "objects": [
+        "robot1",
+        "mug",
+        "sink",
+        "faucet",
+        "countertop1",
+        "cabinet1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is at the mug location.",
+        "Robot is not holding the mug.",
+        "Faucet is already on."
+      ],
+      "effects": [
+        "Mug is cleaned.",
+        "Mug is placed in the cabinet."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4
+    ]
+  }
+}

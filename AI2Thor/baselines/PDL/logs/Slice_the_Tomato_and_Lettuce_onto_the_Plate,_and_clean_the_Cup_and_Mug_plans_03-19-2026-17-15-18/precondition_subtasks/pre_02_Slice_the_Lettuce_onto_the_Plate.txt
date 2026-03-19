@@ -1,0 +1,95 @@
+# Task Description: Slice the Lettuce onto the Plate.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analysis due to previous subtask:
+# 1. Robot not holding any object.
+# 2. Robot not at any specific object location.
+# 3. Fridge is initially closed.
+
+# SubTask 1: Retrieve the Knife from the CounterTop.
+    Skills Required: GoToObject, PickupObject
+    Related Objects: knife(Location=CounterTop)
+
+GoToObject(robot1, knife)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 knife)
+
+PickupObject(robot1, knife, CounterTop)
+   Preconditions:
+     (at-location knife CounterTop)
+     (at robot1 knife)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 knife)
+
+# SubTask 2: Retrieve the Lettuce from the Fridge.
+    Skills Required: GoToObject, OpenObject, PickupObject
+    Related Objects: lettuce(Location=Fridge), fridge(Location=Floor)
+
+GoToObject(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 fridge)
+
+OpenFridge(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 fridge)
+     (is-fridge fridge)
+   Effects:
+     (object-open robot1 fridge)
+     (fridge-open fridge)
+
+GoToObject(robot1, lettuce)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 lettuce)
+
+PickupObject(robot1, lettuce, fridge)
+   Preconditions:
+     (at-location lettuce fridge)
+     (at robot1 lettuce)
+     (not (inaction robot1))
+     (fridge-open fridge)
+   Effects:
+     (holding robot1 lettuce)
+
+# SubTask 3: Slice the Lettuce onto the Plate.
+    Skills Required: GoToObject, SliceObject, PutObject
+    Related Objects: plate(Location=CounterTop)
+
+GoToObject(robot1, plate)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 plate)
+
+SliceObject(robot1, lettuce, plate)
+   Preconditions:
+     (at-location lettuce plate)
+     (at robot1 lettuce)
+     (not (inaction robot1))
+   Effects:
+     (sliced lettuce)
+
+PutObject(robot1, knife, CounterTop)
+   Preconditions:
+     (holding robot1 knife)
+     (at robot1 CounterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location knife CounterTop)
+     (not (holding robot1 knife))
+
+Goal condition:
+(sliced lettuce)
+(at-location knife CounterTop)
+
+# Task Slice the Lettuce onto the Plate is done.

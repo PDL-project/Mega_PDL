@@ -29,6 +29,11 @@
     ;; fridge typing/state
     (is-fridge ?x - object)
     (fridge-open ?f - object)
+
+    ;; sink / faucet state
+    (is-sink ?x - object)
+    (is-faucet ?x - object)
+    (faucet-on)
   )
 
   (:functions (total-cost) - number)
@@ -63,6 +68,10 @@
       (at-location ?o ?loc)
       (at ?r ?o)              ;; IMPORTANT: robot at object, not at location
       (not (inaction ?r))
+      ;; if object is in a fridge, fridge must be open
+      (imply (is-fridge ?loc) (fridge-open ?loc))
+      ;; if object is in a closed receptacle, must open it first
+      (not (object-close ?r ?loc))
     )
     :effect (and
       (holding ?r ?o)
@@ -160,6 +169,8 @@
     :effect (and
       (switch-on ?r ?x)
       (not (switch-off ?r ?x))
+      ;; if x is a faucet, turning it on implies faucet-on
+      (when (is-faucet ?x) (faucet-on))
       (not (inaction ?r))
       (increase (total-cost) 1)
     )
@@ -174,16 +185,21 @@
     :effect (and
       (switch-off ?r ?x)
       (not (switch-on ?r ?x))
+      ;; if x is a faucet, turning it off implies not faucet-on
+      (when (is-faucet ?x) (not (faucet-on)))
       (not (inaction ?r))
       (increase (total-cost) 1)
     )
   )
 
   (:action CleanObject
-    :parameters (?r - robot ?o - object)
+    :parameters (?r - robot ?o - object ?sink - object)
     :precondition (and
       (not (inaction ?r))
-      (at ?r ?o)
+      (holding ?r ?o)
+      (at ?r ?sink)
+      (is-sink ?sink)
+      (faucet-on)
     )
     :effect (and
       (cleaned ?r ?o)
@@ -211,6 +227,10 @@
       (at-location ?o ?loc)
       (at ?r ?o)            ;; unify with "robot at object"
       (not (inaction ?r))
+      ;; if object is in a fridge, fridge must be open
+      (imply (is-fridge ?loc) (fridge-open ?loc))
+      ;; if object is in a closed receptacle, must open it first
+      (not (object-close ?r ?loc))
     )
     :effect (and
       (sliced ?o)

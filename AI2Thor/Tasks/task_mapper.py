@@ -53,6 +53,10 @@ task_mapper = {
     "Slice all sliceable objects" : "4_slice_all_sliceable", # COMPLETED
     "Put appropriate utensils in storage" : "4_put_appropriate_storage", # COMPLETED
 
+    # type 5 tasks - long-horizon with sequential dependencies + high parallelism
+    "Slice all the fruits and wash all the cups": "5_slice_fruits_wash_cups",
+    "Slice the Tomato and Lettuce onto the Plate, and clean the Cup and Mug": "5_prepare_salad_wash_dishes",
+
 }
 
 all_orig_instructions = list(task_mapper.keys())

@@ -1,0 +1,32 @@
+{
+  "tasks": [
+    {
+      "task_name": "5_slice_fruits_wash_cups",
+      "task_description": "Slice all the fruits and wash all the cups",
+      "task_id": 28,
+      "task_type": "manipulation",
+      "task_timeout": 60,
+      "task_floorplans": [
+        "FloorPlan2",
+        "FloorPlan3",
+        "FloorPlan4",
+        "FloorPlan5",
+        "FloorPlan6"
+      ]
+    },
+    {
+      "task_name": "5_prepare_salad_wash_dishes",
+      "task_description": "Slice the Tomato and Lettuce onto the Plate, and clean the Cup and Mug",
+      "task_id": 29,
+      "task_type": "manipulation",
+      "task_timeout": 60,
+      "task_floorplans": [
+        "FloorPlan2",
+        "FloorPlan3",
+        "FloorPlan4",
+        "FloorPlan5",
+        "FloorPlan6"
+      ]
+    }
+  ]
+}

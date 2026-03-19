@@ -1,2 +1,5 @@
-(closeobject robot1 drawer1)
-; cost = 1 (unit cost)
+(gotoobject robot1 pencil)
+(pickupobject robot1 pencil sofa1)
+(gotoobject robot1 armchair2)
+(drophandobject robot1 pencil armchair2)
+; cost = 4 (general cost)

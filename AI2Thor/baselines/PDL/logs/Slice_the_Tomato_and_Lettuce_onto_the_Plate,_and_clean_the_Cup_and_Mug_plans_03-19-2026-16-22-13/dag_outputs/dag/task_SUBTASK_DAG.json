@@ -1,0 +1,115 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Slice_the_Tomato_onto_the_Plate",
+      "objects": [
+        "robot1",
+        "knife",
+        "tomato",
+        "plate",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Knife is on the countertop.",
+        "Tomato is on the countertop.",
+        "Plate is on the countertop.",
+        "Robot is not holding the knife.",
+        "Robot is not holding the tomato."
+      ],
+      "effects": [
+        "Tomato is sliced.",
+        "Tomato is on the plate."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Slice_the_Lettuce_onto_the_Plate",
+      "objects": [
+        "robot1",
+        "knife",
+        "lettuce",
+        "plate",
+        "fridge",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Knife is on the countertop.",
+        "Lettuce is in the fridge.",
+        "Plate is on the countertop.",
+        "Fridge is closed.",
+        "Robot is not holding the knife.",
+        "Robot is not holding the lettuce."
+      ],
+      "effects": [
+        "Lettuce is sliced.",
+        "Lettuce is on the plate."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Clean_the_Cup",
+      "objects": [
+        "robot1",
+        "cup",
+        "sink",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Cup is on the floor.",
+        "Sink is on the floor.",
+        "Robot is not holding the cup."
+      ],
+      "effects": [
+        "Cup is cleaned by the robot."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Clean_the_Mug",
+      "objects": [
+        "robot1",
+        "mug",
+        "sink",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Mug is on the countertop",
+        "Sink is on the floor",
+        "Robot is not holding the mug"
+      ],
+      "effects": [
+        "Mug is cleaned",
+        "Mug is on the countertop"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both subtasks use the same knife object"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1,
+      3,
+      4
+    ],
+    "1": [
+      2
+    ]
+  }
+}
