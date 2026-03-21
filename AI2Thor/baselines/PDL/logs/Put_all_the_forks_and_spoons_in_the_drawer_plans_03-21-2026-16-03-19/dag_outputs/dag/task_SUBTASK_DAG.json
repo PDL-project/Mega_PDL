@@ -1,0 +1,59 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Fork_in_Drawer5",
+      "objects": [
+        "robot1",
+        "fork",
+        "drawer5",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the floor",
+        "Fork is at the countertop",
+        "Drawer5 is at the floor",
+        "Robot1 is close to Drawer5",
+        "Robot1 is not holding the fork"
+      ],
+      "effects": [
+        "Fork is in Drawer5",
+        "Drawer5 is closed",
+        "Robot1 is close to Drawer5"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Spoon_in_Drawer6",
+      "objects": [
+        "robot1",
+        "spoon",
+        "drawer6",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the floor",
+        "Spoon is on the countertop",
+        "Drawer6 is on the floor",
+        "Robot1 is close to Drawer6",
+        "Robot1 is not holding the spoon"
+      ],
+      "effects": [
+        "Spoon is in Drawer6",
+        "Robot1 is close to Drawer6"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ]
+  }
+}

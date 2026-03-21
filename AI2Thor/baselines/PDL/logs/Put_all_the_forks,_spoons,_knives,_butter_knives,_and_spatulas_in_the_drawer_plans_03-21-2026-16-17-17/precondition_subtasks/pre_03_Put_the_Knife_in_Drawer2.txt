@@ -1,0 +1,67 @@
+# Task Description: Put the Knife in Drawer2.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding Knife
+#2. Drawer2 is closed
+
+# SubTask 3: Put the Knife in Drawer2.
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: knife(Location=CounterTop), drawer2(Location=Floor)
+
+GoToObject(robot1, knife)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 knife)
+
+PickupObject(robot1, knife, CounterTop)
+   Preconditions:
+     (at-location knife CounterTop)
+     (at robot1 knife)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 knife)
+     (not (at-location knife CounterTop))
+
+GoToObject(robot1, drawer2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 drawer2)
+
+OpenObject(robot1, drawer2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer2)
+   Effects:
+     (object-open robot1 drawer2)
+     (not (object-close robot1 drawer2))
+
+PutObject(robot1, knife, drawer2)
+   Preconditions:
+     (holding robot1 knife)
+     (at robot1 drawer2)
+     (not (inaction robot1))
+     (not (object-close robot1 drawer2))
+   Effects:
+     (at-location knife drawer2)
+     (not (holding robot1 knife))
+
+CloseObject(robot1, drawer2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer2)
+     (object-open robot1 drawer2)
+   Effects:
+     (object-close robot1 drawer2)
+     (not (object-open robot1 drawer2))
+
+Goal condition:
+(at-location knife drawer2)
+(object-close robot1 drawer2)
+
+# Task Put the Knife in Drawer2 is done.

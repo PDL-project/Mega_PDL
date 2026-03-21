@@ -4,21 +4,12 @@
     "error_message": null,
     "effects": null,
     "completed_actions": [
-      "gotoobject robot1 keychain (1)",
-      "pickupobject robot1 keychain sofa (1)",
-      "gotoobject robot1 sidetable (1)",
-      "drophandobject robot1 keychain sidetable (1)"
-    ]
-  },
-  "4": {
-    "state": "SUCCESS",
-    "error_message": null,
-    "effects": null,
-    "completed_actions": [
-      "gotoobject robot1 pillow (1)",
-      "pickupobject robot1 pillow sofa (1)",
-      "gotoobject robot1 armchair (1)",
-      "drophandobject robot1 pillow armchair (1)"
+      "gotoobject robot1 bread (1)",
+      "pickupobject robot1 bread countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 bread fridge (1)",
+      "closeobject robot1 fridge (1)"
     ]
   },
   "2": {
@@ -26,10 +17,12 @@
     "error_message": null,
     "effects": null,
     "completed_actions": [
-      "gotoobject robot1 pen (1)",
-      "pickupobject robot1 pen sofa (1)",
-      "gotoobject robot1 sidetable (1)",
-      "drophandobject robot1 pen sidetable (1)"
+      "gotoobject robot1 lettuce (1)",
+      "pickupobject robot1 lettuce countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 lettuce fridge (1)",
+      "closeobject robot1 fridge (1)"
     ]
   },
   "3": {
@@ -37,10 +30,12 @@
     "error_message": null,
     "effects": null,
     "completed_actions": [
-      "gotoobject robot1 pencil (1)",
-      "pickupobject robot1 pencil sofa1 (1)",
-      "gotoobject robot1 armchair2 (1)",
-      "drophandobject robot1 pencil armchair2 (1)"
+      "gotoobject robot1 tomato (1)",
+      "pickupobject robot1 tomato countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 tomato fridge (1)",
+      "closeobject robot1 fridge (1)"
     ]
   }
 }

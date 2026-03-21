@@ -46,6 +46,7 @@ from auto_config import AutoConfig # config 로딩/세팅 자동화
 from FeedbackLoopModule import (
     load_subtask_dag_edges,
     load_subtask_precond_effects,
+    load_subtask_action_effects,
     load_subtask_dag_parallel_groups,
     PartialReplanner,
     GroupAgent,
@@ -144,10 +145,22 @@ class PDDLUtils:
 
             objects_ai = []
 
+            # 같은 타입이 여러 개일 때 Fridge1, Fridge2 식으로 구분하기 위해 타입별 카운트
+            from collections import Counter
+            type_counts = Counter(obj["objectType"] for obj in controller.last_event.metadata["objects"])
+            type_index = {}  # 타입별 현재 인덱스 추적
+
             # 마지막 이벤트의 metadata에서 objects 목록을 순회
             for obj in controller.last_event.metadata["objects"]:
-                name = obj["objectType"]
+                obj_type = obj["objectType"]
                 mass = obj.get("mass", 0.0)
+
+                # 같은 타입이 2개 이상이면 Fridge1, Fridge2 식으로 번호 부여
+                if type_counts[obj_type] > 1:
+                    type_index[obj_type] = type_index.get(obj_type, 0) + 1
+                    name = f"{obj_type}{type_index[obj_type]}"
+                else:
+                    name = obj_type
 
                 # parentReceptacles: 현재 오브젝트가 어떤 receptacle(서랍/선반/테이블 등) 위/안에 있는지 정보
                 parents = obj.get("parentReceptacles")
@@ -351,7 +364,7 @@ class LLMHandler:
     
     def __init__(self, api_key_file: str):
         """LLMHandle 초기설정
-        
+
         Args:
             api_key_file (str): api_key 있는 파일
         """
@@ -359,7 +372,7 @@ class LLMHandler:
         self.total_tokens_used: int = 0       # 총 토큰 (prompt + completion)
         self.prompt_tokens_used: int = 0      # 입력 토큰
         self.completion_tokens_used: int = 0  # 출력 토큰
-
+    
     def setup_api(self, api_key_file: str) -> None:
         """
         OpenAI API key 파일을 읽어 openai.api_key에 설정한다.
@@ -433,12 +446,12 @@ class LLMHandler:
             try:
                 if "gpt" not in gpt_version: #모델명에 gpt가 없을경우 -> completion 스타일로 생성
                     response = openai.completions.create(
-                        model=gpt_version, 
-                        prompt=prompt, 
-                        max_tokens=max_tokens, 
-                        temperature=temperature, 
-                        stop=stop, 
-                        logprobs=logprobs, 
+                        model=gpt_version,
+                        prompt=prompt,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        stop=stop,
+                        logprobs=logprobs,
                         frequency_penalty=frequency_penalty
                     )
                     if hasattr(response, 'usage') and response.usage:
@@ -459,7 +472,7 @@ class LLMHandler:
                         self.prompt_tokens_used += response.usage.prompt_tokens
                         self.completion_tokens_used += response.usage.completion_tokens
                     return response, response.choices[0].message.content.strip()
-
+                    
             except openai.RateLimitError: #ai한테 너무 빨리, 많이 요청해서 제한 걸렸을때 예외처리
                 if attempt < MAX_RETRIES - 1:
                     time.sleep(retry_delay)
@@ -760,11 +773,46 @@ class TaskManager:
                 #print("parsed decomposed plan:\n", parsed_subtasks)
                 #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
-                # 2. [woPDDL] LLM이 직접 action sequence 생성 (도메인/PDDL/FastDownward 없이)
-                self._generate_nl_action_plans(parsed_subtasks, objects_ai)
-                print("✓ NL Action plans generated (woPDDL)")
+                precondition_subtasks = self._generate_precondition_subtasks(parsed_subtasks, domain_content, self.available_robot_skills, objects_ai)
+                self.precondition_subtasks.append(precondition_subtasks) 
+                print("✓ Precondition Decomposed Plan generated")
+                #print("Precondition Decomposed Plan:\n", precondition_subtasks)
+                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
-                # 3. action plan 기반 DAG 생성
+                for item in precondition_subtasks:
+                    sid = item.get("subtask_id", -1)
+                    title = item.get("subtask_title", "untitled")
+                    text = item.get("pre_goal_text", "")
+
+                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+                    filename = f"pre_{sid:02d}_{safe_title}.txt"   # 확장자 txt 추천 (PDDL problem이 아니라서)
+
+                    out_path = os.path.join(self.file_processor.precondition_subtasks_path, filename)
+                    self.file_processor.write_file(out_path, text)
+
+                # 2. 서브테스크에 대한 pddl problem 정의
+                subtask_pddl_problems = self._generate_subtask_pddl_problems(precondition_subtasks, domain_content, self.available_robot_skills, objects_ai)
+                self.subtask_pddl_problems.append(subtask_pddl_problems)
+
+                print("✓ PDDL problems generated")
+                #print("PDDL problems plan:\n", subtask_pddl_problems)
+                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
+                for item in subtask_pddl_problems:
+                    sid = item["subtask_id"]
+                    title = item["subtask_title"]
+                    pddl_text = item["problem_text"]
+
+                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+                    filename = f"subtask_{sid:02d}_{safe_title}.pddl"
+
+                    out_path = os.path.join(self.file_processor.subtask_pddl_problems_path, filename)
+                    self.file_processor.write_file(out_path, pddl_text)
+
+                # 3. FastDownward 돌려서, pddl plan 생성
+                validated_plan = self._validate_and_plan()
+
+                # 4. pddl plan기반 DAG 생성
                 self.generate_dag() #DAG 생성 (병렬성 분석)
 
                 # 5a. 시뮬레이터에서 로봇 스폰 좌표 + 오브젝트 좌표 가져오기 (거리 기반 LP용)
@@ -1513,237 +1561,6 @@ class TaskManager:
         except Exception as e:
             raise PDDLError(f"Error generating subtask PDDL problems: {str(e)}") from e
 
-    # ------------------------------------------------------------------ #
-    # [woPDDL] PDDL 없이 LLM이 직접 action sequence 생성                   #
-    # ------------------------------------------------------------------ #
-
-    @staticmethod
-    def _format_objects_with_pddl_names(objects_ai) -> str:
-        """
-        objects_ai 리스트를 PDDL 스타일 이름(타입+카운팅)으로 변환하여 문자열로 반환.
-        LLM이 fork1, drawer2 같은 정확한 오브젝트 이름을 알 수 있도록 함.
-        예: fork1 (Fork) - location: Drawer, pos: (x=1.00, y=0.50, z=2.00)
-        """
-        if not objects_ai or isinstance(objects_ai, str):
-            return str(objects_ai)
-        type_counter: Dict[str, int] = {}
-        lines = []
-        for obj in objects_ai:
-            obj_type = obj.get("name", "Unknown")
-            type_counter[obj_type] = type_counter.get(obj_type, 0) + 1
-            pddl_name = f"{obj_type.lower()}{type_counter[obj_type]}"
-            locs = ", ".join(obj.get("locations", ["unknown"]))
-            p = obj.get("position", {})
-            lines.append(
-                f"{pddl_name} ({obj_type}) - location: {locs}, "
-                f"pos: (x={p.get('x', 0):.2f}, y={p.get('y', 0):.2f}, z={p.get('z', 0):.2f})"
-            )
-        return "\n".join(lines)
-
-    def _generate_nl_action_plans(self, parsed_subtasks: List[Dict[str, Any]], objects_ai: str) -> None:
-        """
-        [woPDDL ablation] PDDL 도메인/solver 없이 LLM이 직접 action sequence를 생성.
-        각 subtask에 대해 available skills + objects만을 참조하여 action list를 생성하고
-        subtask_pddl_plans/subtask_XX_title_actions.txt 에 저장 (executor 호환 포맷).
-        """
-        plans_dir = self.file_processor.subtask_pddl_plans_path
-
-        action_format_example = (
-            "gotoobject robot1 fork1 (1)\n"
-            "pickupobject robot1 fork1 table1 (1)\n"
-            "gotoobject robot1 drawer1 (1)\n"
-            "openobject robot1 drawer1 (1)\n"
-            "drophandobject robot1 fork1 drawer1 (1)\n"
-            "closeobject robot1 drawer1 (1)"
-        )
-
-        objects_ai_formatted = self._format_objects_with_pddl_names(
-            getattr(self, "objects_ai_raw", None) or objects_ai
-        )
-
-        print(objects_ai_formatted)
-
-        for st in parsed_subtasks:
-            sub_id = st.get("id")
-            title = st.get("title", "").strip()
-            st_skills = st.get("skills", [])
-            st_objects = st.get("objects", [])
-
-            prompt = (
-                "You are a robot action planner.\n"
-                "Generate a minimal sequence of robot actions to complete the given subtask.\n\n"
-                f"AVAILABLE ACTIONS (use ONLY these exact names, lowercase):\n{st_skills}\n\n"
-                "ALL OBJECTS IN THE ENVIRONMENT (use these exact names in your plan):\n"
-                "Format: pddl_name (ObjectType) - location: ..., pos: ...\n"
-                f"{objects_ai_formatted}\n\n"
-                f"OBJECTS RELEVANT TO THIS SUBTASK:\n{st_objects}\n\n"
-                f"SUBTASK: {title}\n\n"
-                "OUTPUT FORMAT RULES:\n"
-                "- One action per line\n"
-                "- Use lowercase action names\n"
-                "- Always use 'robot1' as the robot name\n"
-                "- Append ' (1)' at the end of each line\n"
-                "- No explanations, no markdown, no numbering\n\n"
-                "EXAMPLE OUTPUT:\n"
-                f"{action_format_example}\n\n"
-                "Now generate the action sequence for the subtask above:"
-            )
-
-            text = ""
-            try:
-                if "gpt" not in self.gpt_version:
-                    _, text = self.llm.query_model(prompt, self.gpt_version, max_tokens=800, stop=["def"], frequency_penalty=0.0)
-                else:
-                    messages = [{"role": "user", "content": prompt}]
-                    _, text = self.llm.query_model(messages, self.gpt_version, max_tokens=800, frequency_penalty=0.0)
-            except Exception as e:
-                print(f"  Warning: NL action plan generation failed for subtask {sub_id}: {e}")
-
-            # 액션 라인 파싱: actionname으로 시작하는 줄만 추출
-            action_lines = []
-            action_pattern = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*\s+\S+')
-            for line in text.splitlines():
-                line = line.strip()
-                # 번호 제거 ("1. ", "1) " 등)
-                line = re.sub(r'^\d+[\.\)]\s*', '', line)
-                # 마크다운 코드블록 제거
-                if line.startswith('```') or line.startswith('#'):
-                    continue
-                if action_pattern.match(line):
-                    # 말미에 (1) 없으면 추가
-                    if not re.search(r'\(\d+\)\s*$', line):
-                        line = line + " (1)"
-                    action_lines.append(line)
-
-            safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-            filename = f"subtask_{sub_id:02d}_{safe_title}_actions.txt"
-            out_path = os.path.join(plans_dir, filename)
-            self.file_processor.write_file(out_path, "\n".join(action_lines))
-            print(f"  Subtask {sub_id}: {len(action_lines)} actions → {filename}")
-
-    def _regenerate_nl_action_plans_for_replan(
-        self,
-        redecomposed_subtasks: List[Dict[str, Any]],
-        live_objects: str,
-        context,
-        success_effects_text: str = "",
-        failed_progress_text: str = "",
-        local_env_text: str = "",
-    ) -> Optional[Dict[int, List[str]]]:
-        """
-        [woPDDL ablation] 재계획 시 PDDL 없이 LLM이 직접 새 action sequence를 생성.
-        실패 컨텍스트(완료 액션, 환경 상태, 성공 효과)를 자연어로 주입.
-        반환: {subtask_id: [action, ...]} 또는 빈 dict(실패)
-        """
-        plans_dir = self.file_processor.subtask_pddl_plans_path
-
-        action_format_example = (
-            "gotoobject robot1 fork1 (1)\n"
-            "pickupobject robot1 fork1 table1 (1)\n"
-            "gotoobject robot1 drawer1 (1)\n"
-            "openobject robot1 drawer1 (1)\n"
-            "drophandobject robot1 fork1 drawer1 (1)\n"
-            "closeobject robot1 drawer1 (1)"
-        )
-
-        new_plans: Dict[int, List[str]] = {}
-
-        for st in redecomposed_subtasks:
-            sub_id = st.get("id")
-            title = st.get("title", "").strip()
-            st_skills = st.get("skills", [])
-            st_objects = st.get("objects", [])
-            is_failed = (sub_id == getattr(context, "failed_subtask_id", None))
-
-            prompt = (
-                "You are a robot action replanner.\n"
-                "A previous action plan failed. Generate a corrected action sequence.\n\n"
-            )
-
-            if is_failed:
-                prompt += (
-                    "## Failure Information\n"
-                    f"- Failed subtask: {title}\n"
-                    f"- Failure reason: {getattr(context, 'failure_reason', '(unknown)')}\n"
-                    f"- Actions completed before failure (= current robot state):\n"
-                    f"{failed_progress_text if failed_progress_text else '  (none)'}\n\n"
-                    "NOTE: The completed actions above represent the robot's CURRENT STATE. "
-                    "Do NOT repeat actions whose effects are already achieved.\n\n"
-                )
-
-            if success_effects_text:
-                prompt += (
-                    "## Already Achieved (from successfully completed subtasks — DO NOT REPEAT)\n"
-                    f"{success_effects_text}\n\n"
-                )
-
-            if local_env_text:
-                prompt += f"## Current Environment State\n{local_env_text}\n\n"
-
-            live_objects_formatted = self._format_objects_with_pddl_names(live_objects)
-            prompt += (
-                f"AVAILABLE ACTIONS (use ONLY these exact names, lowercase):\n{st_skills}\n\n"
-                "ALL OBJECTS IN THE ENVIRONMENT (use these exact names in your plan):\n"
-                "Format: pddl_name (ObjectType) - location: ..., pos: ...\n"
-                f"{live_objects_formatted}\n\n"
-                f"OBJECTS RELEVANT TO THIS SUBTASK:\n{st_objects}\n\n"
-                f"SUBTASK TO REPLAN: {title}\n\n"
-                "OUTPUT FORMAT RULES:\n"
-                "- One action per line\n"
-                "- Use lowercase action names\n"
-                "- Always use 'robot1' as the robot name\n"
-                "- Append ' (1)' at the end of each line\n"
-                "- No explanations, no markdown, no numbering\n\n"
-                "EXAMPLE OUTPUT:\n"
-                f"{action_format_example}\n\n"
-                "Now generate the corrected action sequence:"
-            )
-
-            text = ""
-            try:
-                if "gpt" not in self.gpt_version:
-                    _, text = self.llm.query_model(prompt, self.gpt_version, max_tokens=800, stop=["def"], frequency_penalty=0.0)
-                else:
-                    messages = [{"role": "user", "content": prompt}]
-                    _, text = self.llm.query_model(messages, self.gpt_version, max_tokens=800, frequency_penalty=0.0)
-            except Exception as e:
-                print(f"  Warning: NL replan generation failed for subtask {sub_id}: {e}")
-
-            action_lines = []
-            action_pattern = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*\s+\S+')
-            for line in text.splitlines():
-                line = line.strip()
-                line = re.sub(r'^\d+[\.\)]\s*', '', line)
-                if line.startswith('```') or line.startswith('#'):
-                    continue
-                if action_pattern.match(line):
-                    if not re.search(r'\(\d+\)\s*$', line):
-                        line = line + " (1)"
-                    action_lines.append(line)
-
-            if not action_lines:
-                print(f"    Subtask {sub_id}: ✗ No actions generated")
-                continue
-
-            # 기존 파일 정리 후 저장
-            prefix = f"subtask_{sub_id:02d}_"
-            for old_f in os.listdir(plans_dir):
-                if old_f.startswith(prefix) and old_f.endswith("_actions.txt"):
-                    try:
-                        os.remove(os.path.join(plans_dir, old_f))
-                    except Exception:
-                        pass
-
-            safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-            filename = f"subtask_{sub_id:02d}_{safe_title}_REPLAN_actions.txt"
-            out_path = os.path.join(plans_dir, filename)
-            self.file_processor.write_file(out_path, "\n".join(action_lines))
-            print(f"    Subtask {sub_id}: ✓ {len(action_lines)} actions → {filename}")
-
-            new_plans[sub_id] = action_lines
-
-        return new_plans
-
     def _generate_reprecondition_subtasks(self, parsed_subtasks: List[Dict[str, Any]], domain_content: str, robots: List[dict], objects_ai: str, context=None, success_effects_text: str = "", local_env_text: str = "", original_task: str = "", executor=None) -> List[Dict[str, Any]]:
         """
         서브태스크 리스트를 입력받아, 각 서브태스크별로 LLM을 호출해 PDDL problem을 위한 precondition과 goal을 추가해 반환해주는 함수
@@ -2007,7 +1824,6 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
-                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -2166,7 +1982,6 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
-                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -2966,11 +2781,14 @@ class TaskManager:
                 self._fb_log_line("No tasks to redecompose")
                 return None
             
+            problems_dir = self.file_processor.subtask_pddl_problems_path
+
             # 분해 전 원본 task description (재계획 시 LLM에 전달)
             original_task = " / ".join(getattr(self, "test_tasks", None) or ["(unknown task)"])
             
             # 그룹 내 subtask들의 완료된 액션과 각 액션의 effect를 순서대로 구성
             # 액션명 + effect를 쌍으로 보여줘야 LLM이 현재 상태를 올바르게 추론 가능
+            action_effects_map = load_subtask_action_effects(self.base_path)
             completed_acts_by_sid = context.completed_actions_by_subtask  # subtask_id -> completed_actions
             achieved_lines = []
             failed_progress_lines = []
@@ -2978,7 +2796,12 @@ class TaskManager:
                 acts = completed_acts_by_sid.get(sid) or []
                 if not acts:
                     continue
-                step_lines = [f"    {i+1}. {act}" for i, act in enumerate(acts)]
+                per_action_effects = action_effects_map.get(sid, [])
+                step_lines = []
+                for i, act in enumerate(acts):
+                    effs = per_action_effects[i] if i < len(per_action_effects) else []
+                    eff_str = "; ".join(effs) if effs else "(no effects recorded)"
+                    step_lines.append(f"    {i+1}. {act} → {eff_str}")
                 entry = f"- Subtask {sid}:\n" + "\n".join(step_lines)
                 if sid == context.failed_subtask_id:
                     failed_progress_lines.append(entry)  # 실패 subtask의 partial progress → 현재 로봇 상태
@@ -2988,14 +2811,41 @@ class TaskManager:
             failed_progress_text = "\n".join(failed_progress_lines) if failed_progress_lines else ""
 
 
-            # [woPDDL] parsed_subtasks에서 서브태스크별 오브젝트 파싱 (PDDL 파일 불필요)
-            _parsed_map = {st["id"]: st for st in (getattr(self, "parsed_subtasks", None) or [])}
-            subtask_robots = {}   # sid -> [robot_name, ...]  (woPDDL에서는 항상 빈 리스트, task_robot_ids로 커버)
+            # PDDL :objects 섹션에서 서브태스크별 로봇/오브젝트 파싱 (1회씩)
+            subtask_robots = {}   # sid -> [robot_name, ...]
             subtask_objects = {}  # sid -> [obj_name, ...]
             for sid in tasks_to_replan:
-                st_info = _parsed_map.get(sid, {})
-                subtask_robots[sid] = []
-                subtask_objects[sid] = [str(o) for o in st_info.get("objects", [])]
+                pddl_fname = None
+                if os.path.exists(problems_dir):
+                    for fname in sorted(os.listdir(problems_dir), reverse=True):
+                        if fname.startswith(f"subtask_{sid:02d}_") and fname.endswith(".pddl"):
+                            pddl_fname = fname
+                            break
+                robots, objects = [], []
+                if pddl_fname:
+                    try:
+                        with open(os.path.join(problems_dir, pddl_fname), "r") as f:
+                            pddl_lines = f.readlines()
+                        section, depth = None, 0
+                        for line in pddl_lines:
+                            s = line.strip()
+                            if section is None:
+                                if s.startswith("(:objects"):
+                                    section, depth = "objects", s.count("(") - s.count(")")
+                            else:
+                                depth += s.count("(") - s.count(")")
+                                if depth <= 0:
+                                    break
+                                if " - robot" in s:
+                                    robots.append(s.split(" - ")[0].strip())
+                                elif " - " in s:
+                                    obj_name = s.split(" - ")[0].strip()
+                                    if obj_name:
+                                        objects.append(obj_name)
+                    except Exception:
+                        pass
+                subtask_robots[sid] = robots
+                subtask_objects[sid] = objects
 
             # 실제 물리 로봇 ID 목록 (task_robot_ids 우선, 없으면 PDDL 파싱 fallback)
             # all_robots는 PDDL :objects에서 파싱한 이름("robot1")만 담겨 물리 로봇 전체를 커버 못함.
@@ -3106,6 +2956,14 @@ class TaskManager:
 
             local_env_text = "\n".join(local_env_lines)
 
+            # 도메인 로드
+            domain_path = os.path.join(self.resources_path, "allactionrobot.pddl")
+            try:
+                domain_content = self.file_processor.read_file(domain_path)
+            except Exception as e:
+                print(f"  ERROR: Could not read domain: {e}")
+                return None
+            
             # decomposition prompt file 불러오기
             decompose_prompt_path = os.path.join(self.base_path, "data", "pythonic_plans", f"chaerin_pddl_train_redecom.py")
             decompose_prompt = self.file_processor.read_file(decompose_prompt_path)
@@ -3236,25 +3094,155 @@ class TaskManager:
                 return {}
             
             print(f"  Redecomposed into {len(redecomposed_subtasks)} new subtasks")
+            
+            # Precondition 및 PDDL Problem 생성
+            #print("  Generating preconditions and PDDL problems...")
+            try:
+                # Precondition 생성 (성공 effects를 초기 상태로 반영)
+                precondition_subtasks = self._generate_reprecondition_subtasks(
+                    redecomposed_subtasks,
+                    domain_content,
+                    self.available_robot_skills,
+                    live_objects,
+                    context=context,
+                    success_effects_text=success_effects_text,
+                    local_env_text=local_env_text,
+                    original_task=original_task,
+                    executor=executor,
+                )
 
-            # [woPDDL] PDDL 없이 LLM이 직접 새 action sequence 생성
-            new_plans = self._regenerate_nl_action_plans_for_replan(
-                redecomposed_subtasks=redecomposed_subtasks,
-                live_objects=live_objects,
-                context=context,
-                success_effects_text=success_effects_text,
-                failed_progress_text=failed_progress_text,
-                local_env_text=local_env_text,
-            )
 
+                # 성공 effects를 초기 상태에 명시적으로 추가
+                if success_effects_text:
+                    for item in precondition_subtasks:
+                        pre_text = item.get("pre_goal_text", "")
+                        # precondition 텍스트에 성공 effects 주입
+                        enhanced_pre = f"# Already Achieved (from successful subtasks):\n{success_effects_text}\n\n{pre_text}"
+                        item["pre_goal_text"] = enhanced_pre
+
+                # PDDL Problem 생성: executor를 context에 attach해서 receptacle 정보 접근
+                if not hasattr(context, 'executor'):
+                    context.executor = executor
+                subtask_pddl_problems = self._regenerate_subtask_pddl_problems(
+                    precondition_subtasks,
+                    domain_content,
+                    self.available_robot_skills,
+                    live_objects,
+                    context=context,
+                )
+                
+            except Exception as e:
+                print(f"  ERROR: Failed to generate PDDL: {e}")
+                import traceback
+                traceback.print_exc()
+                return None
+            
+            # 파일 저장
+            print("  Saving generated files...")
+            try:
+                for item in precondition_subtasks:
+                    sid = item.get("subtask_id", -1)
+                    title = item.get("subtask_title", "untitled")
+                    text = item.get("pre_goal_text", "")
+
+                    # 같은 subtask_id의 기존 precondition 파일 제거 (중복 방지)
+                    precond_dir = self.file_processor.precondition_subtasks_path
+                    for old_f in os.listdir(precond_dir):
+                        if old_f.startswith(f"pre_{sid:02d}_") and old_f.endswith(".txt"):
+                            try:
+                                os.remove(os.path.join(precond_dir, old_f))
+                            except Exception:
+                                pass
+
+                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+                    filename = f"pre_{sid:02d}_{safe_title}_REPLAN.txt"
+                    out_path = os.path.join(precond_dir, filename)
+                    self.file_processor.write_file(out_path, text)
+
+                for item in subtask_pddl_problems:
+                    sid = item["subtask_id"]
+                    title = item["subtask_title"]
+                    pddl_text = item["problem_text"]
+
+                    # 같은 subtask_id의 기존 pddl problem 파일 제거 (중복 방지)
+                    for old_f in os.listdir(problems_dir):
+                        if old_f.startswith(f"subtask_{sid:02d}_") and old_f.endswith(".pddl"):
+                            try:
+                                os.remove(os.path.join(problems_dir, old_f))
+                            except Exception:
+                                pass
+
+                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+                    filename = f"subtask_{sid:02d}_{safe_title}_REPLAN.pddl"
+                    out_path = os.path.join(problems_dir, filename)
+                    self.file_processor.write_file(out_path, pddl_text)
+            except Exception as e:
+                print(f"  ERROR: Failed to save files: {e}")
+                return None
+
+            # Validation
+            print("  Validating regenerated PDDL problems (replan)...")
+            try:
+                self._run_replan_validator(subtask_pddl_problems, precondition_subtasks, domain_content)
+            except Exception as e:
+                print(f"  Warning: PDDL validation step failed: {e}")
+                import traceback
+                traceback.print_exc()
+
+            # 플래너 실행하여 액션 생성
+            print("  Running planner for new subtasks...")
+            new_plans: Dict[int, List[str]] = {}
+
+            for item in subtask_pddl_problems:
+                sid = item["subtask_id"]
+                plans_dir = self.file_processor.subtask_pddl_plans_path
+                prefix = f"subtask_{sid:02d}_"
+                # 동일 sid의 과거 action 파일 제거 (stale/중복 방지)
+                for old_f in os.listdir(plans_dir):
+                    if old_f.startswith(prefix) and old_f.endswith("_actions.txt"):
+                        try:
+                            os.remove(os.path.join(plans_dir, old_f))
+                        except Exception:
+                            pass
+
+                ok, plan_actions = self.run_planner_for_subtask_id(sid)
+
+                if ok and plan_actions:
+                    new_plans[sid] = plan_actions
+                    print(f"    Subtask {sid}: ✓ {len(plan_actions)} actions")
+                    # [Issue 2 Fix] REPLAN 액션 파일이 생성됐으면 같은 subtask_id의 원본 파일 삭제
+                    plans_dir = self.file_processor.subtask_pddl_plans_path
+                    prefix = f"subtask_{sid:02d}_"
+                    for old_f in os.listdir(plans_dir):
+                        if (old_f.startswith(prefix)
+                                and old_f.endswith("_actions.txt")
+                                and "_REPLAN" not in old_f):
+                            try:
+                                os.remove(os.path.join(plans_dir, old_f))
+                                print(f"  [Cleanup] Removed duplicate original: {old_f}")
+                            except Exception:
+                                pass
+                else:
+                    # planner 실패 시 생성된 빈 파일 정리
+                    for old_f in os.listdir(plans_dir):
+                        if not (old_f.startswith(prefix) and old_f.endswith("_actions.txt")):
+                            continue
+                        fpath = os.path.join(plans_dir, old_f)
+                        try:
+                            if os.path.getsize(fpath) == 0:
+                                os.remove(fpath)
+                        except Exception:
+                            pass
+                    print(f"    Subtask {sid}: ✗ Planning failed")
+            
             if not new_plans:
                 print("  ERROR: No valid plans generated")
                 return None
-
+            
             print(f"\n  ✓ Successfully generated {len(new_plans)} new plans")
             print(f"{'='*60}\n")
             return new_plans
-
+        
         return decomposition_callback
     
     def create_partial_replanner(
@@ -4032,9 +4020,7 @@ def main():
 
             print(f"\n----Test set tasks----\n{test_tasks}\nTotal: {len(test_tasks)} tasks\n")
 
-            objects_ai_raw = PDDLUtils.get_ai2_thor_objects(floor_plan_num, task_description=task_str)
-            objects_ai = f"\n\nobjects = {objects_ai_raw}"
-            task_manager.objects_ai_raw = objects_ai_raw
+            objects_ai = f"\n\nobjects = {PDDLUtils.get_ai2_thor_objects(floor_plan_num, task_description=task_str)}"
 
             task_manager.process_tasks(test_tasks, robots_test_tasks, objects_ai, floor_plan=floor_plan_num,
                 run_with_feedback=getattr(args, "run_with_feedback", False),

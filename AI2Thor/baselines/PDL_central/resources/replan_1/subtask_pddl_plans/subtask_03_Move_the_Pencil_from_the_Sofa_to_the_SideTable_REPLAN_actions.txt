@@ -1,4 +1,0 @@
-gotoobject robot1 pencil (1)
-pickupobject robot1 pencil sofa1 (1)
-gotoobject robot1 armchair2 (1)
-drophandobject robot1 pencil armchair2 (1)

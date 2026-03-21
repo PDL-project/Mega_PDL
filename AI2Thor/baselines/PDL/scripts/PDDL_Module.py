@@ -145,10 +145,22 @@ class PDDLUtils:
 
             objects_ai = []
 
+            # 같은 타입이 여러 개일 때 Fridge1, Fridge2 식으로 구분하기 위해 타입별 카운트
+            from collections import Counter
+            type_counts = Counter(obj["objectType"] for obj in controller.last_event.metadata["objects"])
+            type_index = {}  # 타입별 현재 인덱스 추적
+
             # 마지막 이벤트의 metadata에서 objects 목록을 순회
             for obj in controller.last_event.metadata["objects"]:
-                name = obj["objectType"]
+                obj_type = obj["objectType"]
                 mass = obj.get("mass", 0.0)
+
+                # 같은 타입이 2개 이상이면 Fridge1, Fridge2 식으로 번호 부여
+                if type_counts[obj_type] > 1:
+                    type_index[obj_type] = type_index.get(obj_type, 0) + 1
+                    name = f"{obj_type}{type_index[obj_type]}"
+                else:
+                    name = obj_type
 
                 # parentReceptacles: 현재 오브젝트가 어떤 receptacle(서랍/선반/테이블 등) 위/안에 있는지 정보
                 parents = obj.get("parentReceptacles")

@@ -37,15 +37,17 @@ import actions # resources/actions.py (로봇 액션 정의 등)
 import robots  # resources/robots.py (로봇 스킬/질량 정보 등)
 
 from DAG_Module import DAGGenerator # plan 기반 DAG(병렬성) 생성 모듈
-from LP_Module import assign_subtasks_llm
+from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
 
 from MultiRobotExecutor import MultiRobotExecutor, SubTaskExecutionResult, _TASK_NAME_MAP, _TASK_NAME_MAP_LOWER # 멀티 로봇 실행 코드 생성/실행 관리
 from AI2Thor.Tasks.get_scene_init import get_scene_initializer  # preinit용
 from auto_config import AutoConfig # config 로딩/세팅 자동화
 
 from FeedbackLoopModule import (
+    load_subtask_dag_edges,
     load_subtask_precond_effects,
     load_subtask_action_effects,
+    load_subtask_dag_parallel_groups,
     PartialReplanner,
     GroupAgent,
     subtask_has_dependency,
@@ -143,10 +145,22 @@ class PDDLUtils:
 
             objects_ai = []
 
+            # 같은 타입이 여러 개일 때 Fridge1, Fridge2 식으로 구분하기 위해 타입별 카운트
+            from collections import Counter
+            type_counts = Counter(obj["objectType"] for obj in controller.last_event.metadata["objects"])
+            type_index = {}  # 타입별 현재 인덱스 추적
+
             # 마지막 이벤트의 metadata에서 objects 목록을 순회
             for obj in controller.last_event.metadata["objects"]:
-                name = obj["objectType"]
+                obj_type = obj["objectType"]
                 mass = obj.get("mass", 0.0)
+
+                # 같은 타입이 2개 이상이면 Fridge1, Fridge2 식으로 번호 부여
+                if type_counts[obj_type] > 1:
+                    type_index[obj_type] = type_index.get(obj_type, 0) + 1
+                    name = f"{obj_type}{type_index[obj_type]}"
+                else:
+                    name = obj_type
 
                 # parentReceptacles: 현재 오브젝트가 어떤 receptacle(서랍/선반/테이블 등) 위/안에 있는지 정보
                 parents = obj.get("parentReceptacles")
@@ -350,7 +364,7 @@ class LLMHandler:
     
     def __init__(self, api_key_file: str):
         """LLMHandle 초기설정
-        
+
         Args:
             api_key_file (str): api_key 있는 파일
         """
@@ -358,7 +372,7 @@ class LLMHandler:
         self.total_tokens_used: int = 0       # 총 토큰 (prompt + completion)
         self.prompt_tokens_used: int = 0      # 입력 토큰
         self.completion_tokens_used: int = 0  # 출력 토큰
-
+    
     def setup_api(self, api_key_file: str) -> None:
         """
         OpenAI API key 파일을 읽어 openai.api_key에 설정한다.
@@ -432,12 +446,12 @@ class LLMHandler:
             try:
                 if "gpt" not in gpt_version: #모델명에 gpt가 없을경우 -> completion 스타일로 생성
                     response = openai.completions.create(
-                        model=gpt_version, 
-                        prompt=prompt, 
-                        max_tokens=max_tokens, 
-                        temperature=temperature, 
-                        stop=stop, 
-                        logprobs=logprobs, 
+                        model=gpt_version,
+                        prompt=prompt,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        stop=stop,
+                        logprobs=logprobs,
                         frequency_penalty=frequency_penalty
                     )
                     if hasattr(response, 'usage') and response.usage:
@@ -798,11 +812,8 @@ class TaskManager:
                 # 3. FastDownward 돌려서, pddl plan 생성
                 validated_plan = self._validate_and_plan()
 
-                # 4. [woDAG] DAG 생성 없음 - 모든 subtask 순차 실행
-                self.subtask_dag = None
-                _seq_sids = sorted([st["id"] for st in parsed_subtasks])
-                _sequential_parallel_groups = {sid: [sid] for sid in _seq_sids}
-                print("✓ Sequential groups assigned (woDAG)")
+                # 4. pddl plan기반 DAG 생성
+                self.generate_dag() #DAG 생성 (병렬성 분석)
 
                 # 5a. 시뮬레이터에서 로봇 스폰 좌표 + 오브젝트 좌표 가져오기 (거리 기반 LP용)
                 robot_positions = None
@@ -817,18 +828,25 @@ class TaskManager:
                 # 5b. 작업할당
                 plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
 
+                binding_pairs = binding_pairs_from_subtask_dag(self.subtask_dag)
+
+                # parallel_groups를 LP에 전달하여 같은 그룹 내 분산 배정 유도
+                pg_for_lp = None
+                if self.subtask_dag and hasattr(self.subtask_dag, 'parallel_groups'):
+                    pg_for_lp = {str(k): v for k, v in self.subtask_dag.parallel_groups.items()}
+
                 assignment = assign_subtasks_llm(
-                    subtasks=parsed_subtasks,
-                    robot_ids=task_robot_ids,
-                    robots_db=robots.robots,
+                    subtasks=parsed_subtasks,  # _decomposed_plan_to_subtasks() 결과 (id, skills 들어있어야 함)
+                    robot_ids=task_robot_ids,  # 예: [1,2,3]
+                    robots_db=robots.robots,   # robots.py의 robots 리스트
                     plan_actions_by_subtask=plan_actions_by_sid,
-                    objects_ai=self.objects_ai,
+                    objects_ai=self.objects_ai,  # 저장해둔 objects_ai 문자열/리스트
                     llm=self.llm,
                     gpt_version=self.gpt_version,
-                    binding_pairs=[],
+                    binding_pairs=binding_pairs,
                     robot_positions=robot_positions,
                     object_positions=object_positions,
-                    parallel_groups=None,
+                    parallel_groups=pg_for_lp,
                 )
 
                 # 작업 할당 결과 출력
@@ -871,8 +889,6 @@ class TaskManager:
                     executor.record_video = True
                     executor.video_output_path = _vid_dir
                     #print(f"[Record] Video output → {_vid_dir}")
-                # [woDAG] run() 이전에 설정해야 load_plan_actions()가 올바른 group으로 로드함
-                executor.parallel_groups = _sequential_parallel_groups
                 execution_code = executor.run(
                     task_idx=task_idx,
                     task_name="task",
@@ -948,8 +964,9 @@ class TaskManager:
                             return bool(success)
                         return False
 
-                    # [woDAG] DAG 없음 - 각 subtask가 독립 그룹 (엣지 없음)
-                    _dag_edges_fb = []
+                    # DAG 엣지 기반 연결 컴포넌트로 그룹 구성
+                    # (엣지로 연결된 서브태스크 = 한 그룹, 고립된 서브태스크 = 단독 그룹)
+                    _dag_edges_fb = load_subtask_dag_edges(self.base_path, task_name_fb)
                     _all_sids_fb = [sid for sids in executor.parallel_groups.values() for sid in sids]
                     _parent_fb = {sid: sid for sid in _all_sids_fb}
 
@@ -1807,7 +1824,6 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
-                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -1966,7 +1982,6 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
-                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -2429,8 +2444,8 @@ class TaskManager:
             # executor가 plan 파일을 읽는 경로도 versioned 폴더로 갱신
             executor.plans_path = self.file_processor.subtask_pddl_plans_path
 
-        # [woDAG] DAG 없음 - 엣지 없음
-        edges = []
+        # 현재 subtask dependency graph를 불러오기
+        edges = load_subtask_dag_edges(self.base_path, task_name)
         
         # subtask_id → group_id 역방향 맵 (pre-created agents의 메모리에서 직접 구성)
         _subtask_to_gid: Dict[int, int] = {}
@@ -3688,13 +3703,25 @@ class TaskManager:
             # 3. Plan actions 로드
             plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
             
-            # 4. [woDAG] Binding pairs 없음
-            binding_pairs = []
-
+            # 4. Binding pairs 계산
+            from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
+            
+            # subtask_dag 객체 형태로 변환 (간단한 래퍼)
+            class SubtaskDAGWrapper:
+                def __init__(self, dag_dict):
+                    self.nodes = dag_dict["nodes"]
+                    self.edges = dag_dict["edges"]
+                    self.parallel_groups = dag_dict["parallel_groups"]
+            
+            subtask_dag_obj = SubtaskDAGWrapper(integrated_dag)
+            binding_pairs = binding_pairs_from_subtask_dag(subtask_dag_obj)
+            
+            #print(f"  ✓ Computed {len(binding_pairs)} binding pairs")
+            
             # 5. 로봇/오브젝트 위치 가져오기 (거리 기반 최적화)
             robot_positions = None
             object_positions = None
-
+            
             if executor is not None and executor.controller is not None:
                 robot_positions, object_positions = executor.get_live_positions()
                 #print(f"  ✓ Robot positions (live): {robot_positions}")
@@ -3703,12 +3730,14 @@ class TaskManager:
                     floor_plan, len(task_robot_ids)
                 )
                 #print(f"  ✓ Robot positions (new scene): {robot_positions}")
-
+            
             # 6. LLM 작업 할당 실행
             import robots
 
-            # [woDAG] parallel_groups 없음
+            # parallel_groups를 LP에 전달
             pg_for_lp = None
+            if "parallel_groups" in integrated_dag:
+                pg_for_lp = {str(k): v for k, v in integrated_dag["parallel_groups"].items()}
 
             # 물건을 손에 들고 있는 로봇 → 해당 오브젝트가 포함된 서브태스크는 반드시 그 로봇에 배당
             forced_assignments: Dict[int, int] = {}

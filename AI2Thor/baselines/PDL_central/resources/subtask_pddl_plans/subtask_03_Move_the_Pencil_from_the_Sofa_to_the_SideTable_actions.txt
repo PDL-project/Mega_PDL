@@ -1,6 +1,0 @@
-gotoobject robot1 sofa (1)
-openobject robot1 sofa (1)
-gotoobject robot1 pencil (1)
-pickupobject robot1 pencil sofa (1)
-gotoobject robot1 sidetable (1)
-drophandobject robot1 pencil sidetable (1)

@@ -145,10 +145,22 @@ class PDDLUtils:
 
             objects_ai = []
 
+            # 같은 타입이 여러 개일 때 Fridge1, Fridge2 식으로 구분하기 위해 타입별 카운트
+            from collections import Counter
+            type_counts = Counter(obj["objectType"] for obj in controller.last_event.metadata["objects"])
+            type_index = {}  # 타입별 현재 인덱스 추적
+
             # 마지막 이벤트의 metadata에서 objects 목록을 순회
             for obj in controller.last_event.metadata["objects"]:
-                name = obj["objectType"]
+                obj_type = obj["objectType"]
                 mass = obj.get("mass", 0.0)
+
+                # 같은 타입이 2개 이상이면 Fridge1, Fridge2 식으로 번호 부여
+                if type_counts[obj_type] > 1:
+                    type_index[obj_type] = type_index.get(obj_type, 0) + 1
+                    name = f"{obj_type}{type_index[obj_type]}"
+                else:
+                    name = obj_type
 
                 # parentReceptacles: 현재 오브젝트가 어떤 receptacle(서랍/선반/테이블 등) 위/안에 있는지 정보
                 parents = obj.get("parentReceptacles")
@@ -352,7 +364,7 @@ class LLMHandler:
     
     def __init__(self, api_key_file: str):
         """LLMHandle 초기설정
-        
+
         Args:
             api_key_file (str): api_key 있는 파일
         """
@@ -360,7 +372,7 @@ class LLMHandler:
         self.total_tokens_used: int = 0       # 총 토큰 (prompt + completion)
         self.prompt_tokens_used: int = 0      # 입력 토큰
         self.completion_tokens_used: int = 0  # 출력 토큰
-
+    
     def setup_api(self, api_key_file: str) -> None:
         """
         OpenAI API key 파일을 읽어 openai.api_key에 설정한다.
@@ -434,12 +446,12 @@ class LLMHandler:
             try:
                 if "gpt" not in gpt_version: #모델명에 gpt가 없을경우 -> completion 스타일로 생성
                     response = openai.completions.create(
-                        model=gpt_version, 
-                        prompt=prompt, 
-                        max_tokens=max_tokens, 
-                        temperature=temperature, 
-                        stop=stop, 
-                        logprobs=logprobs, 
+                        model=gpt_version,
+                        prompt=prompt,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        stop=stop,
+                        logprobs=logprobs,
                         frequency_penalty=frequency_penalty
                     )
                     if hasattr(response, 'usage') and response.usage:
@@ -907,8 +919,15 @@ class TaskManager:
                         #print(f"[Feedback] Immediate replan triggered by subtask {sid} (retry {count+1}/{max_replan_retries})")
                         replan_retry_per_subtask[sid] = count + 1
 
-                        # [Central] 그룹 구분 없이 전체 실행 결과를 중앙에 전달
-                        current_results = dict(executor._subtask_results)
+                        current_group_sids: set = set()
+                        for _, _sids in executor.parallel_groups.items():
+                            if sid in _sids:
+                                current_group_sids = set(_sids)
+                                break
+                        current_results = {
+                            s: r for s, r in executor._subtask_results.items()
+                            if s in current_group_sids
+                        }
                         # 방금 실패한 서브태스크는 반드시 포함
                         current_results[sid] = failed_result
                         # replan 중간 동기화에서는 stale sid-effect 매핑을 피하기 위해
@@ -945,15 +964,39 @@ class TaskManager:
                             return bool(success)
                         return False
 
-                    # [Central] 단일 중앙 에이전트: 모든 서브태스크를 하나의 그룹으로 관리
-                    _all_sids_fb = sorted([sid for sids in executor.parallel_groups.values() for sid in sids])
-                    _central_agent = GroupAgent(self.llm, self.gpt_version).bind_memory(
-                        group_id=0,
-                        subtask_ids=_all_sids_fb,
-                        base_path=self.base_path,
-                        task_name=task_name_fb,
-                    )
-                    group_agents = {0: _central_agent}
+                    # DAG 엣지 기반 연결 컴포넌트로 그룹 구성
+                    # (엣지로 연결된 서브태스크 = 한 그룹, 고립된 서브태스크 = 단독 그룹)
+                    _dag_edges_fb = load_subtask_dag_edges(self.base_path, task_name_fb)
+                    _all_sids_fb = [sid for sids in executor.parallel_groups.values() for sid in sids]
+                    _parent_fb = {sid: sid for sid in _all_sids_fb}
+
+                    def _find_fb(x):
+                        while _parent_fb[x] != x:
+                            _parent_fb[x] = _parent_fb[_parent_fb[x]]
+                            x = _parent_fb[x]
+                        return x
+
+                    for _frm, _to in _dag_edges_fb:
+                        if _frm in _parent_fb and _to in _parent_fb:
+                            _ra, _rb = _find_fb(_frm), _find_fb(_to)
+                            if _ra != _rb:
+                                _parent_fb[_rb] = _ra
+
+                    _component_groups_fb: Dict[int, List[int]] = {}
+                    for _sid in _all_sids_fb:
+                        _root = _find_fb(_sid)
+                        _component_groups_fb.setdefault(_root, []).append(_sid)
+
+                    # 연결 컴포넌트별 GroupAgent 미리 생성 (실행 중 메모리 실시간 업데이트)
+                    group_agents = {
+                        gid: GroupAgent(self.llm, self.gpt_version).bind_memory(
+                            group_id=gid,
+                            subtask_ids=sorted(sids),
+                            base_path=self.base_path,
+                            task_name=task_name_fb,
+                        )
+                        for gid, sids in _component_groups_fb.items()
+                    }
 
                     results = executor.execute_in_ai2thor_with_feedback(
                         floor_plan,
@@ -1781,7 +1824,6 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
-                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -1940,7 +1982,6 @@ class TaskManager:
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
                 prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
-                prompt += "6) SINK/FAUCET: If CleanObject is needed, add a SinkBasin object with (is-sink <sink>) and a Faucet object with (is-faucet <faucet>) in :init. Set (not (faucet-on)) in :init unless faucet was already on from a previous subtask.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -2430,17 +2471,42 @@ class TaskManager:
         updated = False
         dropped_in_this_round = False
 
-        # [Central] 성공/drop되지 않은 모든 subtask를 중앙에서 한 번에 재계획
+        # 의존성 기반 replan 그룹 구성:
+        # 실패한 subtask + DAG edges로 연결된 미실행 subtask들
+        # (parallel_groups는 실행 전용, replan 그룹은 의존성 기반)
         succeeded_ids = {sid for sid, r in execution_results.items() if r.success}
         dropped_ids = getattr(executor, '_dropped_subtasks', set()) if executor else set()
 
-        def _build_dependency_group(_: int) -> List[int]:
-            """[Central] 성공하지 않은 모든 subtask를 반환 (DAG 의존성 무시)"""
-            all_exec_sids = {s for sids in executor.parallel_groups.values() for s in sids} if executor else set()
-            return sorted(
-                s for s in all_exec_sids
-                if s not in succeeded_ids and s not in dropped_ids
-            )
+        def _build_dependency_group(failed_id: int) -> List[int]:
+            """실패한 subtask에서 edges로 연결된 미실행 subtask들을 BFS로 수집"""
+            # 양방향 인접 리스트 구성 (미실행 노드만)
+            adj = {}
+            all_node_ids = set()
+            for frm, to in edges:
+                all_node_ids.add(frm)
+                all_node_ids.add(to)
+                adj.setdefault(frm, set()).add(to)
+                adj.setdefault(to, set()).add(frm)
+
+            # BFS: failed_id에서 시작하여 연결된 미실행 subtask 수집
+            group = set()
+            queue = [failed_id]
+            visited = set()
+            while queue:
+                current = queue.pop(0)
+                if current in visited:
+                    continue
+                visited.add(current)
+                # 이미 성공했거나 drop된 subtask는 그룹에 포함하지 않음 (단, failed_id 자체는 포함)
+                if current != failed_id and (current in succeeded_ids or current in dropped_ids):
+                    continue
+                group.add(current)
+                # 연결된 미실행 노드 탐색
+                for neighbor in adj.get(current, []):
+                    if neighbor not in visited and neighbor not in succeeded_ids and neighbor not in dropped_ids:
+                        queue.append(neighbor)
+
+            return sorted(group)
 
         if partial_replanner is not None:
             processed_failed = set()

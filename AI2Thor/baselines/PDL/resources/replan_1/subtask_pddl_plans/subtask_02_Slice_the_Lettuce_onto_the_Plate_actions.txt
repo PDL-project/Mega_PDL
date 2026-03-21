@@ -1,7 +1,0 @@
-gotoobject robot1 fridge (1)
-openfridge robot1 fridge (1)
-gotoobject robot1 lettuce (1)
-sliceobject robot1 lettuce fridge (1)
-pickupobject robot1 lettuce fridge (1)
-gotoobject robot1 plate (1)
-drophandobject robot1 lettuce plate (1)

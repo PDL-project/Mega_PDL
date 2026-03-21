@@ -1,0 +1,17 @@
+{
+  "tasks": [
+    {
+      "task_name": "6_put_silverware_in_drawer",
+      "task_description": "Put all the forks, spoons, butter knives, and spatulas in the drawer",
+      "task_id": 31,
+      "task_type": "transport",
+      "task_timeout": 60,
+      "task_floorplans": [
+        "FloorPlan2",
+        "FloorPlan3",
+        "FloorPlan4",
+        "FloorPlan5"
+      ]
+    }
+  ]
+}

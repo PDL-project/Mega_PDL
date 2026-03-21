@@ -1,0 +1,110 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Fork_in_Drawer1",
+      "objects": [
+        "robot1",
+        "fork",
+        "drawer1",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not holding the fork.",
+        "Drawer1 is closed.",
+        "Fork is on the countertop.",
+        "Robot1 is at the floor."
+      ],
+      "effects": [
+        "Fork is in Drawer1.",
+        "Drawer1 is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Spoon_in_Drawer1",
+      "objects": [
+        "robot1",
+        "spoon",
+        "drawer1",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the floor.",
+        "Spoon is on the countertop.",
+        "Drawer1 is on the floor.",
+        "Robot1 is close to drawer1.",
+        "Robot1 is not holding the spoon."
+      ],
+      "effects": [
+        "Spoon is in drawer1.",
+        "Robot1 is close to drawer1."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Put_the_Spatula_in_Drawer3",
+      "objects": [
+        "robot1",
+        "spatula",
+        "drawer3",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the floor.",
+        "Spatula is on the countertop.",
+        "Drawer3 is on the floor.",
+        "Robot1 is close to drawer3.",
+        "Robot1 is not holding the spatula."
+      ],
+      "effects": [
+        "Spatula is in drawer3.",
+        "Drawer3 is closed.",
+        "Robot1 is close to drawer3."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Place_the_Knife_in_Drawer2_REPLAN",
+      "objects": [
+        "robot1",
+        "knife",
+        "drawer2"
+      ],
+      "preconds": [
+        "Robot1 is at drawer2",
+        "Robot1 is holding the knife",
+        "Drawer2 is not a fridge",
+        "Robot1 is not inactive"
+      ],
+      "effects": [
+        "Knife is placed in drawer2",
+        "Robot1 is not holding the knife",
+        "Robot1 is not inactive"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both subtasks put objects into drawer1"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1,
+      3,
+      5
+    ],
+    "1": [
+      2
+    ]
+  }
+}

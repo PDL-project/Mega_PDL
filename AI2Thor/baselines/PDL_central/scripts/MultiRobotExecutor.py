@@ -62,7 +62,9 @@ _TASK_NAME_MAP = {
     "Put all school supplies in the sofa": "3_put_all_school_supplies_sofa",   # config_type3 variant
     "Move everything on the table to the sofa": "3_clear_table_to_sofa",
     "Put all kitchenware in the cardboard box": "3_put_all_kitchenware_box",
+    "Tidy up the living room by placing all items in their appropriate positions": "5_tidy_up_livingroom",
     "Clear the kitchen floor by placing items at their appropriate positions": "4_clear_floor_kitchen",
+    "Put all the forks, spoons, butter knives, and spatulas in the drawer": "6_put_silverware_in_drawer",
     "Clear the table by placing items at their appropriate positions": "4_clear_table_kitchen",
     "Clear the kitchen central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",
     "Clear the central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",  # config_type4 variant
@@ -453,7 +455,8 @@ class MultiRobotExecutor:
         #    pass
         # Scene 초기 상태 설정
         if scene_initializer is not None:
-            self.controller.last_event = scene_initializer.SceneInitializer().preinit(
+            scene_init_obj = scene_initializer.SceneInitializer()
+            self.controller.last_event = scene_init_obj.preinit(
                 self.controller.last_event, self.controller
             )
 
@@ -2543,39 +2546,25 @@ class MultiRobotExecutor:
                             position=best_rp, agentId=i, forceAction=True))
                         print(f"[Robot{rid}] No spawn pos assigned, placed at reachable ({best_rp['x']:.2f}, {best_rp['z']:.2f})")
         else:
-            # 기존 랜덤 배치 - 로봇 간 거리를 고려하여 배치
+            # 결정론적 최대거리 배치: 같은 FloorPlan → 모든 baseline 동일 스폰 보장
+            # TODO: 실험 완료 후 원래 랜덤 배치로 복원
+            rp_sorted = sorted(self.reachable_positions_,
+                               key=lambda p: (round(p['x'], 2), round(p['z'], 2)))
             used_positions = []
-            min_distance = 1.5  # 로봇들간의 최소거리
-
             for i in range(agent_count):
-                best_pos = None
-                best_min_dist = -1
-
-                # 다른 로봇과 가장 멀리 떨어진 위치를 찾기 위해 최대 50번 시도
-                for _ in range(50):
-                    candidate = random.choice(self.reachable_positions_)
-
-                    if not used_positions:
-                        best_pos = candidate
-                        break
-
-                    # 이미 배치된 모든 위치와의 최소 거리 계산
-                    min_dist_to_others = min(
-                        ((candidate["x"] - p["x"])**2 + (candidate["z"] - p["z"])**2)**0.5
-                        for p in used_positions
+                if not used_positions:
+                    best_pos = rp_sorted[max(0, len(rp_sorted) // 4)]
+                else:
+                    best_pos = max(
+                        rp_sorted,
+                        key=lambda p: min(
+                            ((p['x'] - q['x'])**2 + (p['z'] - q['z'])**2)**0.5
+                            for q in used_positions
+                        )
                     )
-
-                    if min_dist_to_others > best_min_dist:
-                        best_min_dist = min_dist_to_others
-                        best_pos = candidate
-
-                    if min_dist_to_others >= min_distance:
-                        break
-
-                if best_pos:
-                    self.controller.step(dict(action="Teleport", position=best_pos, agentId=i))
-                    used_positions.append(best_pos)
-                    print(f"[Robot{i+1}] Spawned at ({best_pos['x']:.2f}, {best_pos['z']:.2f})")
+                self.controller.step(dict(action="Teleport", position=best_pos, agentId=i))
+                used_positions.append(best_pos)
+                print(f"[Robot{i+1}] Spawned at ({best_pos['x']:.2f}, {best_pos['z']:.2f})")
 
         # 물체를 더 잘 보기 위해 카메라를 약간 아래로 조절
         for i in range(agent_count):
