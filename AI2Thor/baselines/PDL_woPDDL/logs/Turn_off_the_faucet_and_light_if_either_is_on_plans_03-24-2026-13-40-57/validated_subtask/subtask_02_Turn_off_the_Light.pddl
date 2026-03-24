@@ -1,0 +1,24 @@
+(define (problem switch-off-light)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    lightswitch - object
+    floor - object
+    kitchen - object
+  )
+
+  (:init
+    (= (total-cost) 0)
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (at-location lightswitch floor)
+    (switch-on robot1 lightswitch)
+  )
+
+  (:goal (and
+    (switch-off robot1 lightswitch)
+  ))
+
+  (:metric minimize (total-cost))
+)

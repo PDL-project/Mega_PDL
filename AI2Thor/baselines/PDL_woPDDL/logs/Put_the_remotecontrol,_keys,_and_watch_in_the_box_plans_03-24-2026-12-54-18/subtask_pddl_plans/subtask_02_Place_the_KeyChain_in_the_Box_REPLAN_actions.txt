@@ -1,0 +1,3 @@
+openobject robot1 box1 (1)
+drophandobject robot1 keychain box1 (1)
+closeobject robot1 box1 (1)

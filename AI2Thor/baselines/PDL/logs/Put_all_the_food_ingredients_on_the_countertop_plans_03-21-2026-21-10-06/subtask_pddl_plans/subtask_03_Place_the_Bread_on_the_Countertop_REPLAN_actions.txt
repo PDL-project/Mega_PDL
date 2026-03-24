@@ -1,0 +1,5 @@
+gotoobject robot1 bread (1)
+pickupobject robot1 bread floor (1)
+gotoobject robot1 drawer1 (1)
+drophandobject robot1 bread drawer1 (1)
+closeobject robot1 drawer1 (1)

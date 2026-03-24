@@ -1,0 +1,62 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot1 is holding Apple
+#2. Drawer1 is occupied
+#3. Fork is not found in the scene
+#4. Drawer2 is occupied
+
+# SubTask 2: Place the Fork in Drawer3.
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: fork(Location=floor), drawer3(Location=floor)
+
+GoToObject(robot1, fork)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 fork)
+
+PickupObject(robot1, fork, floor)
+   Preconditions:
+     (at-location fork floor)
+     (at robot1 fork)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 fork)
+     (not (at-location fork floor))
+
+GoToObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 drawer3)
+
+OpenObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer3)
+   Effects:
+     (object-open robot1 drawer3)
+
+PutObject(robot1, fork, drawer3)
+   Preconditions:
+     (holding robot1 fork)
+     (at robot1 drawer3)
+     (not (inaction robot1))
+     (not (object-close robot1 drawer3))
+   Effects:
+     (at-location fork drawer3)
+     (not (holding robot1 fork))
+
+CloseObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer3)
+     (object-open robot1 drawer3)
+   Effects:
+     (object-close robot1 drawer3)
+
+Goal condition: 
+(at-location fork drawer3)

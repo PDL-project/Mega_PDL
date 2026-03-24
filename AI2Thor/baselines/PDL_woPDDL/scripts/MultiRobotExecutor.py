@@ -238,6 +238,13 @@ class MultiRobotExecutor:
         self._task_wall_end: float = 0.0    # wall-clock makespan 계산용: 태스크 종료 시각
         # 물리적으로 불가능하여 drop된 서브태스크 (더 이상 실행하지 않음)
         self._dropped_subtasks: set = set()
+        # 재계획 한도 초과 등으로 영구 실패 처리된 서브태스크 (더 이상 실행하지 않음)
+        self._permanent_failed_subtasks: set = set()
+        # 전체 피드백 재계획 예산 초과 시 실행 루프 종료
+        self._feedback_stop_requested: bool = False
+        self._feedback_stop_reason: Optional[str] = None
+        self._global_replan_budget: Optional[int] = None
+        self._global_replan_attempts: int = 0
         # 실시간 상태 반영용 (execute_in_ai2thor_with_feedback 호출 시에만 설정)
         self._feedback_state_store: Optional[Any] = None
         # 그룹별 GroupAgent (개별 AgentMemory 포함): {group_id: GroupAgent}
@@ -798,18 +805,6 @@ class MultiRobotExecutor:
                         if err_msg != "":
                             action_success = False
                             print(f"[PutObject] Error: {err_msg}")
-                            # Auto-recovery: if receptacle closed, open then retry once
-                            if "CLOSED" in err_msg.upper():
-                                retry = act.get("retry", 0)
-                                if retry < 1:
-                                    self._enqueue_action({
-                                        'action': 'OpenObject',
-                                        'objectId': act['objectId'],
-                                        'agent_id': act['agent_id']
-                                    }, front=True)
-                                    new_act = dict(act)
-                                    new_act["retry"] = retry + 1
-                                    self._enqueue_action(new_act, front=True)
                         else:
                             self.success_exec += 1
                             self._record_agent_success(act['agent_id'])
@@ -1068,10 +1063,11 @@ class MultiRobotExecutor:
                         return True
 
         # fallback for legacy regex-style patterns
+        # re.match는 시작만 앵커링되어 "pen"이 "Pencil"에도 매칭되는 버그 방지를 위해 re.fullmatch 사용
         try:
             return bool(
-                re.match(p, object_id, re.IGNORECASE)
-                or re.match(p, object_type, re.IGNORECASE)
+                re.fullmatch(p, object_id, re.IGNORECASE)
+                or re.fullmatch(p, object_type, re.IGNORECASE)
             )
         except re.error:
             return False
@@ -2205,8 +2201,8 @@ class MultiRobotExecutor:
         atype, _, objs = self._parse_action(action_str)
 
         if atype == "gotoobject" and len(objs) >= 1:
-            # return value 체크: GoToObject 실패 시 이미 _fail_current_subtask 호출됨
-            self.GoToObject(agent_id, objs[0])
+            if self.GoToObject(agent_id, objs[0]):
+                self.success_exec += 1
 
         elif atype == "pickupobject" and len(objs) >= 1:
             if not self.GoToObject(agent_id, objs[0]):
@@ -2653,10 +2649,11 @@ class MultiRobotExecutor:
                     break
                 max_retries = 3
                 attempt = 0
+                # total_exec는 PDDL 액션 단위로 1회 카운트 (retry 제외)
+                self._subtask_exec_counts[plan.subtask_id] = self._subtask_exec_counts.get(plan.subtask_id, 0) + 1
+                self.total_exec += 1
                 while attempt < max_retries:
                     print(f"[Robot{plan.robot_id}] Action {i+1}/{len(plan.actions)}: {action}")
-                    self._subtask_exec_counts[plan.subtask_id] = self._subtask_exec_counts.get(plan.subtask_id, 0) + 1
-                    self.total_exec += 1
                     self._execute_pddl_action(agent_id, action)
                     # 액션 실행 후 실패가 발생하지 않았으면 완료 목록에 추가
                     if not self._subtask_failed.get(plan.subtask_id, False):
@@ -2836,6 +2833,10 @@ class MultiRobotExecutor:
         self._subtask_last_error = {}
         self._subtask_completed_actions = {}
         self._dropped_subtasks = set()
+        self._permanent_failed_subtasks = set()
+        self._feedback_stop_requested = False
+        self._feedback_stop_reason = None
+        self._global_replan_attempts = 0
         # 로봇별 Lock: 같은 로봇에 할당된 서브태스크는 순차 실행
         self._robot_locks: Dict[int, threading.Lock] = defaultdict(threading.Lock)
 
@@ -2880,6 +2881,9 @@ class MultiRobotExecutor:
         try:
             completed_groups = set()
             while True:
+                if self._feedback_stop_requested:
+                    print(f"[Feedback] Stop requested: {self._feedback_stop_reason or 'global replan budget exhausted'}")
+                    break
                 # 매 반복마다 groups_to_plans를 최신 상태로 재구성
                 groups_to_plans = defaultdict(list)
                 for sp in self.subtask_plans.values():
@@ -2897,6 +2901,9 @@ class MultiRobotExecutor:
                 for p in plans:
                     if p.subtask_id in self._dropped_subtasks:
                         print(f"[Subtask {p.subtask_id}] Dropped (physically impossible), skipping")
+                        continue
+                    if p.subtask_id in self._permanent_failed_subtasks:
+                        print(f"[Subtask {p.subtask_id}] Permanently failed, skipping")
                         continue
                     prev = self._subtask_results.get(p.subtask_id)
                     if prev and prev.success:
@@ -2972,6 +2979,10 @@ class MultiRobotExecutor:
 
                 print(f"[Group {gid}] Completed")
 
+                if self._feedback_stop_requested:
+                    print(f"[Feedback] Stop requested after group {gid}: {self._feedback_stop_reason or 'global replan budget exhausted'}")
+                    break
+
                 if replanned:
                     # 재계획 후 교체된 subtask_plans 기반으로 그룹 재구성 (의존성 순서 유지)
                     completed_groups.clear()
@@ -3019,6 +3030,8 @@ class MultiRobotExecutor:
                     print(f"[Checker] Missing ({len(missing)}): {missing}")
                     if self._dropped_subtasks:
                         print(f"[Checker] Dropped (physically impossible): subtask IDs {sorted(self._dropped_subtasks)}")
+                    if self._permanent_failed_subtasks:
+                        print(f"[Checker] Permanently failed: subtask IDs {sorted(self._permanent_failed_subtasks)}")
                 except Exception:
                     pass
             return dict(self._subtask_results)

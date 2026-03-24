@@ -1,0 +1,49 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 1
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Turn on StoveKnob1.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Turn on StoveKnob2.",
+      "robot": 2
+    },
+    {
+      "id": 3,
+      "title": "Turn on StoveKnob3.",
+      "robot": 3
+    },
+    {
+      "id": 4,
+      "title": "Turn on StoveKnob4.",
+      "robot": 1
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      1.0,
+      0.900999128818512,
+      1.25
+    ],
+    "2": [
+      -1.0,
+      0.900999128818512,
+      -0.75
+    ],
+    "3": [
+      -0.25,
+      0.900999128818512,
+      2.25
+    ]
+  }
+}

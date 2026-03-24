@@ -1,0 +1,73 @@
+{
+  "task_idx": 0,
+  "agent_count": 4,
+  "assignment": {
+    "1": 1,
+    "2": 3,
+    "3": 4,
+    "4": 1,
+    "5": 2,
+    "6": 2,
+    "7": 2
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "subtask_01_Place_the_Bowl_on_the_CounterTop_REPLAN",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "subtask_02_Move_the_Potato_to_the_CounterTop_REPLAN",
+      "robot": 3
+    },
+    {
+      "id": 3,
+      "title": "subtask_03_Move_the_Apple_to_the_CounterTop_REPLAN",
+      "robot": 4
+    },
+    {
+      "id": 4,
+      "title": "subtask_04_Move_the_Bread_to_the_CounterTop_REPLAN",
+      "robot": 1
+    },
+    {
+      "id": 5,
+      "title": "subtask_05_Drop_the_ButterKnife_REPLAN",
+      "robot": 2
+    },
+    {
+      "id": 6,
+      "title": "subtask_06_Locate_and_Move_the_Lettuce_to_the_CounterTop_REPLAN",
+      "robot": 2
+    },
+    {
+      "id": 7,
+      "title": "subtask_07_Locate_and_Move_the_Tomato_to_the_CounterTop_REPLAN",
+      "robot": 2
+    }
+  ],
+  "replanned": true,
+  "robot_spawn_positions": {
+    "1": [
+      -0.6140426397323608,
+      0.9009992480278015,
+      -0.6285346746444702
+    ],
+    "2": [
+      0.5345116257667542,
+      0.9009992480278015,
+      1.9175666570663452
+    ],
+    "3": [
+      0.40936702489852905,
+      0.9009992480278015,
+      -0.7151588201522827
+    ],
+    "4": [
+      0.018301814794540405,
+      0.9009992480278015,
+      -0.7881759405136108
+    ]
+  }
+}

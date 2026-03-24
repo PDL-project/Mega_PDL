@@ -1,0 +1,47 @@
+# Task Description: Put the RemoteControl on the CoffeeTable.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at remoteControl location
+#2. Robot not holding remoteControl
+
+# SubTask 3: Put the RemoteControl on the CoffeeTable.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: remoteControl(Location=SideTable2), coffeeTable(Location=Floor)
+
+GoToObject(robot1, remoteControl)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 remoteControl)
+
+PickupObject(robot1, remoteControl, SideTable2)
+   Preconditions:
+     (at-location remoteControl SideTable2)
+     (at robot1 remoteControl)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 remoteControl)
+
+GoToObject(robot1, coffeeTable)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 coffeeTable)
+
+PutObject(robot1, remoteControl, coffeeTable)
+   Preconditions:
+     (holding robot1 remoteControl)
+     (at robot1 coffeeTable)
+     (not (inaction robot1))
+   Effects:
+     (at-location remoteControl coffeeTable)
+     (not (holding robot1 remoteControl))
+
+Goal condition:
+(at-location remoteControl coffeeTable)
+
+# Task Put the RemoteControl on the CoffeeTable is done.

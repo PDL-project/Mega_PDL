@@ -1,0 +1,169 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Open_Drawer1",
+      "objects": [
+        "robot1",
+        "drawer1",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Drawer1 is close to Robot1"
+      ],
+      "effects": [
+        "Robot1 is at Drawer1",
+        "Drawer1 is open"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Open_Drawer2",
+      "objects": [
+        "robot1",
+        "drawer2",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Drawer2 is initially closed"
+      ],
+      "effects": [
+        "Robot1 is at drawer2",
+        "Drawer2 is open"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Open_Drawer4",
+      "objects": [
+        "robot1",
+        "drawer4"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Drawer4 is on the floor",
+        "Robot1 is close to Drawer4"
+      ],
+      "effects": [
+        "Robot1 is at Drawer4",
+        "Drawer4 is open"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "subtask_06_Open_Drawer6",
+      "objects": [
+        "robot1",
+        "drawer6",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Drawer6 is closed and located on the floor",
+        "Robot1 is close to drawer6"
+      ],
+      "effects": [
+        "Robot1 is at drawer6",
+        "Drawer6 is open"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "subtask_07_Open_Drawer7",
+      "objects": [
+        "robot1",
+        "drawer7",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the floor",
+        "Drawer7 is at the floor",
+        "Robot1 is close to Drawer7"
+      ],
+      "effects": [
+        "Robot1 is at Drawer7",
+        "Drawer7 is open"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "subtask_08_Open_Drawer8",
+      "objects": [
+        "robot1",
+        "drawer8",
+        "floor"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the floor",
+        "drawer8 is at the floor",
+        "robot1 is close to drawer8"
+      ],
+      "effects": [
+        "robot1 is at drawer8",
+        "drawer8 is open"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "subtask_09_Open_Drawer9",
+      "objects": [
+        "robot1",
+        "drawer9",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Drawer9 is on the floor",
+        "Robot1 is close to Drawer9"
+      ],
+      "effects": [
+        "Robot1 is at Drawer9",
+        "Drawer9 is open"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Open_Drawer3_REPLAN",
+      "objects": [
+        "robot1",
+        "drawer3",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at drawer3",
+        "Drawer3 is closed"
+      ],
+      "effects": [
+        "Drawer3 is open",
+        "Drawer3 is not close"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      7,
+      8,
+      9
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+# Task Description: Put the Laptop on the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding Laptop.
+# 2. Robot not at Laptop location.
+
+# SubTask 4: Put the Laptop on the Sofa.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Laptop(Location=DiningTable), Sofa(Location=Floor)
+
+GoToObject(robot1, Laptop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Laptop)
+
+PickupObject(robot1, Laptop, DiningTable)
+   Preconditions:
+     (at-location Laptop DiningTable)
+     (at robot1 Laptop)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Laptop)
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, Laptop, Sofa)
+   Preconditions:
+     (holding robot1 Laptop)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location Laptop Sofa)
+     (not (holding robot1 Laptop))
+
+Goal condition:
+(at-location Laptop Sofa)
+
+# Task Put the Laptop on the Sofa is done.

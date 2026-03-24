@@ -1,0 +1,75 @@
+# Task Description: Put the Apple on the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding Lettuce.
+# 2. Robot not at Lettuce location.
+
+# SubTask 1: Put the Apple on the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: apple(Location=fridge), countertop(Location=floor)
+
+GoToObject(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 fridge)
+
+OpenFridge(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 fridge)
+     (is-fridge fridge)
+   Effects:
+     (object-open robot1 fridge)
+     (fridge-open fridge)
+
+GoToObject(robot1, apple)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 apple)
+
+PickupObject(robot1, apple, fridge)
+   Preconditions:
+     (at-location apple fridge)
+     (at robot1 apple)
+     (not (inaction robot1))
+     (fridge-open fridge)
+   Effects:
+     (holding robot1 apple)
+     (not (at-location apple fridge))
+
+GoToObject(robot1, countertop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop)
+
+PutObject(robot1, apple, countertop)
+   Preconditions:
+     (holding robot1 apple)
+     (at robot1 countertop)
+     (not (inaction robot1))
+   Effects:
+     (at-location apple countertop)
+     (not (holding robot1 apple))
+
+CloseFridge(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 fridge)
+     (object-open robot1 fridge)
+     (is-fridge fridge)
+   Effects:
+     (object-close robot1 fridge)
+     (not (fridge-open fridge))
+
+Goal condition:
+(at-location apple countertop)
+(not (fridge-open fridge))
+
+# Task Put the Apple on the CounterTop is done.

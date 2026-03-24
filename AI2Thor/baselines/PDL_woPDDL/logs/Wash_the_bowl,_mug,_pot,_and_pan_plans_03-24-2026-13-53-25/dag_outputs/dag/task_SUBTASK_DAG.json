@@ -1,0 +1,80 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Wash_the_Bowl",
+      "objects": [
+        "robot1",
+        "bowl",
+        "sink",
+        "faucet",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Bowl is on the countertop",
+        "Sink is on the floor",
+        "Faucet is off",
+        "Robot1 is not holding the bowl"
+      ],
+      "effects": [
+        "Bowl is cleaned",
+        "Bowl is on the countertop",
+        "Robot1 is not holding the bowl"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Wash_the_Mug",
+      "objects": [
+        "robot1",
+        "mug",
+        "sink",
+        "faucet",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not holding the mug",
+        "Robot is at the kitchen",
+        "Mug is on the countertop",
+        "Sink is on the floor",
+        "Faucet is on"
+      ],
+      "effects": [
+        "Mug is cleaned",
+        "Mug is on the countertop",
+        "Robot is not holding the mug"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Wash_the_Pan_REPLAN",
+      "objects": [
+        "robot1",
+        "pan",
+        "sink",
+        "kitchen",
+        "robot3"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Pan is at robot3's location.",
+        "Faucet is on."
+      ],
+      "effects": [
+        "Robot1 has cleaned the pan."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      4
+    ]
+  }
+}

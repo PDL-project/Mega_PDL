@@ -1,0 +1,79 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_ButterKnife_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "butterknife",
+        "countertop2",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "ButterKnife is on the floor.",
+        "CounterTop2 is on the floor.",
+        "Robot1 is not holding the ButterKnife."
+      ],
+      "effects": [
+        "ButterKnife is on CounterTop2.",
+        "Robot1 is not holding the ButterKnife."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Bowl_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "bowl",
+        "countertop1",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Bowl is on the floor.",
+        "Countertop1 is on the floor.",
+        "Robot1 is not holding the bowl."
+      ],
+      "effects": [
+        "Bowl is on Countertop1.",
+        "Robot1 is not holding the bowl."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_Mug_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "mug",
+        "countertop3",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Mug is on the floor",
+        "Countertop3 is on the floor",
+        "Robot is not holding the mug"
+      ],
+      "effects": [
+        "Mug is on CounterTop3",
+        "Robot is not holding the mug"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3
+    ]
+  }
+}

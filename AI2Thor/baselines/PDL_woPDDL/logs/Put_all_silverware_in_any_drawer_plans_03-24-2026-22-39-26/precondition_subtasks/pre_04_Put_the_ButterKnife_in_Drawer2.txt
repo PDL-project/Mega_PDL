@@ -1,0 +1,65 @@
+# Task Description: Put the ButterKnife in Drawer2.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at ButterKnife location
+#2. Robot not holding ButterKnife
+#3. Drawer2 is initially closed
+
+# SubTask 4: Put the ButterKnife in Drawer2.
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: ButterKnife(Location=CounterTop), Drawer2(Location=Floor)
+
+GoToObject(robot1, ButterKnife)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 ButterKnife)
+
+PickupObject(robot1, ButterKnife, CounterTop)
+   Preconditions:
+     (at-location ButterKnife CounterTop)
+     (at robot1 ButterKnife)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 ButterKnife)
+
+GoToObject(robot1, Drawer2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Drawer2)
+
+OpenObject(robot1, Drawer2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 Drawer2)
+   Effects:
+     (object-open robot1 Drawer2)
+
+PutObject(robot1, ButterKnife, Drawer2)
+   Preconditions:
+     (holding robot1 ButterKnife)
+     (at robot1 Drawer2)
+     (not (inaction robot1))
+     (not (object-close robot1 Drawer2))
+   Effects:
+     (at-location ButterKnife Drawer2)
+     (not (holding robot1 ButterKnife))
+
+CloseObject(robot1, Drawer2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 Drawer2)
+     (object-open robot1 Drawer2)
+   Effects:
+     (object-close robot1 Drawer2)
+
+Goal condition:
+(at-location ButterKnife Drawer2)
+(object-close robot1 Drawer2)
+
+# Task Put all silverware in any drawer is done.

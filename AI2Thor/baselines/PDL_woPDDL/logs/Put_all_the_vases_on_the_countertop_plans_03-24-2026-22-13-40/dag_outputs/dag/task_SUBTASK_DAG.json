@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_Vase1_on_CounterTop1",
+      "objects": [
+        "robot1",
+        "vase1",
+        "shelf1",
+        "countertop1"
+      ],
+      "preconds": [
+        "Robot1 is in the kitchen",
+        "Vase1 is on shelf1",
+        "Robot1 is not holding Vase1"
+      ],
+      "effects": [
+        "Vase1 is on countertop1",
+        "Robot1 is not holding Vase1"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Place_Vase2_on_Countertop2_REPLAN",
+      "objects": [
+        "robot1",
+        "vase2",
+        "countertop2",
+        "floor"
+      ],
+      "preconds": [
+        "robot1 is holding vase2",
+        "robot1 is at the floor",
+        "countertop2 is at the floor"
+      ],
+      "effects": [
+        "vase2 is at countertop2",
+        "robot1 is not holding vase2"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ]
+  }
+}

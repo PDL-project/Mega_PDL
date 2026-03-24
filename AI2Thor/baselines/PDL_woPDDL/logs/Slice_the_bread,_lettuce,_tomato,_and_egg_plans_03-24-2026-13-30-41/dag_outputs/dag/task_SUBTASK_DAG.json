@@ -1,0 +1,143 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Slice_the_Bread",
+      "objects": [
+        "robot1",
+        "bread",
+        "butterknife",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Bread is on the countertop",
+        "Butterknife is on the countertop",
+        "Robot is not holding the bread",
+        "Robot is not holding the butterknife"
+      ],
+      "effects": [
+        "Bread is sliced",
+        "Bread is on the countertop"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Slice_the_Lettuce",
+      "objects": [
+        "robot1",
+        "lettuce",
+        "butterknife",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Lettuce is on the countertop.",
+        "Butterknife is on the countertop.",
+        "Robot1 is not holding lettuce.",
+        "Robot1 is not holding butterknife."
+      ],
+      "effects": [
+        "Lettuce is sliced.",
+        "Lettuce is on the countertop."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Slice_the_Tomato",
+      "objects": [
+        "robot1",
+        "tomato",
+        "butterknife",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Tomato is on the countertop",
+        "Butterknife is on the countertop"
+      ],
+      "effects": [
+        "Tomato is sliced"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Slice_the_Egg",
+      "objects": [
+        "robot1",
+        "egg",
+        "butterknife",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Egg is on the countertop",
+        "Robot1 is at the egg's location"
+      ],
+      "effects": [
+        "Egg is sliced",
+        "Egg is on the countertop"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Same butterknife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same butterknife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 1,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same butterknife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same butterknife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 2,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same butterknife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same butterknife object - cannot be manipulated in parallel"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ]
+  }
+}

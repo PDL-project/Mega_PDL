@@ -1,0 +1,2 @@
+gotoobject robot1 cabinet8 (1)
+closeobject robot1 cabinet8 (1)

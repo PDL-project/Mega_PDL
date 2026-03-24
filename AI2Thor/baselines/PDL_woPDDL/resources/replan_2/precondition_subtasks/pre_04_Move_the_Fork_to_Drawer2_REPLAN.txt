@@ -1,0 +1,49 @@
+# Already Achieved (from successful subtasks):
+- Subtask 1:
+    1. gotoobject robot1 apple (1) → (at robot1 apple)
+    2. pickupobject robot1 apple countertop1 (1) → (holding robot1 apple)
+    3. gotoobject robot1 bowl1 (1) → (at robot1 bowl)
+- Subtask 5:
+    1. gotoobject robot1 fridge (1) → (at robot1 lettuce)
+    2. openfridge robot1 fridge (1) → (holding robot1 lettuce)
+    3. putobjectinfridge robot1 lettuce fridge (1) → (at robot1 fridge)
+    4. closeobject robot1 fridge (1) → (at-location lettuce fridge); (not (holding robot1 lettuce)); (not (inaction robot1))
+
+# SubTask 4: Move the Fork to Drawer2.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: fork(Location=floor), drawer2(Location=floor)
+
+GoToObject(robot1, fork)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 fork)
+
+PickupObject(robot1, fork, floor)
+   Preconditions:
+     (at-location fork floor)
+     (at robot1 fork)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 fork)
+     (not (at-location fork floor))
+
+GoToObject(robot1, drawer2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 drawer2)
+
+PutObject(robot1, fork, drawer2)
+   Preconditions:
+     (holding robot1 fork)
+     (at robot1 drawer2)
+     (not (inaction robot1))
+     (not (object-close robot1 drawer2))
+   Effects:
+     (at-location fork drawer2)
+     (not (holding robot1 fork))
+     (not (inaction robot1))
+
+Goal condition:
+(at-location fork drawer2)

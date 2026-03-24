@@ -1,0 +1,73 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot2 (robot1 in PDDL) is holding ButterKnife
+#2. Lettuce is on the floor
+#3. Countertop1 is occupied
+
+# SubTask 1: Drop the ButterKnife to free up the gripper.
+    Skills Required: GoToObject, DropHandObject
+    Related Objects: ButterKnife(Location=floor), cabinet1(Location=floor)
+
+GoToObject(robot1, cabinet1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet1)
+
+DropHandObject(robot1, ButterKnife, cabinet1)
+   Preconditions:
+     (holding robot1 ButterKnife)
+     (at robot1 cabinet1)
+     (not (inaction robot1))
+     (not (is-fridge cabinet1))
+     (not (object-close robot1 cabinet1))
+   Effects:
+     (at-location ButterKnife cabinet1)
+     (not (holding robot1 ButterKnife))
+     (not (inaction robot1))
+
+# SubTask 2: Locate and Move the Lettuce to the CounterTop.
+    Skills Required: GoToObject, PickupObject, GoToObject(destination), PutObject
+    Related Objects: lettuce(Location=floor), bowl1(Location=CounterTop)
+
+GoToObject(robot1, lettuce)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 lettuce)
+
+PickupObject(robot1, lettuce, floor)
+   Preconditions:
+     (at-location lettuce floor)
+     (at robot1 lettuce)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 lettuce)
+     (not (at-location lettuce floor))
+     (not (inaction robot1))
+
+GoToObject(robot1, bowl1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 bowl1)
+
+PutObject(robot1, lettuce, bowl1)
+   Preconditions:
+     (holding robot1 lettuce)
+     (at robot1 bowl1)
+     (not (inaction robot1))
+     (not (is-fridge bowl1))
+     (not (object-close robot1 bowl1))
+   Effects:
+     (at-location lettuce bowl1)
+     (not (holding robot1 lettuce))
+     (not (inaction robot1))
+
+Goal condition: 
+(at-location lettuce bowl1)
+
+# Task Locate and Move the Lettuce to the CounterTop is done.

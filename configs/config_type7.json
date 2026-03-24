@@ -1,0 +1,17 @@
+{
+  "tasks": [
+    {
+      "task_name": "7_put_ingredients_on_counter",
+      "task_description": "Put all the food ingredients on the countertop",
+      "task_id": 41,
+      "task_type": "transport",
+      "task_timeout": 60,
+      "task_floorplans": [
+        "FloorPlan1",
+        "FloorPlan2",
+        "FloorPlan3",
+        "FloorPlan4"
+      ]
+    }
+  ]
+}

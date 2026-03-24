@@ -1,0 +1,79 @@
+# Task Description: Wash the Pan.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at pan location
+#2. Robot not holding pan
+#3. Sink is sink, and faucet initially off
+
+# SubTask 4: Wash the Pan.
+    Skills Required: GoToObject, PickupObject, CleanObject, PutObject
+    Related Objects: pan(Location=counterTop), sink(Location=floor)
+
+GoToObject(robot1, pan)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pan)
+
+PickupObject(robot1, pan, counterTop)
+   Preconditions:
+     (at-location pan counterTop)
+     (at robot1 pan)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 pan)
+
+GoToObject(robot1, sink)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sink)
+
+SwitchOn(robot1, faucet)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 faucet)
+   Effects:
+     (faucet-on)
+
+CleanObject(robot1, pan, sink)
+   Preconditions:
+     (not (inaction robot1))
+     (holding robot1 pan)
+     (at robot1 sink)
+     (is-sink sink)
+     (faucet-on)
+   Effects:
+     (cleaned robot1 pan)
+
+SwitchOff(robot1, faucet)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 faucet)
+   Effects:
+     (not (faucet-on))
+
+GoToObject(robot1, counterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 counterTop)
+
+PutObject(robot1, pan, counterTop)
+   Preconditions:
+     (holding robot1 pan)
+     (at robot1 counterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location pan counterTop)
+     (not (holding robot1 pan))
+
+Goal condition:
+(cleaned robot1 pan)
+(at-location pan counterTop)
+
+# Task Wash the bowl, mug, pot, and pan is done.

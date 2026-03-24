@@ -903,6 +903,9 @@ class TaskManager:
                     task_name_fb = "task"
                     state_store = SharedTaskStateStore(self.base_path, task_name_fb)
                     replan_retry_per_subtask = {}  # subtask_id -> retry count
+                    global_replan_budget = 6
+                    executor._global_replan_budget = global_replan_budget
+                    executor._global_replan_attempts = 0
 
                     def _on_subtask_failed(failed_result):
                         """재계획 시도 후 새 플랜 로드 여부 반환."""
@@ -911,9 +914,25 @@ class TaskManager:
                         if sid in executor._dropped_subtasks:
                             #print(f"[Feedback] Subtask {sid} already dropped, skipping replan")
                             return False
+                        if getattr(executor, "_feedback_stop_requested", False):
+                            return False
+                        if sid in getattr(executor, "_permanent_failed_subtasks", set()):
+                            return False
                         count = replan_retry_per_subtask.get(sid, 0)
                         if count >= max_replan_retries:
-                            #print(f"[Feedback] Max replan retries ({max_replan_retries}) for subtask {sid} reached, skipping replan")
+                            print(
+                                f"[Feedback] Max replan retries ({max_replan_retries}) reached for subtask {sid}; "
+                                "marking as permanently failed"
+                            )
+                            executor._permanent_failed_subtasks.add(sid)
+                            if state_store is not None:
+                                state_store.update_subtask_on_completion(
+                                    sid,
+                                    success=False,
+                                    error_message=failed_result.error_message or "Max replan retries reached",
+                                    effects=None,
+                                    completed_actions=failed_result.completed_actions,
+                                )
                             return False
 
                         #print(f"[Feedback] Immediate replan triggered by subtask {sid} (retry {count+1}/{max_replan_retries})")
@@ -961,6 +980,14 @@ class TaskManager:
                                 task_idx=task_idx,
                                 task_name=task_name_fb
                             )
+                            if success:
+                                # 재계획 성공 후 해당 SID를 state_store에서 제거 (= PENDING 처리)
+                                # 동시 다중 실패 시 두 번째 replan이 첫 번째 replan의 SID를
+                                # FAILED로 오인해 DAG에서 제외하는 버그 방지
+                                with state_store._lock:
+                                    for _rsid, _r in current_results.items():
+                                        if not _r.success:
+                                            state_store._store.pop(_rsid, None)
                             return bool(success)
                         return False
 
@@ -1009,16 +1036,29 @@ class TaskManager:
                     # 종료 동기화도 status 중심으로 반영 (sid remap 이후 효과 오염 방지)
                     sync_execution_results_to_store(state_store, results)
                     dropped = getattr(executor, '_dropped_subtasks', set())
-                    failed = [sid for sid, r in results.items() if not r.success and sid not in dropped]
+                    permanent_failed = getattr(executor, '_permanent_failed_subtasks', set())
+                    failed = [
+                        sid for sid, r in results.items()
+                        if not r.success and sid not in dropped and sid not in permanent_failed
+                    ]
+                    if getattr(executor, "_feedback_stop_requested", False):
+                        print(
+                            f"[Feedback] Stopped early after {executor._global_replan_attempts}/{global_replan_budget} "
+                            "replan attempts"
+                        )
                     if not failed:
                         if dropped:
                             print(f"[Feedback] All feasible subtasks succeeded. Dropped (impossible): {sorted(dropped)}")
+                        elif permanent_failed:
+                            print(f"[Feedback] Replan limit reached. Permanently failed: {sorted(permanent_failed)}")
                         else:
                             print("[Feedback] All subtasks succeeded.")
                     else:
                         print(f"[Feedback] {len(failed)} subtask(s) still failed: {failed}")
                         if dropped:
                             print(f"[Feedback] Dropped (impossible): {sorted(dropped)}")
+                        if permanent_failed:
+                            print(f"[Feedback] Permanently failed: {sorted(permanent_failed)}")
                     print("✓ Feedback loop finished.")
 
                 print(
@@ -2433,6 +2473,22 @@ class TaskManager:
         if not failed:
             return "no_change"
 
+        def _consume_global_replan_budget(target_sid: int) -> bool:
+            if executor is None:
+                return True
+            budget = getattr(executor, "_global_replan_budget", None)
+            if budget is None:
+                return True
+            attempts = getattr(executor, "_global_replan_attempts", 0)
+            if attempts >= budget:
+                executor._feedback_stop_requested = True
+                executor._feedback_stop_reason = f"global replan budget exceeded ({budget})"
+                print(f"[Feedback] Global replan budget ({budget}) exceeded; stopping feedback loop")
+                return False
+            executor._global_replan_attempts = attempts + 1
+            print(f"[Feedback] Replan attempt {executor._global_replan_attempts}/{budget} for subtask {target_sid}")
+            return True
+
         # 재계획 전용 versioned 폴더 생성 및 file_processor 경로 전환
         # ─ 현재 폴더의 파일을 새 replan_N 폴더에 복사 후 경로를 전환한다.
         # ─ 이후 모든 읽기/쓰기가 replan_N 폴더 기준으로 수행되므로
@@ -2514,6 +2570,8 @@ class TaskManager:
             for failed_id in failed:
                 if failed_id in processed_failed:
                     continue
+                if not _consume_global_replan_budget(failed_id):
+                    break
 
                 # 의존성 기반 replan 그룹 구성
                 subtask_ids_in_group = _build_dependency_group(failed_id)
@@ -2553,6 +2611,12 @@ class TaskManager:
 
                 if context is None:
                     continue
+
+                # AgentMemory는 group 단위로 공유되므로 failed_ids[0]이 다른 subtask일 수 있음
+                # (e.g. subtask 4,5가 같은 group → 4가 먼저 실패 기록 → subtask 5 replan 시 4로 오인)
+                # 루프 변수 failed_id로 강제 오버라이드해 정확한 subtask를 재계획하도록 수정
+                if context.failed_subtask_id != failed_id:
+                    context.failed_subtask_id = failed_id
 
                 self._fb_log_line("Action: group-level redecomposition")
 
@@ -2635,7 +2699,15 @@ class TaskManager:
                     if not dag_integrated:
                         self._fb_log_line("DAG integration: FAILED (skip LP reallocation)")
                         continue
-                    
+
+                    # DAG 통합 성공 → 재계획된 SID를 state_store에서 제거 (= PENDING 처리)
+                    # 루프 내 다음 failed_id의 integrate_replanned_subtasks_to_dag가
+                    # 이미 재계획된 SID를 FAILED로 오인해 DAG에서 제외하는 버그 방지
+                    if state_store is not None:
+                        with state_store._lock:
+                            for _rsid in replanned_ids:
+                                state_store._store.pop(_rsid, None)
+
                     # LP 재할당
                     if task_robot_ids is not None:
                         new_assignment = self.recompute_task_assignment_after_replan(
@@ -2674,6 +2746,8 @@ class TaskManager:
                     continue
                 if subtask_has_dependency(sid, edges):
                     continue
+                if not _consume_global_replan_budget(sid):
+                    break
                 result = execution_results.get(sid)
                 if not result or result.success:
                     continue

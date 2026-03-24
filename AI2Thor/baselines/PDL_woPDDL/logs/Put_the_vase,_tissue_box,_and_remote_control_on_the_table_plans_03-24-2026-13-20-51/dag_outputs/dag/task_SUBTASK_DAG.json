@@ -1,0 +1,72 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Vase_on_the_CoffeeTable",
+      "objects": [
+        "robot1",
+        "vase",
+        "sideTable1",
+        "coffeeTable"
+      ],
+      "preconds": [
+        "Robot is not holding the vase",
+        "Vase is on the sideTable1",
+        "Robot is in the kitchen"
+      ],
+      "effects": [
+        "Vase is on the coffeeTable",
+        "Robot is not holding the vase"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_TissueBox_on_the_TVStand",
+      "objects": [
+        "robot1",
+        "tissuebox",
+        "tvstand",
+        "kitchen",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Tissuebox is at the TVStand",
+        "TVStand is on the floor",
+        "Robot1 is not holding the tissuebox"
+      ],
+      "effects": [
+        "Tissuebox is on the TVStand",
+        "Robot1 is not holding the tissuebox"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Place_the_RemoteControl_on_SideTable2_REPLAN",
+      "objects": [
+        "robot1",
+        "remoteControl",
+        "armchair1"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is holding remoteControl",
+        "robot1 is at kitchen"
+      ],
+      "effects": [
+        "remoteControl is at armchair1",
+        "robot1 is not holding remoteControl",
+        "robot1 is not in action"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot1 is not at bread location
+#2. Robot1 is not holding bread
+#3. Sink is not known to be open
+
+# SubTask 2: Move the Bread to the Appropriate Location.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: bread(Location=unknown), sink(Location=unknown)
+
+GoToObject(robot1, bread)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 bread)
+
+PickupObject(robot1, bread, countertop)
+   Preconditions:
+     (at-location bread countertop)
+     (at robot1 bread)
+     (not (inaction robot1))
+     (not (object-close robot1 countertop))
+   Effects:
+     (holding robot1 bread)
+     (not (at-location bread countertop))
+
+GoToObject(robot1, sink)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sink)
+
+PutObject(robot1, bread, sink)
+   Preconditions:
+     (holding robot1 bread)
+     (at robot1 sink)
+     (not (inaction robot1))
+     (not (object-close robot1 sink))
+   Effects:
+     (at-location bread sink)
+     (not (holding robot1 bread))
+
+Goal condition:
+(at-location bread sink)

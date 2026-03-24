@@ -1,0 +1,71 @@
+# Task Description: Put the Mug in the Fridge.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at mug location
+#2. Robot not holding mug
+#3. Fridge is fridge, and initially closed
+
+# SubTask 2: Put the Mug in the Fridge. 
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: mug(Location=counterTop), fridge(Location=floor)
+
+GoToObject(robot1, mug)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 mug)
+
+PickupObject(robot1, mug, counterTop)
+   Preconditions:
+     (at-location mug counterTop)
+     (at robot1 mug)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 mug)
+
+GoToObject(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 fridge)
+
+OpenFridge(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 fridge)
+     (is-fridge fridge)
+   Effects:
+     (object-open robot1 fridge)
+     (fridge-open fridge)
+
+PutObjectInFridge(robot1, mug, fridge)
+   Preconditions:
+     (holding robot1 mug)
+     (at robot1 fridge)
+     (not (inaction robot1))
+     (is-fridge fridge)
+     (fridge-open fridge)
+   Effects:
+     (at-location mug fridge)
+     (not (holding robot1 mug))
+     (not (inaction robot1))
+
+CloseFridge(robot1, fridge)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 fridge)
+     (object-open robot1 fridge)
+     (is-fridge fridge)
+   Effects:
+     (object-close robot1 fridge)
+     (not (fridge-open fridge))
+
+Goal condition: 
+(at-location mug fridge)
+(not (fridge-open fridge))
+
+# Task Put the Mug in the Fridge is done.

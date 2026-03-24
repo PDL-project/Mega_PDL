@@ -1,0 +1,44 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Turn_off_the_Faucet",
+      "objects": [
+        "robot1",
+        "faucet"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Faucet is on"
+      ],
+      "effects": [
+        "Robot switches off the faucet",
+        "Faucet is off"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Turn_off_the_Light",
+      "objects": [
+        "robot1",
+        "lightswitch"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the light switch location"
+      ],
+      "effects": [
+        "Light switch is turned off"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ]
+  }
+}

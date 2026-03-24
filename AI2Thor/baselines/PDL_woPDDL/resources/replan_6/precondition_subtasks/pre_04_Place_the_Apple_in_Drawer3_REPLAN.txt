@@ -1,0 +1,40 @@
+# Already Achieved (from successful subtasks):
+- Subtask 2:
+    1. gotoobject robot1 bread (1) → (at robot1 bread)
+    2. pickupobject robot1 bread countertop (1) → (holding robot1 bread)
+    3. gotoobject robot1 sink (1) → (at robot1 sink)
+
+# Initial condition analyze due to previous subtask:
+#1. Robot at sink
+#2. Robot holding apple
+#3. Drawer3 is initially closed
+
+# SubTask 1: Place the Apple in Drawer3.
+    Skills Required: GoToObject, OpenObject, PutObject
+    Related Objects: apple(Location=robot1), drawer3(Location=floor)
+
+GoToObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 drawer3)
+
+OpenObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer3)
+   Effects:
+     (object-open robot1 drawer3)
+
+PutObject(robot1, apple, drawer3)
+   Preconditions:
+     (holding robot1 apple)
+     (at robot1 drawer3)
+     (not (inaction robot1))
+     (not (object-close robot1 drawer3))
+   Effects:
+     (at-location apple drawer3)
+     (not (holding robot1 apple))
+
+Goal condition:
+(at-location apple drawer3)

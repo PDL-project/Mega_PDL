@@ -1,0 +1,10 @@
+{
+  "5": {
+    "state": "FAILED",
+    "error_message": "OpenObject failed or timed out for 'drawer5'",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer5 (1)"
+    ]
+  }
+}

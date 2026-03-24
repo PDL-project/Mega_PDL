@@ -1,0 +1,2 @@
+gotoobject robot1 faucet (1)
+switchoff robot1 faucet (1)

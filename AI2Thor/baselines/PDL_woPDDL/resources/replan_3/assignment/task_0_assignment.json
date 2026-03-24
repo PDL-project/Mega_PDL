@@ -1,0 +1,68 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "5": 1,
+    "3": 3,
+    "7": 2,
+    "2": 2,
+    "6": 1,
+    "8": 3,
+    "9": 1
+  },
+  "subtasks": [
+    {
+      "id": 5,
+      "title": "subtask_05_Place_the_Lettuce_in_the_Fridge_REPLAN",
+      "robot": 1
+    },
+    {
+      "id": 3,
+      "title": "subtask_03_Move_the_ButterKnife_to_Drawer1_REPLAN",
+      "robot": 3
+    },
+    {
+      "id": 7,
+      "title": "subtask_07_Move_the_Pan_to_StoveBurner1_REPLAN",
+      "robot": 2
+    },
+    {
+      "id": 2,
+      "title": "subtask_02_Place_the_Bread_on_Countertop1_REPLAN",
+      "robot": 2
+    },
+    {
+      "id": 6,
+      "title": "subtask_06_Move_the_Mug_to_Cabinet1_REPLAN",
+      "robot": 1
+    },
+    {
+      "id": 8,
+      "title": "subtask_08_Move_the_PepperShaker_to_Cabinet2_REPLAN",
+      "robot": 3
+    },
+    {
+      "id": 9,
+      "title": "subtask_09_Move_the_SaltShaker_to_Cabinet3_REPLAN",
+      "robot": 1
+    }
+  ],
+  "replanned": true,
+  "robot_spawn_positions": {
+    "1": [
+      -0.5617039203643799,
+      0.900999128818512,
+      1.2562403678894043
+    ],
+    "2": [
+      -1.2547125816345215,
+      0.900999128818512,
+      -1.8168132305145264
+    ],
+    "3": [
+      -0.25026506185531616,
+      0.900999128818512,
+      -1.8215655088424683
+    ]
+  }
+}

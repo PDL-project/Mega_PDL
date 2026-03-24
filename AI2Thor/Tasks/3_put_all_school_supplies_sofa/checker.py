@@ -56,8 +56,8 @@ class Checker(BaseChecker):
              'PutObject(Sofa, Book)',
              'NavigateTo(CellPhone)',
              'PickUpObject(CellPhone)',
-             'NavigateTo(Sofa, Cellphone)',
-             'PutObject(Sofa, Cellphone)'
+             'NavigateTo(Sofa, CellPhone)',
+             'PutObject(Sofa, CellPhone)'
             ]
 
         conditional_subtasks = [
@@ -69,8 +69,8 @@ class Checker(BaseChecker):
          'PutObject(Sofa, Laptop)',
          'NavigateTo(Sofa, Book)',
          'PutObject(Sofa, Book)',
-         'NavigateTo(Sofa, Cellphone)',
-         'PutObject(Sofa, Cellphone)'
+         'NavigateTo(Sofa, CellPhone)',
+         'PutObject(Sofa, CellPhone)'
         ]
 
 

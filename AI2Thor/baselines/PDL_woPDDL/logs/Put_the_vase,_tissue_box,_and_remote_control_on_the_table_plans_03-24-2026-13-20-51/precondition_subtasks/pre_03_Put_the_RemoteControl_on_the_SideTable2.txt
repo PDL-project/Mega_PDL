@@ -1,0 +1,35 @@
+# SubTask 3: Put the RemoteControl on the SideTable2.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: remoteControl(Location=SideTable2), sideTable2(Location=Floor)
+
+GoToObject(robot1, remoteControl)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 remoteControl)
+
+PickupObject(robot1, remoteControl, SideTable2)
+   Preconditions:
+     (at-location remoteControl SideTable2)
+     (at robot1 remoteControl)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 remoteControl)
+
+GoToObject(robot1, SideTable2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 SideTable2)
+
+PutObject(robot1, remoteControl, SideTable2)
+   Preconditions:
+     (holding robot1 remoteControl)
+     (at robot1 SideTable2)
+     (not (inaction robot1))
+   Effects:
+     (at-location remoteControl SideTable2)
+     (not (holding robot1 remoteControl))
+
+Goal condition:
+(at-location remoteControl SideTable2)

@@ -1,0 +1,67 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot1 is holding Apple
+#2. Robot1 is not at mug location
+#3. Cabinet1 is not full
+#4. Robot1 is not holding mug
+
+# SubTask 3: Move the Mug to Cabinet1.
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: mug(Location=floor), cabinet1(Location=floor)
+
+GoToObject(robot1, mug)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 mug)
+
+PickupObject(robot1, mug, countertop3)
+   Preconditions:
+     (at-location mug countertop3)
+     (at robot1 mug)
+     (not (inaction robot1))
+     (not (object-close robot1 countertop3))
+   Effects:
+     (holding robot1 mug)
+     (not (at-location mug countertop3))
+
+GoToObject(robot1, cabinet1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet1)
+
+OpenObject(robot1, cabinet1)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet1)
+   Effects:
+     (object-open robot1 cabinet1)
+     (not (object-close robot1 cabinet1))
+
+PutObject(robot1, mug, cabinet1)
+   Preconditions:
+     (holding robot1 mug)
+     (at robot1 cabinet1)
+     (not (inaction robot1))
+     (not (object-close robot1 cabinet1))
+   Effects:
+     (at-location mug cabinet1)
+     (not (holding robot1 mug))
+
+CloseObject(robot1, cabinet1)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet1)
+     (object-open robot1 cabinet1)
+   Effects:
+     (object-close robot1 cabinet1)
+     (not (object-open robot1 cabinet1))
+
+Goal condition: 
+(at-location mug cabinet1)
+
+# Task Move the Mug to Cabinet1 is done.

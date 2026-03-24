@@ -1,0 +1,65 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Tomato_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "tomato",
+        "fridge",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding the tomato.",
+        "Fridge is initially closed.",
+        "Tomato is on the countertop.",
+        "Robot is in the kitchen."
+      ],
+      "effects": [
+        "Tomato is in the fridge.",
+        "Fridge is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Potato_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "potato",
+        "fridge",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Potato is on the countertop.",
+        "Fridge is on the floor.",
+        "Fridge is closed.",
+        "Robot1 is not holding the potato."
+      ],
+      "effects": [
+        "Potato is in the fridge.",
+        "Fridge is closed."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both subtasks use the same fridge instance"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ]
+  }
+}

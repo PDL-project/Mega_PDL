@@ -1,0 +1,24 @@
+# SubTask 1: Place the Bowl on the CounterTop.
+    Skills Required: GoToObject, PutObject
+    Related Objects: bowl(Location=robot1), countertop(Location=kitchen)
+
+GoToObject(robot1, countertop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop)
+
+PutObject(robot1, bowl, countertop)
+   Preconditions:
+     (holding robot1 bowl)
+     (at robot1 countertop)
+     (not (inaction robot1))
+     (not (is-fridge countertop))
+     (not (object-close robot1 countertop))
+   Effects:
+     (at-location bowl countertop)
+     (not (holding robot1 bowl))
+     (not (inaction robot1))
+
+Goal condition:
+(at-location bowl countertop)

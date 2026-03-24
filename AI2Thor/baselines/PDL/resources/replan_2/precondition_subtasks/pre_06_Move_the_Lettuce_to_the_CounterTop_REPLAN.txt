@@ -1,0 +1,56 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot2 (robot1 in PDDL) is holding ButterKnife
+#2. Robot2 (robot1 in PDDL) is not at Lettuce location
+#3. Robot2 (robot1 in PDDL) is not at CounterTop location
+
+# SubTask 2: Move the Lettuce to the CounterTop.
+    Skills Required: GoToObject, PickupObject, GoToObject(destination), PutObject
+    Related Objects: Lettuce(Location=unknown), CounterTop(Location=unknown)
+
+GoToObject(robot1, Lettuce)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Lettuce)
+
+DropHandObject(robot1, ButterKnife, Floor)
+   Preconditions:
+     (holding robot1 ButterKnife)
+     (at robot1 Lettuce)
+     (not (inaction robot1))
+   Effects:
+     (at-location ButterKnife Floor)
+     (not (holding robot1 ButterKnife))
+
+PickupObject(robot1, Lettuce, Floor)
+   Preconditions:
+     (at-location Lettuce Floor)
+     (at robot1 Lettuce)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Lettuce)
+     (not (at-location Lettuce Floor))
+
+GoToObject(robot1, CounterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop)
+
+PutObject(robot1, Lettuce, CounterTop)
+   Preconditions:
+     (holding robot1 Lettuce)
+     (at robot1 CounterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location Lettuce CounterTop)
+     (not (holding robot1 Lettuce))
+
+Goal condition: 
+(at-location Lettuce CounterTop)
+
+# Task Move the Lettuce to the CounterTop is done.

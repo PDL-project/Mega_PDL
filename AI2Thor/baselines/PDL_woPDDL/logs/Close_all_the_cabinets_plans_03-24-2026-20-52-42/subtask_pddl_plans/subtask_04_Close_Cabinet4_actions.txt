@@ -1,0 +1,1 @@
+closeobject robot1 cabinet4 (1)

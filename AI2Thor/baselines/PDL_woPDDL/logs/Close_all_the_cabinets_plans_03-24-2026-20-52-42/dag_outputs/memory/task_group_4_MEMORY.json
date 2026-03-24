@@ -1,0 +1,10 @@
+{
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "closeobject robot1 cabinet4 (1)"
+    ]
+  }
+}

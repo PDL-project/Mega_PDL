@@ -1,0 +1,65 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot1 is holding Apple
+#2. Robot1 is not at saltShaker location
+#3. Cabinet3 is not full
+#4. Robot1 is not holding saltShaker
+
+# SubTask 10: Move the SaltShaker to Cabinet3.
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: saltShaker(Location=floor), cabinet3(Location=floor)
+
+GoToObject(robot1, saltShaker)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 saltShaker)
+
+PickupObject(robot1, saltShaker, floor)
+   Preconditions:
+     (at-location saltShaker floor)
+     (at robot1 saltShaker)
+     (not (inaction robot1))
+     (not (object-close robot1 floor))
+   Effects:
+     (holding robot1 saltShaker)
+     (not (at-location saltShaker floor))
+
+GoToObject(robot1, cabinet3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet3)
+
+OpenObject(robot1, cabinet3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet3)
+   Effects:
+     (object-open robot1 cabinet3)
+     (not (object-close robot1 cabinet3))
+
+PutObject(robot1, saltShaker, cabinet3)
+   Preconditions:
+     (holding robot1 saltShaker)
+     (at robot1 cabinet3)
+     (not (inaction robot1))
+     (not (object-close robot1 cabinet3))
+   Effects:
+     (at-location saltShaker cabinet3)
+     (not (holding robot1 saltShaker))
+
+CloseObject(robot1, cabinet3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet3)
+     (object-open robot1 cabinet3)
+   Effects:
+     (object-close robot1 cabinet3)
+     (not (object-open robot1 cabinet3))
+
+Goal condition: 
+(at-location saltShaker cabinet3)

@@ -1,0 +1,67 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot1 is holding a Bowl
+#2. Robot1 is not at the Potato location
+#3. Robot1 is not at the CounterTop location
+
+# SubTask 2: Move the Potato to the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: potato(Location=kitchen), countertop(Location=kitchen)
+
+GoToObject(robot1, cabinet1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet1)
+
+PutObject(robot1, Bowl, cabinet1)
+   Preconditions:
+     (holding robot1 Bowl)
+     (at robot1 cabinet1)
+     (not (inaction robot1))
+     (not (is-fridge cabinet1))
+     (not (object-close robot1 cabinet1))
+   Effects:
+     (at-location Bowl cabinet1)
+     (not (holding robot1 Bowl))
+     (not (inaction robot1))
+
+GoToObject(robot1, Potato)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Potato)
+
+PickupObject(robot1, Potato, Floor)
+   Preconditions:
+     (at-location Potato Floor)
+     (at robot1 Potato)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Potato)
+     (not (at-location Potato Floor))
+     (not (inaction robot1))
+
+GoToObject(robot1, countertop1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop1)
+
+PutObject(robot1, Potato, countertop1)
+   Preconditions:
+     (holding robot1 Potato)
+     (at robot1 countertop1)
+     (not (inaction robot1))
+     (not (is-fridge countertop1))
+     (not (object-close robot1 countertop1))
+   Effects:
+     (at-location Potato countertop1)
+     (not (holding robot1 Potato))
+     (not (inaction robot1))
+
+Goal condition:
+(at-location Potato countertop1)

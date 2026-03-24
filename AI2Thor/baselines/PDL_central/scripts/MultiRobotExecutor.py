@@ -65,6 +65,7 @@ _TASK_NAME_MAP = {
     "Tidy up the living room by placing all items in their appropriate positions": "5_tidy_up_livingroom",
     "Clear the kitchen floor by placing items at their appropriate positions": "4_clear_floor_kitchen",
     "Put all the forks, spoons, butter knives, and spatulas in the drawer": "6_put_silverware_in_drawer",
+    "Put all the food ingredients on the countertop": "7_put_ingredients_on_counter",
     "Clear the table by placing items at their appropriate positions": "4_clear_table_kitchen",
     "Clear the kitchen central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",
     "Clear the central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",  # config_type4 variant
@@ -459,6 +460,11 @@ class MultiRobotExecutor:
             self.controller.last_event = scene_init_obj.preinit(
                 self.controller.last_event, self.controller
             )
+            if hasattr(scene_init_obj, 'perturb'):
+                print("[PERTURB] Applying scene perturbation (defined in FloorPlan initializer)...")
+                self.controller.last_event = scene_init_obj.perturb(
+                    self.controller.last_event, self.controller
+                )
 
     def _enqueue_front(self, actions: List[dict]):
         # 여러 개의 Action을 해당 로봇의 Action Queue 맨 앞에 삽입하는 함수
@@ -799,18 +805,6 @@ class MultiRobotExecutor:
                         if err_msg != "":
                             action_success = False
                             print(f"[PutObject] Error: {err_msg}")
-                            # Auto-recovery: if receptacle closed, open then retry once
-                            if "CLOSED" in err_msg.upper():
-                                retry = act.get("retry", 0)
-                                if retry < 1:
-                                    self._enqueue_action({
-                                        'action': 'OpenObject',
-                                        'objectId': act['objectId'],
-                                        'agent_id': act['agent_id']
-                                    }, front=True)
-                                    new_act = dict(act)
-                                    new_act["retry"] = retry + 1
-                                    self._enqueue_action(new_act, front=True)
                         else:
                             self.success_exec += 1
                             self._record_agent_success(act['agent_id'])
@@ -1013,6 +1007,25 @@ class MultiRobotExecutor:
                 except Exception:
                     pass
             else:
+                # 큐가 비어있어도 재플래닝 중이면 현재 씬 프레임을 계속 기록 (정지 장면)
+                if (_record_video and _video_dir
+                        and hasattr(self, '_stop_for_replan')
+                        and self._stop_for_replan.is_set()
+                        and _writers):
+                    try:
+                        for i, e in enumerate(c.last_event.events):
+                            frame = e.cv2img
+                            if frame is not None and i in _writers:
+                                _writers[i].write(frame)
+                        if (c.last_event.events[0].third_party_camera_frames
+                                and "top" in _writers):
+                            top_view_rgb = cv2.cvtColor(
+                                c.last_event.events[0].third_party_camera_frames[-1],
+                                cv2.COLOR_BGR2RGB
+                            )
+                            _writers["top"].write(top_view_rgb)
+                    except Exception:
+                        pass
                 time.sleep(0.05)
 
         # 녹화 종료
@@ -1069,10 +1082,11 @@ class MultiRobotExecutor:
                         return True
 
         # fallback for legacy regex-style patterns
+        # re.match는 시작만 앵커링되어 "pen"이 "Pencil"에도 매칭되는 버그 방지를 위해 re.fullmatch 사용
         try:
             return bool(
-                re.match(p, object_id, re.IGNORECASE)
-                or re.match(p, object_type, re.IGNORECASE)
+                re.fullmatch(p, object_id, re.IGNORECASE)
+                or re.fullmatch(p, object_type, re.IGNORECASE)
             )
         except re.error:
             return False
@@ -1561,6 +1575,10 @@ class MultiRobotExecutor:
 
         iteration = 0
         while dist_goal > goal_thresh and iteration < max_iterations:
+            # 전체 정지 신호 체크: 다른 서브태스크 실패 시 nav 즉시 중단
+            if hasattr(self, '_stop_for_replan') and self._stop_for_replan.is_set():
+                return False
+
             iteration += 1
 
             # 현재 로봇의 위치 정보(메타데이터) 가져오기
@@ -1758,9 +1776,13 @@ class MultiRobotExecutor:
                         #print(f"[Robot{agent_id+1}] 요청: Robot{blocking+1} 길 비켜줘 ({dest_obj})")
                         yield_active_for = blocking
                         yield_wait_iters = 0
-                    count_since_update = 0
-                    time.sleep(0.1)
-                    continue
+                        count_since_update = 0
+                        time.sleep(0.1)
+                        continue
+                    else:
+                        # yield 거절(우선순위 낮음) → 얼지 말고 접근점 변경으로 돌파
+                        need_approach_change = True
+                        need_yield = False
 
             # --- 접근점 변경 ---
             if need_approach_change:
@@ -1779,6 +1801,30 @@ class MultiRobotExecutor:
 
             # 정상 이동 가능 시 경로 최적화 액션 수행
             if count_since_update < 5:
+                # 접근 지점에 다른 로봇이 점령 중이면 미리 다음 접근점으로 건너뜀 (spinning 방지)
+                _crp_x, _crp_z = crp[0][0], crp[0][2]
+                _crp_blocked = False
+                for _oid in range(self.no_robot):
+                    if _oid == agent_id:
+                        continue
+                    try:
+                        _op = self.controller.last_event.events[_oid].metadata["agent"]["position"]
+                        _dx = _op["x"] - _crp_x
+                        _dz = _op["z"] - _crp_z
+                        if (_dx*_dx + _dz*_dz) ** 0.5 < 0.4:
+                            _crp_blocked = True
+                            break
+                    except Exception:
+                        pass
+                if _crp_blocked:
+                    clost_node_location[0] += 1
+                    max_positions = max(4 * 4, len(self.reachable_positions) // 5)
+                    if clost_node_location[0] >= max_positions:
+                        clost_node_location[0] = 0
+                    crp = closest_node(dest_obj_pos, self.reachable_positions, 1, clost_node_location)
+                    time.sleep(0.05)
+                    continue
+
                 ok = self._enqueue_and_wait({
                     'action': 'ObjectNavExpertAction',
                     'position': dict(x=crp[0][0], y=crp[0][1], z=crp[0][2]),
@@ -2206,8 +2252,8 @@ class MultiRobotExecutor:
         atype, _, objs = self._parse_action(action_str)
 
         if atype == "gotoobject" and len(objs) >= 1:
-            # return value 체크: GoToObject 실패 시 이미 _fail_current_subtask 호출됨
-            self.GoToObject(agent_id, objs[0])
+            if self.GoToObject(agent_id, objs[0]):
+                self.success_exec += 1
 
         elif atype == "pickupobject" and len(objs) >= 1:
             if not self.GoToObject(agent_id, objs[0]):
@@ -2646,7 +2692,13 @@ class MultiRobotExecutor:
                     or "gotoobject: failed to reach" in m
                 )
 
+            _aborted_by_global_stop = False
             for i, action in enumerate(plan.actions):
+                # 전체 정지-재플래닝 플래그 체크 (다른 서브태스크가 실패해 정지 신호 발생)
+                if self._stop_for_replan.is_set():
+                    print(f"[Subtask {plan.subtask_id}] Global stop-for-replan: aborting remaining actions")
+                    _aborted_by_global_stop = True
+                    break
                 # 이미 실패한 서브태스크의 남은 액션은 건너뜀
                 if self._subtask_failed.get(plan.subtask_id, False):
                     remaining = len(plan.actions) - i
@@ -2654,11 +2706,19 @@ class MultiRobotExecutor:
                     break
                 max_retries = 3
                 attempt = 0
+                # total_exec는 PDDL 액션 단위로 1회 카운트 (retry 제외)
+                self._subtask_exec_counts[plan.subtask_id] = self._subtask_exec_counts.get(plan.subtask_id, 0) + 1
+                self.total_exec += 1
                 while attempt < max_retries:
                     print(f"[Robot{plan.robot_id}] Action {i+1}/{len(plan.actions)}: {action}")
-                    self._subtask_exec_counts[plan.subtask_id] = self._subtask_exec_counts.get(plan.subtask_id, 0) + 1
-                    self.total_exec += 1
                     self._execute_pddl_action(agent_id, action)
+                    # stop-for-replan 중 GoToObject 중단: 액션 미완료 → total_exec 보정
+                    # (GoToObject가 stop 감지 후 return False, _fail_current_subtask 미호출)
+                    if self._stop_for_replan.is_set() and not self._subtask_failed.get(plan.subtask_id, False):
+                        self.total_exec -= 1
+                        self._subtask_exec_counts[plan.subtask_id] = max(0, self._subtask_exec_counts.get(plan.subtask_id, 1) - 1)
+                        _aborted_by_global_stop = True
+                        break
                     # 액션 실행 후 실패가 발생하지 않았으면 완료 목록에 추가
                     if not self._subtask_failed.get(plan.subtask_id, False):
                         self._subtask_completed_actions[plan.subtask_id].append(action)
@@ -2675,6 +2735,14 @@ class MultiRobotExecutor:
                     break
 
             success = not self._subtask_failed.get(plan.subtask_id, False)
+            # 전체 정지 신호로 중단된 서브태스크: 실패 처리 (재플래닝 대상)
+            if _aborted_by_global_stop and success:
+                success = False
+                self._subtask_failed[plan.subtask_id] = True
+                self._subtask_last_error[plan.subtask_id] = "Aborted: global stop-for-replan"
+            # 실제 실패한 서브태스크: 전체 정지 신호 발생
+            if not success and not _aborted_by_global_stop:
+                self._stop_for_replan.set()
             err = self._subtask_last_error.get(plan.subtask_id, "")
             completed = self._subtask_completed_actions.get(plan.subtask_id, [])
             self._subtask_results[plan.subtask_id] = SubTaskExecutionResult(
@@ -2837,6 +2905,8 @@ class MultiRobotExecutor:
         self._subtask_last_error = {}
         self._subtask_completed_actions = {}
         self._dropped_subtasks = set()
+        # 전체 정지-재플래닝 플래그: 임의 서브태스크 실패 시 set → 모든 로봇 즉시 정지
+        self._stop_for_replan = threading.Event()
         # 로봇별 Lock: 같은 로봇에 할당된 서브태스크는 순차 실행
         self._robot_locks: Dict[int, threading.Lock] = defaultdict(threading.Lock)
 
@@ -2918,38 +2988,13 @@ class MultiRobotExecutor:
                 for p in to_run:
                     robot_plans[p.robot_id].append(p)
 
-                # 리플랜 직렬화 락: DAG 통합/executor reload는 동시 실행 불가
-                replan_lock = threading.Lock()
-                replan_threads: List[threading.Thread] = []
-                replan_threads_lock = threading.Lock()
-                replanned = False
-
-                def _trigger_replan_for(plan: SubtaskPlan):
-                    nonlocal replanned
-                    result = self._subtask_results.get(plan.subtask_id)
-                    if not result or result.success or on_subtask_failed is None:
-                        return
-                    try:
-                        # DAG 통합/executor reload 직렬화 (LLM 호출은 각 그룹이 병렬 가능하나
-                        # 파일 쓰기/executor 상태 변경은 한 번에 하나씩)
-                        with replan_lock:
-                            replan_success = on_subtask_failed(result)
-                        if replan_success:
-                            replanned = True
-                    except Exception as cb_e:
-                        print(f"[Feedback] on_subtask_failed callback error: {cb_e}")
-
                 def _run_robot_seq(plan_list: List[SubtaskPlan]):
                     for p in plan_list:
+                        # 이미 전체 정지 신호가 발생한 경우 새 서브태스크 시작하지 않음
+                        if self._stop_for_replan.is_set():
+                            print(f"[Subtask {p.subtask_id}] Skipped (global stop-for-replan before start)")
+                            break
                         self._run_subtask(p)
-                    # 로봇 완료 즉시 실패 서브태스크 리플랜 트리거 (다른 로봇 기다리지 않음)
-                    for p in plan_list:
-                        result = self._subtask_results.get(p.subtask_id)
-                        if result and not result.success:
-                            rt = threading.Thread(target=_trigger_replan_for, args=(p,), daemon=True)
-                            rt.start()
-                            with replan_threads_lock:
-                                replan_threads.append(rt)
 
                 threads = []
                 for robot_id, plan_list in robot_plans.items():
@@ -2962,30 +3007,51 @@ class MultiRobotExecutor:
                 for t in threads:
                     t.join()
 
-                # 모든 리플랜 스레드 완료 대기 (로봇 스레드 종료 후 리플랜 스레드는 모두 시작된 상태)
-                with replan_threads_lock:
-                    pending_replan = list(replan_threads)
-                for rt in pending_replan:
-                    rt.join()
-
                 # 남은 액션 큐 소진 대기
                 self._drain_action_queue()
 
                 print(f"[Group {gid}] Completed")
 
-                if replanned:
-                    # 재계획 후 교체된 subtask_plans 기반으로 그룹 재구성 (의존성 순서 유지)
-                    completed_groups.clear()
-                    replanned_groups: Dict[int, list] = defaultdict(list)
-                    for _sp in self.subtask_plans.values():
-                        replanned_groups[_sp.parallel_group].append(_sp)
-                    for prev_gid, prev_plans in replanned_groups.items():
-                        if all(
-                            self._subtask_results.get(p.subtask_id)
-                            and self._subtask_results[p.subtask_id].success
-                            for p in prev_plans
-                        ):
-                            completed_groups.add(prev_gid)
+                if self._stop_for_replan.is_set() and on_subtask_failed is not None:
+                    # ── 전체 정지 → 중앙 집중 재플래닝 ──
+                    # 모든 서브태스크 결과 수집:
+                    #   성공 → 그대로, 실패/중단 → 그대로, 미실행 → synthetic 실패로 추가
+                    all_sids = [sid for sids in self.parallel_groups.values() for sid in sids]
+                    all_results_central = dict(self._subtask_results)
+                    for _sid in all_sids:
+                        if _sid not in all_results_central:
+                            all_results_central[_sid] = SubTaskExecutionResult(
+                                subtask_id=_sid,
+                                success=False,
+                                error_message="Not yet started (global stop-for-replan)",
+                                completed_actions=None,
+                            )
+
+                    print(f"[Central Replan] Stop-for-replan triggered. Replanning all remaining subtasks...")
+                    try:
+                        replan_success = on_subtask_failed(all_results_central)
+                    except Exception as cb_e:
+                        print(f"[Feedback] on_subtask_failed callback error: {cb_e}")
+                        replan_success = False
+
+                    if replan_success:
+                        # 재플래닝 성공: 정지 플래그 해제 후 처음부터 재실행
+                        self._stop_for_replan.clear()
+                        completed_groups.clear()
+                        replanned_groups: Dict[int, list] = defaultdict(list)
+                        for _sp in self.subtask_plans.values():
+                            replanned_groups[_sp.parallel_group].append(_sp)
+                        for prev_gid, prev_plans in replanned_groups.items():
+                            if all(
+                                self._subtask_results.get(p.subtask_id)
+                                and self._subtask_results[p.subtask_id].success
+                                for p in prev_plans
+                            ):
+                                completed_groups.add(prev_gid)
+                    else:
+                        # 재플래닝 실패: 루프 종료
+                        print("[Central Replan] Replan failed or max retries reached. Stopping execution.")
+                        break
                 else:
                     completed_groups.add(gid)
             self._drain_action_queue()

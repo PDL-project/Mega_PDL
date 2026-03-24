@@ -1,0 +1,45 @@
+# Task Description: Put the KeyChain in the Box.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding KeyChain
+#2. Box is open
+
+# SubTask 2: Put the KeyChain in the Box.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: KeyChain(Location=SideTable), Box(Location=Floor)
+
+GoToObject(robot1, KeyChain)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 KeyChain)
+
+PickupObject(robot1, KeyChain, SideTable)
+   Preconditions:
+     (at-location KeyChain SideTable)
+     (at robot1 KeyChain)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 KeyChain)
+
+GoToObject(robot1, Box)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Box)
+
+PutObject(robot1, KeyChain, Box)
+   Preconditions:
+     (holding robot1 KeyChain)
+     (at robot1 Box)
+     (not (inaction robot1))
+   Effects:
+     (at-location KeyChain Box)
+     (not (holding robot1 KeyChain))
+
+Goal condition:
+(at-location KeyChain Box)

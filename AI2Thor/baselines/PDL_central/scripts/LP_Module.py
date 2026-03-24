@@ -235,6 +235,7 @@ def assign_subtasks_llm(
     object_positions: Optional[Dict[str, Tuple[float, float, float]]] = None,
     parallel_groups: Optional[Dict[str, List[int]]] = None,
     forced_assignments: Optional[Dict[int, int]] = None,
+    holding_exclusions: Optional[Dict[int, List[int]]] = None,
 ) -> Dict[int, int]:
     """
     LLM에게 subtask → robot 할당을 요청한다.
@@ -330,6 +331,14 @@ def assign_subtasks_llm(
         lines.append(f"- Forced assignments (robot already holding object): {fa_str}")
     else:
         lines.append("- Forced assignments: none")
+
+    if holding_exclusions:
+        ex_parts = []
+        for rid, excl_sids in holding_exclusions.items():
+            ex_parts.append(f"Robot {rid} CANNOT be assigned to subtasks {excl_sids} (hand is full, cannot pick up another object)")
+        lines.append("- Holding exclusions (MUST NOT assign): " + "; ".join(ex_parts))
+    else:
+        lines.append("- Holding exclusions: none")
 
     # 4) Soft preferences
     lines.append("\n## Soft Preferences (apply in this priority order)")

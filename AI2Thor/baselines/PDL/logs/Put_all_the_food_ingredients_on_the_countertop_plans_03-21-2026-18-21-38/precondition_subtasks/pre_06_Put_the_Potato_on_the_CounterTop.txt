@@ -1,0 +1,48 @@
+# Task Description: Put the Potato on the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at potato location
+#2. Robot not holding potato
+
+# SubTask 6: Put the Potato on the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: potato(Location=counterTop), countertop(Location=floor)
+
+GoToObject(robot1, potato)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 potato)
+
+PickupObject(robot1, potato, counterTop)
+   Preconditions:
+     (at-location potato counterTop)
+     (at robot1 potato)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 potato)
+     (not (at-location potato counterTop))
+
+GoToObject(robot1, counterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 counterTop)
+
+PutObject(robot1, potato, counterTop)
+   Preconditions:
+     (holding robot1 potato)
+     (at robot1 counterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location potato counterTop)
+     (not (holding robot1 potato))
+
+Goal condition:
+(at-location potato counterTop)
+
+# Task Put the Potato on the CounterTop is done.

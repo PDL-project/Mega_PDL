@@ -1,0 +1,3 @@
+gotoobject robot1 cabinet1 (1)
+drophandobject robot1 bread cabinet1 (1)
+closeobject robot1 cabinet1 (1)

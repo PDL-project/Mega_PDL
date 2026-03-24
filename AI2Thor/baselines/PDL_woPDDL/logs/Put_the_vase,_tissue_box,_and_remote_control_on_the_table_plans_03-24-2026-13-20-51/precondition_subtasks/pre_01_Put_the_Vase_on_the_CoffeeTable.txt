@@ -1,0 +1,47 @@
+# Task Description: Put the Vase on the CoffeeTable.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at vase location
+#2. Robot not holding vase
+
+# SubTask 1: Put the Vase on the CoffeeTable.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: vase(Location=SideTable1), coffeeTable(Location=Floor)
+
+GoToObject(robot1, vase)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 vase)
+
+PickupObject(robot1, vase, SideTable1)
+   Preconditions:
+     (at-location vase SideTable1)
+     (at robot1 vase)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 vase)
+
+GoToObject(robot1, coffeeTable)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 coffeeTable)
+
+PutObject(robot1, vase, coffeeTable)
+   Preconditions:
+     (holding robot1 vase)
+     (at robot1 coffeeTable)
+     (not (inaction robot1))
+   Effects:
+     (at-location vase coffeeTable)
+     (not (holding robot1 vase))
+
+Goal condition: 
+(at-location vase coffeeTable)
+
+# Task Put the Vase on the CoffeeTable is done.

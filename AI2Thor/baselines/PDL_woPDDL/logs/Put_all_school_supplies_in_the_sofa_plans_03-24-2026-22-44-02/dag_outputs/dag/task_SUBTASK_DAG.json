@@ -1,0 +1,190 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Book_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "book",
+        "chair",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Book is at the chair.",
+        "Sofa is on the floor.",
+        "Robot1 is not holding the book."
+      ],
+      "effects": [
+        "Book is on the sofa.",
+        "Robot1 is not holding the book."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Pen_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "pen",
+        "diningtable",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Pen is on the dining table",
+        "Sofa is on the floor",
+        "Robot1 is not holding the pen"
+      ],
+      "effects": [
+        "Pen is on the sofa",
+        "Robot1 is not holding the pen"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_Pencil_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "pencil",
+        "coffeetable",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Pencil is on the coffeetable",
+        "Sofa is on the floor",
+        "Robot1 is not holding the pencil"
+      ],
+      "effects": [
+        "Pencil is on the sofa",
+        "Robot1 is not holding the pencil"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Put_the_Laptop_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "laptop",
+        "diningtable",
+        "sofa"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Laptop is on the diningtable.",
+        "Sofa is on the floor.",
+        "Robot1 is not holding the laptop."
+      ],
+      "effects": [
+        "Laptop is on the sofa.",
+        "Robot1 is not holding the laptop."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Put_the_Notebook_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "newspaper",
+        "diningtable",
+        "sofa"
+      ],
+      "preconds": [
+        "Robot1 is in the kitchen",
+        "Newspaper is on the dining table",
+        "Robot1 is not holding the newspaper"
+      ],
+      "effects": [
+        "Newspaper is on the sofa",
+        "Robot1 is not holding the newspaper"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 1,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 1,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 2,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 2,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 3,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    },
+    {
+      "from_id": 4,
+      "to_id": 5,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle: sofa"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ],
+    "4": [
+      5
+    ]
+  }
+}

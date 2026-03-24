@@ -1,0 +1,3 @@
+openfridge robot1 fridge (1)
+putobjectinfridge robot1 tomato fridge (1)
+closeobject robot1 fridge (1)

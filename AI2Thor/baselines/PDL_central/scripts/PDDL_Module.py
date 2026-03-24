@@ -50,6 +50,7 @@ from FeedbackLoopModule import (
     load_subtask_dag_parallel_groups,
     PartialReplanner,
     GroupAgent,
+    ReplanContext,
     subtask_has_dependency,
     SubtaskManagerLLM,
     run_planner_for_one_subtask,
@@ -603,7 +604,7 @@ class TaskManager:
         subtask_pddl_dir = os.path.join(log_folder, "subtask_pddl_problems")
         os.makedirs(subtask_pddl_dir, exist_ok=True)
 
-        for item in self.subtask_pddl_problems[idx]:
+        for item in (self.subtask_pddl_problems[idx] if idx < len(self.subtask_pddl_problems) else []):
             sid = item.get("subtask_id", "unknown")
             title = item.get("subtask_title", "untitled")
             pddl_text = item.get("problem_text", "")
@@ -618,7 +619,7 @@ class TaskManager:
         precondition_dir = os.path.join(log_folder, "precondition_subtasks")
         os.makedirs(precondition_dir, exist_ok=True)
 
-        for item in self.precondition_subtasks[idx]:
+        for item in (self.precondition_subtasks[idx] if idx < len(self.precondition_subtasks) else []):
             sid = item.get("subtask_id", "unknown")
             title = item.get("subtask_title", "untitled")
             pre_text = item.get("pre_goal_text", "")
@@ -707,6 +708,38 @@ class TaskManager:
             with open(os.path.join(folder, filename), 'w') as f:
                 f.write(content)
     
+    _CACHE_DIRS = [
+        "subtask_pddl_plans",
+        os.path.join("dag_outputs", "dag"),
+        os.path.join("dag_outputs", "assignment"),
+    ]
+
+    def _save_plan_cache(self, cache_dir: str) -> None:
+        """현재 resources/ 의 플랜 결과물을 cache_dir 에 스냅샷으로 저장."""
+        for rel in self._CACHE_DIRS:
+            src = os.path.join(self.resources_path, rel)
+            dst = os.path.join(cache_dir, rel)
+            if os.path.exists(src):
+                if os.path.exists(dst):
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+        print(f"[PlanCache] Saved to {cache_dir}")
+
+    def _restore_plan_cache(self, cache_dir: str) -> bool:
+        """cache_dir 에서 resources/ 로 플랜 파일을 복원. 성공 여부 반환."""
+        if not os.path.exists(cache_dir):
+            print(f"[PlanCache] Cache dir not found: {cache_dir}")
+            return False
+        for rel in self._CACHE_DIRS:
+            src = os.path.join(cache_dir, rel)
+            dst = os.path.join(self.resources_path, rel)
+            if os.path.exists(src):
+                if os.path.exists(dst):
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+        print(f"[PlanCache] Restored from {cache_dir}")
+        return True
+
     def _available_robot_skills(self, _: List[int]) -> List[str]:
         """현재 구현은 입력 로봇 id 리스트를 무시하고
         robots.robots[0]의 skills만 반환한다.
@@ -715,7 +748,8 @@ class TaskManager:
 
     def process_tasks(self, test_tasks: List[str], robot_ids: List[List[int]], objects_ai: str,
                        floor_plan: Optional[int] = None, run_with_feedback: bool = False, max_replan_retries: int = 2,
-                       record_video: bool = False) -> None:
+                       record_video: bool = False, skip_planning: bool = False,
+                       plan_cache_dir: Optional[str] = None) -> None:
         """
         TaskManager 전체 파이프라인의 main함수
         test_tasks -> 자연어 task 리스트
@@ -759,123 +793,129 @@ class TaskManager:
                 
                 # 이전 task 흔적 지우기
                 self.clean_all_resources_directories()
-                
-                # 1. task 분해, decomposed_plan 생성 -> 자연어 task를 여러개의 subtask로 쪼개기 + 필요한 스킬과 오브젝트 선정
-                decomposed_plan = self._generate_decomposed_plan(task, domain_content, self.available_robot_skills, objects_ai)
-                self.decomposed_plan.append(decomposed_plan)
-                
-                print("✓ Decomposed plan generated")
-                #print("decomposed plan:\n", decomposed_plan)
-                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-                
-                parsed_subtasks = self._decomposed_plan_to_subtasks(decomposed_plan) #분리
-                print("✓ Parsed Decomposed Plan generated")
-                #print("parsed decomposed plan:\n", parsed_subtasks)
-                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
-                precondition_subtasks = self._generate_precondition_subtasks(parsed_subtasks, domain_content, self.available_robot_skills, objects_ai)
-                self.precondition_subtasks.append(precondition_subtasks) 
-                print("✓ Precondition Decomposed Plan generated")
-                #print("Precondition Decomposed Plan:\n", precondition_subtasks)
-                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+                _use_cache = skip_planning and bool(plan_cache_dir)
+                if _use_cache:
+                    if not self._restore_plan_cache(plan_cache_dir):
+                        raise RuntimeError(
+                            f"[PlanCache] --skip-planning 지정됐으나 캐시가 없습니다: {plan_cache_dir}\n"
+                            "먼저 --plan-cache-dir 만 지정해서 한 번 실행해 캐시를 생성하세요."
+                        )
+                    print("[PlanCache] Skipping LLM planning — using cached plan")
 
-                for item in precondition_subtasks:
-                    sid = item.get("subtask_id", -1)
-                    title = item.get("subtask_title", "untitled")
-                    text = item.get("pre_goal_text", "")
+                if not _use_cache:
+                    # 1. task 분해, decomposed_plan 생성 -> 자연어 task를 여러개의 subtask로 쪼개기 + 필요한 스킬과 오브젝트 선정
+                    decomposed_plan = self._generate_decomposed_plan(task, domain_content, self.available_robot_skills, objects_ai)
+                    self.decomposed_plan.append(decomposed_plan)
 
-                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-                    filename = f"pre_{sid:02d}_{safe_title}.txt"   # 확장자 txt 추천 (PDDL problem이 아니라서)
+                    print("✓ Decomposed plan generated")
 
-                    out_path = os.path.join(self.file_processor.precondition_subtasks_path, filename)
-                    self.file_processor.write_file(out_path, text)
+                    parsed_subtasks = self._decomposed_plan_to_subtasks(decomposed_plan) #분리
+                    print("✓ Parsed Decomposed Plan generated")
 
-                # 2. 서브테스크에 대한 pddl problem 정의
-                subtask_pddl_problems = self._generate_subtask_pddl_problems(precondition_subtasks, domain_content, self.available_robot_skills, objects_ai)
-                self.subtask_pddl_problems.append(subtask_pddl_problems)
+                    precondition_subtasks = self._generate_precondition_subtasks(parsed_subtasks, domain_content, self.available_robot_skills, objects_ai)
+                    self.precondition_subtasks.append(precondition_subtasks)
+                    print("✓ Precondition Decomposed Plan generated")
 
-                print("✓ PDDL problems generated")
-                #print("PDDL problems plan:\n", subtask_pddl_problems)
-                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+                    for item in precondition_subtasks:
+                        sid = item.get("subtask_id", -1)
+                        title = item.get("subtask_title", "untitled")
+                        text = item.get("pre_goal_text", "")
 
-                for item in subtask_pddl_problems:
-                    sid = item["subtask_id"]
-                    title = item["subtask_title"]
-                    pddl_text = item["problem_text"]
+                        safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+                        filename = f"pre_{sid:02d}_{safe_title}.txt"
 
-                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-                    filename = f"subtask_{sid:02d}_{safe_title}.pddl"
+                        out_path = os.path.join(self.file_processor.precondition_subtasks_path, filename)
+                        self.file_processor.write_file(out_path, text)
 
-                    out_path = os.path.join(self.file_processor.subtask_pddl_problems_path, filename)
-                    self.file_processor.write_file(out_path, pddl_text)
+                    # 2. 서브테스크에 대한 pddl problem 정의
+                    subtask_pddl_problems = self._generate_subtask_pddl_problems(precondition_subtasks, domain_content, self.available_robot_skills, objects_ai)
+                    self.subtask_pddl_problems.append(subtask_pddl_problems)
 
-                # 3. FastDownward 돌려서, pddl plan 생성
-                validated_plan = self._validate_and_plan()
+                    print("✓ PDDL problems generated")
 
-                # 4. pddl plan기반 DAG 생성
-                self.generate_dag() #DAG 생성 (병렬성 분석)
+                    for item in subtask_pddl_problems:
+                        sid = item["subtask_id"]
+                        title = item["subtask_title"]
+                        pddl_text = item["problem_text"]
 
-                # 5a. 시뮬레이터에서 로봇 스폰 좌표 + 오브젝트 좌표 가져오기 (거리 기반 LP용)
-                robot_positions = None
-                object_positions = None
-                if floor_plan is not None:
-                    robot_positions, object_positions = MultiRobotExecutor.spawn_and_get_positions(
-                        floor_plan, len(task_robot_ids)
+                        safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+                        filename = f"subtask_{sid:02d}_{safe_title}.pddl"
+
+                        out_path = os.path.join(self.file_processor.subtask_pddl_problems_path, filename)
+                        self.file_processor.write_file(out_path, pddl_text)
+
+                    # 3. FastDownward 돌려서, pddl plan 생성
+                    validated_plan = self._validate_and_plan()
+
+                    # 4. pddl plan기반 DAG 생성
+                    self.generate_dag() #DAG 생성 (병렬성 분석)
+
+                    # 5a. 시뮬레이터에서 로봇 스폰 좌표 + 오브젝트 좌표 가져오기 (거리 기반 LP용)
+                    robot_positions = None
+                    object_positions = None
+                    if floor_plan is not None:
+                        robot_positions, object_positions = MultiRobotExecutor.spawn_and_get_positions(
+                            floor_plan, len(task_robot_ids)
+                        )
+                        self.robot_spawn_positions = robot_positions
+                        print(f"✓ Robot spawn positions: {robot_positions}")
+
+                    # 5b. 작업할당
+                    plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
+
+                    binding_pairs = binding_pairs_from_subtask_dag(self.subtask_dag)
+
+                    # parallel_groups를 LP에 전달하여 같은 그룹 내 분산 배정 유도
+                    pg_for_lp = None
+                    if self.subtask_dag and hasattr(self.subtask_dag, 'parallel_groups'):
+                        pg_for_lp = {str(k): v for k, v in self.subtask_dag.parallel_groups.items()}
+
+                    assignment = assign_subtasks_llm(
+                        subtasks=parsed_subtasks,
+                        robot_ids=task_robot_ids,
+                        robots_db=robots.robots,
+                        plan_actions_by_subtask=plan_actions_by_sid,
+                        objects_ai=self.objects_ai,
+                        llm=self.llm,
+                        gpt_version=self.gpt_version,
+                        binding_pairs=binding_pairs,
+                        robot_positions=robot_positions,
+                        object_positions=object_positions,
+                        parallel_groups=pg_for_lp,
                     )
-                    self.robot_spawn_positions = robot_positions
-                    print(f"✓ Robot spawn positions: {robot_positions}")
 
-                # 5b. 작업할당
-                plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
+                    # 작업 할당 결과 출력
+                    print("\n" + "="*50)
+                    print("✓ LLM Task Allocation Result")
+                    print("="*50)
+                    for sid, rid in sorted(assignment.items()):
+                        subtask_title = next((st["title"] for st in parsed_subtasks if st["id"] == sid), f"Subtask {sid}")
+                        print(f"  Subtask {sid} ({subtask_title}) -> Robot {rid}")
+                    print("="*50)
 
-                binding_pairs = binding_pairs_from_subtask_dag(self.subtask_dag)
-
-                # parallel_groups를 LP에 전달하여 같은 그룹 내 분산 배정 유도
-                pg_for_lp = None
-                if self.subtask_dag and hasattr(self.subtask_dag, 'parallel_groups'):
-                    pg_for_lp = {str(k): v for k, v in self.subtask_dag.parallel_groups.items()}
-
-                assignment = assign_subtasks_llm(
-                    subtasks=parsed_subtasks,  # _decomposed_plan_to_subtasks() 결과 (id, skills 들어있어야 함)
-                    robot_ids=task_robot_ids,  # 예: [1,2,3]
-                    robots_db=robots.robots,   # robots.py의 robots 리스트
-                    plan_actions_by_subtask=plan_actions_by_sid,
-                    objects_ai=self.objects_ai,  # 저장해둔 objects_ai 문자열/리스트
-                    llm=self.llm,
-                    gpt_version=self.gpt_version,
-                    binding_pairs=binding_pairs,
-                    robot_positions=robot_positions,
-                    object_positions=object_positions,
-                    parallel_groups=pg_for_lp,
-                )
-
-                # 작업 할당 결과 출력
-                print("\n" + "="*50)
-                print("✓ LLM Task Allocation Result")
-                print("="*50)
-                for sid, rid in sorted(assignment.items()):
-                    subtask_title = next((st["title"] for st in parsed_subtasks if st["id"] == sid), f"Subtask {sid}")
-                    print(f"  Subtask {sid} ({subtask_title}) -> Robot {rid}")
-                print("="*50)
-
-                # 할당 결과 저장
-                self.task_assignment = assignment
-                assignment_output = {
-                    "task_idx": task_idx,
-                    "agent_count": len(task_robot_ids),
-                    "assignment": {str(k): v for k, v in assignment.items()},
-                    "subtasks": [{"id": st["id"], "title": st["title"], "robot": assignment.get(st["id"])} for st in parsed_subtasks]
-                }
-                # 스폰 좌표가 있으면 저장 (실행 시 동일 위치 재배치용)
-                if robot_positions is not None:
-                    assignment_output["robot_spawn_positions"] = {
-                        str(k): list(v) for k, v in robot_positions.items()
+                    # 할당 결과 저장
+                    self.task_assignment = assignment
+                    assignment_output = {
+                        "task_idx": task_idx,
+                        "agent_count": len(task_robot_ids),
+                        "assignment": {str(k): v for k, v in assignment.items()},
+                        "subtasks": [{"id": st["id"], "title": st["title"], "robot": assignment.get(st["id"])} for st in parsed_subtasks]
                     }
-                assignment_path = os.path.join(self.resources_path, "dag_outputs", "assignment", f"task_{task_idx}_assignment.json")
-                os.makedirs(os.path.dirname(assignment_path), exist_ok=True)
-                with open(assignment_path, "w") as f:
-                    json.dump(assignment_output, f, indent=2, ensure_ascii=False)
-                print(f"✓ Assignment Done")
+                    # 스폰 좌표가 있으면 저장 (실행 시 동일 위치 재배치용)
+                    if robot_positions is not None:
+                        assignment_output["robot_spawn_positions"] = {
+                            str(k): list(v) for k, v in robot_positions.items()
+                        }
+                    assignment_path = os.path.join(self.resources_path, "dag_outputs", "assignment", f"task_{task_idx}_assignment.json")
+                    os.makedirs(os.path.dirname(assignment_path), exist_ok=True)
+                    with open(assignment_path, "w") as f:
+                        json.dump(assignment_output, f, indent=2, ensure_ascii=False)
+                    print(f"✓ Assignment Done")
+
+                    # 플랜 캐시 저장 (--plan-cache-dir 지정 시)
+                    if plan_cache_dir:
+                        self._save_plan_cache(plan_cache_dir)
 
                 # 6. 멀티로봇 실행 코드 생성
                 #print("\n[Step 6] Generating multi-robot execution code...")
@@ -902,60 +942,35 @@ class TaskManager:
                     print("\n✓ Running execution with feedback loop...")
                     task_name_fb = "task"
                     state_store = SharedTaskStateStore(self.base_path, task_name_fb)
-                    replan_retry_per_subtask = {}  # subtask_id -> retry count
+                    central_replan_count = [0]  # 중앙 재플래닝 횟수
 
-                    def _on_subtask_failed(failed_result):
-                        """재계획 시도 후 새 플랜 로드 여부 반환."""
-                        sid = failed_result.subtask_id
-                        # 이미 drop된 subtask는 재계획 불필요
-                        if sid in executor._dropped_subtasks:
-                            #print(f"[Feedback] Subtask {sid} already dropped, skipping replan")
+                    def _on_subtask_failed(all_results):
+                        """중앙 집중 재플래닝: 모든 남은 서브태스크를 한 번에 재플래닝.
+                        all_results: Dict[subtask_id, SubTaskExecutionResult] — 성공 포함 전체 결과.
+                        """
+                        if central_replan_count[0] >= max_replan_retries:
+                            print(f"[Central Replan] Max retries ({max_replan_retries}) reached, stopping.")
                             return False
-                        count = replan_retry_per_subtask.get(sid, 0)
-                        if count >= max_replan_retries:
-                            #print(f"[Feedback] Max replan retries ({max_replan_retries}) for subtask {sid} reached, skipping replan")
-                            return False
+                        central_replan_count[0] += 1
+                        print(f"[Central Replan] Attempt {central_replan_count[0]}/{max_replan_retries}")
 
-                        #print(f"[Feedback] Immediate replan triggered by subtask {sid} (retry {count+1}/{max_replan_retries})")
-                        replan_retry_per_subtask[sid] = count + 1
+                        sync_execution_results_to_store(state_store, all_results)
 
-                        current_group_sids: set = set()
-                        for _, _sids in executor.parallel_groups.items():
-                            if sid in _sids:
-                                current_group_sids = set(_sids)
-                                break
-                        current_results = {
-                            s: r for s, r in executor._subtask_results.items()
-                            if s in current_group_sids
-                        }
-                        # 방금 실패한 서브태스크는 반드시 포함
-                        current_results[sid] = failed_result
-                        # replan 중간 동기화에서는 stale sid-effect 매핑을 피하기 위해
-                        # success/failure 상태만 반영한다.
-                        sync_execution_results_to_store(state_store, current_results)
-
-                        replan_result = self.run_feedback_replan(
+                        replan_result = self.run_central_replan(
                             task_idx=task_idx,
                             task_name=task_name_fb,
-                            execution_results=current_results,
+                            all_results=all_results,
                             domain_content=domain_content,
                             objects_ai=objects_ai,
                             state_store=state_store,
                             task_robot_ids=task_robot_ids,
                             floor_plan=floor_plan,
                             executor=executor,
-                            group_agents=group_agents,
                         )
 
                         if replan_result == "no_change":
-                            # run_feedback_replan 내부에서 dropped 처리가 되었을 수 있음
-                            #if sid in executor._dropped_subtasks:
-                            #    print(f"[Feedback] Subtask {sid} was dropped during replan (physically impossible)")
-                            #else:
-                            #    print("[Feedback] Replan: NO_CHANGE")
                             return False
                         if replan_result == "fully_replanned":
-                            #print("[Feedback] Replan: fully_replanned")
                             success = self.reload_executor_with_integrated_dag(
                                 executor=executor,
                                 task_idx=task_idx,
@@ -964,47 +979,12 @@ class TaskManager:
                             return bool(success)
                         return False
 
-                    # DAG 엣지 기반 연결 컴포넌트로 그룹 구성
-                    # (엣지로 연결된 서브태스크 = 한 그룹, 고립된 서브태스크 = 단독 그룹)
-                    _dag_edges_fb = load_subtask_dag_edges(self.base_path, task_name_fb)
-                    _all_sids_fb = [sid for sids in executor.parallel_groups.values() for sid in sids]
-                    _parent_fb = {sid: sid for sid in _all_sids_fb}
-
-                    def _find_fb(x):
-                        while _parent_fb[x] != x:
-                            _parent_fb[x] = _parent_fb[_parent_fb[x]]
-                            x = _parent_fb[x]
-                        return x
-
-                    for _frm, _to in _dag_edges_fb:
-                        if _frm in _parent_fb and _to in _parent_fb:
-                            _ra, _rb = _find_fb(_frm), _find_fb(_to)
-                            if _ra != _rb:
-                                _parent_fb[_rb] = _ra
-
-                    _component_groups_fb: Dict[int, List[int]] = {}
-                    for _sid in _all_sids_fb:
-                        _root = _find_fb(_sid)
-                        _component_groups_fb.setdefault(_root, []).append(_sid)
-
-                    # 연결 컴포넌트별 GroupAgent 미리 생성 (실행 중 메모리 실시간 업데이트)
-                    group_agents = {
-                        gid: GroupAgent(self.llm, self.gpt_version).bind_memory(
-                            group_id=gid,
-                            subtask_ids=sorted(sids),
-                            base_path=self.base_path,
-                            task_name=task_name_fb,
-                        )
-                        for gid, sids in _component_groups_fb.items()
-                    }
-
                     results = executor.execute_in_ai2thor_with_feedback(
                         floor_plan,
                         task_name=task_name_fb,
                         task_description=task,
                         state_store=state_store,
                         on_subtask_failed=_on_subtask_failed,
-                        group_agents=group_agents,
                     )
                     # 종료 동기화도 status 중심으로 반영 (sid remap 이후 효과 오염 방지)
                     sync_execution_results_to_store(state_store, results)
@@ -2405,6 +2385,136 @@ class TaskManager:
                 subtask_pddl_plans_path=self.file_processor.subtask_pddl_plans_path,
             )
 
+    def run_central_replan(
+        self,
+        task_idx: int,
+        task_name: str,
+        all_results: Dict[int, Any],
+        domain_content: str,
+        objects_ai: str,
+        state_store: Optional[Any] = None,
+        task_robot_ids: Optional[List[int]] = None,
+        floor_plan: Optional[int] = None,
+        executor: Optional[Any] = None,
+    ) -> str:
+        """
+        중앙 집중 재플래닝: 성공하지 못한 모든 서브태스크를 한 번에 재플래닝.
+        그룹 에이전트 없이 ReplanContext를 직접 구성하여 decomposition_callback 단일 호출.
+
+        Returns:
+            "no_change" | "fully_replanned"
+        """
+        dropped_ids = getattr(executor, '_dropped_subtasks', set()) if executor else set()
+        remaining_ids = sorted(
+            sid for sid, r in all_results.items()
+            if not r.success and sid not in dropped_ids
+        )
+
+        if not remaining_ids:
+            return "no_change"
+
+        # 재플래닝 버전 폴더 생성 및 경로 전환
+        replan_dir = self._create_next_replan_dir()
+        print(f"[Central Replan] versioned folder: {replan_dir}")
+        self.file_processor.switch_to_dir(replan_dir)
+        if executor is not None:
+            executor.plans_path = self.file_processor.subtask_pddl_plans_path
+
+        # decomposition_callback 생성 (feedback_process_tasks 재사용)
+        decomp_callback = self.feedback_process_tasks(executor=executor, task_robot_ids=task_robot_ids)
+
+        # ReplanContext 직접 구성 (그룹 에이전트 없이)
+        # genuine failure: Aborted/Not-yet-started 가 아닌 실제 실패
+        genuine_failed = [
+            sid for sid in remaining_ids
+            if all_results[sid].error_message
+            and "Aborted" not in (all_results[sid].error_message or "")
+            and "Not yet started" not in (all_results[sid].error_message or "")
+        ]
+        first_failed_sid = genuine_failed[0] if genuine_failed else remaining_ids[0]
+        failure_reason = (all_results[first_failed_sid].error_message or "Unknown error")
+        remaining_pending_ids = [sid for sid in remaining_ids if sid != first_failed_sid]
+
+        # success effects: state_store에서 성공한 subtask effects
+        success_effects: Dict[int, Any] = {}
+        if state_store is not None:
+            success_effects = state_store.get_success_effects_immutable()
+
+        # completed_actions: 각 subtask의 부분 완료 액션
+        completed_actions = None
+        completed_actions_by_subtask: Dict[int, Any] = {}
+        if executor is not None:
+            completed_actions = executor._subtask_completed_actions.get(first_failed_sid)
+            # aborted/중단된 서브태스크의 partial actions를 completed_actions_by_subtask에
+            # 넣으면 decomp_callback 내부에서 "Already Achieved Effects"로 오인됨.
+            # first_failed_sid만 넣고, 나머지는 local_env_text(인벤토리+위치)로 충분히 전달됨.
+            if completed_actions:
+                completed_actions_by_subtask[first_failed_sid] = completed_actions
+
+        context = ReplanContext(
+            local_env="Kitchen environment with standard appliances",
+            success_effects=success_effects,
+            failed_subtask_id=first_failed_sid,
+            failure_reason=failure_reason,
+            remaining_pending_ids=remaining_pending_ids,
+            completed_actions=completed_actions,
+            completed_actions_by_subtask=completed_actions_by_subtask,
+        )
+
+        self._fb_log_header("Central Replan")
+        self._fb_log_line(f"Remaining subtasks: {remaining_ids}")
+        self._fb_log_line(f"First failed: {first_failed_sid} — {failure_reason[:80]}")
+
+        # decomposition_callback 단일 호출 (남은 모든 서브태스크 한 번에 재분해)
+        new_plans = decomp_callback(
+            group_id=first_failed_sid,
+            subtask_ids_in_group=remaining_ids,
+            context=context,
+        )
+
+        if new_plans is None:
+            self._fb_log_line("Central replan: FAILED")
+            return "no_change"
+
+        if not new_plans:
+            self._fb_log_line("Central replan: DROPPED (all remaining goals physically impossible)")
+            if executor is not None:
+                for sid in remaining_ids:
+                    executor._dropped_subtasks.add(sid)
+            return "no_change"
+
+        replanned_ids = sorted(new_plans.keys())
+        self._fb_log_line(f"Replanned into: {replanned_ids}")
+
+        # DAG 통합
+        dag_integrated = self.integrate_replanned_subtasks_to_dag(
+            task_name=task_name,
+            task_idx=task_idx,
+            original_group_id=first_failed_sid,
+            replaced_subtask_ids=remaining_ids,
+            replanned_subtask_ids=replanned_ids,
+            new_plans=new_plans,
+            state_store=state_store,
+        )
+        if not dag_integrated:
+            self._fb_log_line("DAG integration: FAILED")
+            return "no_change"
+
+        # LP 재할당
+        if task_robot_ids is not None:
+            new_assignment = self.recompute_task_assignment_after_replan(
+                task_idx=task_idx,
+                task_name=task_name,
+                task_robot_ids=task_robot_ids,
+                floor_plan=floor_plan,
+                executor=executor,
+            )
+            if new_assignment is None:
+                self._fb_log_line("LP reallocation: FAILED")
+                return "no_change"
+
+        return "fully_replanned"
+
     def run_feedback_replan(
         self,
         task_idx: int,
@@ -2982,9 +3092,8 @@ class TaskManager:
                         _title = f"subtask_{_sid:02d}_{_m.group(1)}"
                         break
                 _scope_lines.append(f"  - Subtask {_sid}: {_title}")
-            redecompose_prompt += "## YOUR SCOPE (STRICT)\n"
-            redecompose_prompt += "You are responsible for ONLY the following subtask(s).\n"
-            redecompose_prompt += "DO NOT plan for any other subtasks — other robots/agents are handling them separately.\n"
+            redecompose_prompt += "## YOUR SCOPE\n"
+            redecompose_prompt += "You MUST replan ALL of the following subtasks. Every subtask listed below is your responsibility — none of them have been completed yet.\n"
             redecompose_prompt += "\n".join(_scope_lines) + "\n\n"
 
             redecompose_prompt += "## CRITICAL RULE: DISTINGUISH IMPOSSIBLE vs RECOVERABLE FAILURES\n"
@@ -3795,6 +3904,22 @@ class TaskManager:
                 #if forced_assignments:
                     #print(f"  ✓ Forced assignments (holding constraint): {forced_assignments}")
 
+            # 손에 물건을 들고 있지만 forced_assignments에 포함되지 않은 로봇 →
+            # pickup이 포함된 다른 서브태스크에 배정 불가 (hand is full)
+            holding_exclusions: Dict[int, List[int]] = {}
+            for ht, rid in held_by.items():
+                excl = []
+                for st in parsed_subtasks:
+                    sid = st["id"]
+                    # 이미 강제 배정된 서브태스크는 제외
+                    if forced_assignments.get(sid) == rid:
+                        continue
+                    plan = plan_actions_by_sid.get(sid, [])
+                    if any("pickupobject" in a.lower() for a in plan):
+                        excl.append(sid)
+                if excl:
+                    holding_exclusions.setdefault(rid, []).extend(excl)
+
             assignment = assign_subtasks_llm(
                 subtasks=parsed_subtasks,
                 robot_ids=task_robot_ids,
@@ -3808,6 +3933,7 @@ class TaskManager:
                 object_positions=object_positions,
                 parallel_groups=pg_for_lp,
                 forced_assignments=forced_assignments if forced_assignments else None,
+                holding_exclusions=holding_exclusions if holding_exclusions else None,
             )
 
             # 7. 할당 결과 출력 및 저장
@@ -3959,6 +4085,17 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Record execution as MP4 videos (top_view.mp4, robot1.mp4, ...) saved in logs/<run>/videos/",
     )
+    parser.add_argument(
+        "--skip-planning",
+        action="store_true",
+        help="Skip LLM planning and use cached plan from --plan-cache-dir",
+    )
+    parser.add_argument(
+        "--plan-cache-dir",
+        type=str,
+        default=None,
+        help="Directory to save/restore plan cache (subtask plans + DAG + assignment)",
+    )
 
     args = parser.parse_args()
 
@@ -4025,7 +4162,9 @@ def main():
             task_manager.process_tasks(test_tasks, robots_test_tasks, objects_ai, floor_plan=floor_plan_num,
                 run_with_feedback=getattr(args, "run_with_feedback", False),
                 max_replan_retries=getattr(args, "max_replan_retries", 2),
-                record_video=getattr(args, "record_video", False))
+                record_video=getattr(args, "record_video", False),
+                skip_planning=getattr(args, "skip_planning", False),
+                plan_cache_dir=getattr(args, "plan_cache_dir", None))
 
             if args.log_results:
                 task_manager.log_results(

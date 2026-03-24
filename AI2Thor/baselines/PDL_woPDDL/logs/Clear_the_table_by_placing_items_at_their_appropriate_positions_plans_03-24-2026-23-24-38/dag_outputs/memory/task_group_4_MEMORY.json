@@ -1,0 +1,22 @@
+{
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 lettuce fridge (1)",
+      "closeobject robot1 fridge (1)"
+    ]
+  },
+  "5": {
+    "state": "FAILED",
+    "error_message": "Target openable Receptacle is CLOSED, can't place if target is not open!",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 tomato (1)",
+      "pickupobject robot1 tomato diningtable (1)",
+      "gotoobject robot1 fridge (1)"
+    ]
+  }
+}

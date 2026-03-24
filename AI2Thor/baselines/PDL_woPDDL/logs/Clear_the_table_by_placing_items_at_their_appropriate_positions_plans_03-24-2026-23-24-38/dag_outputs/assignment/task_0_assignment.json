@@ -1,0 +1,61 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 3,
+    "2": 1,
+    "3": 2,
+    "4": 2,
+    "5": 3,
+    "6": 1
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Place the Fork in Drawer1.",
+      "robot": 3
+    },
+    {
+      "id": 2,
+      "title": "Place the Spoon in Drawer2.",
+      "robot": 1
+    },
+    {
+      "id": 3,
+      "title": "Place the Mug on the CoffeeMachine.",
+      "robot": 2
+    },
+    {
+      "id": 4,
+      "title": "Place the Lettuce in the Fridge.",
+      "robot": 2
+    },
+    {
+      "id": 5,
+      "title": "Place the Tomato in the Fridge.",
+      "robot": 3
+    },
+    {
+      "id": 6,
+      "title": "Place the Toaster on the CounterTop1.",
+      "robot": 1
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      -3.75,
+      0.9009997248649597,
+      1.25
+    ],
+    "2": [
+      -2.25,
+      0.9009997844696045,
+      2.0
+    ],
+    "3": [
+      -0.75,
+      0.9009997248649597,
+      1.25
+    ]
+  }
+}

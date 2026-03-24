@@ -1,0 +1,45 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot at soapbottle location
+#2. Robot not holding soapbottle
+#3. Robot not at sink location
+
+# SubTask 10: Move the SoapBottle to the Appropriate Location.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: soapbottle(Location=counterTop), sink(Location=floor)
+
+GoToObject(robot1, soapbottle)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 soapbottle)
+
+PickupObject(robot1, soapbottle, counterTop)
+   Preconditions:
+     (at-location soapbottle counterTop)
+     (at robot1 soapbottle)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 soapbottle)
+     (not (at-location soapbottle counterTop))
+
+GoToObject(robot1, sink)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sink)
+
+PutObject(robot1, soapbottle, sink)
+   Preconditions:
+     (holding robot1 soapbottle)
+     (at robot1 sink)
+     (not (inaction robot1))
+   Effects:
+     (at-location soapbottle sink)
+     (not (holding robot1 soapbottle))
+
+Goal condition:
+(at-location soapbottle sink)

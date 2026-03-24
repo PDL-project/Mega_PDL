@@ -1,0 +1,32 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot2 (treated as robot1 in PDDL) is holding ButterKnife
+#2. Robot2 is at an unspecified location
+
+# SubTask 1: Drop the ButterKnife.
+    Skills Required: GoToObject, DropHandObject
+    Related Objects: ButterKnife(Location=robot2), bowl1(Location=CounterTop)
+
+GoToObject(robot1, bowl1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 bowl1)
+
+DropHandObject(robot1, ButterKnife, bowl1)
+   Preconditions:
+     (holding robot1 ButterKnife)
+     (at robot1 bowl1)
+     (not (inaction robot1))
+     (not (is-fridge bowl1))
+     (not (object-close robot1 bowl1))
+   Effects:
+     (at-location ButterKnife bowl1)
+     (not (holding robot1 ButterKnife))
+     (not (inaction robot1))
+
+Goal condition: 
+(at-location ButterKnife bowl1)

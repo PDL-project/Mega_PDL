@@ -961,6 +961,14 @@ class TaskManager:
                                 task_idx=task_idx,
                                 task_name=task_name_fb
                             )
+                            if success:
+                                # 재계획 성공 후 해당 SID를 state_store에서 제거 (= PENDING 처리)
+                                # 동시 다중 실패 시 두 번째 replan이 첫 번째 replan의 SID를
+                                # FAILED로 오인해 DAG에서 제외하는 버그 방지
+                                with state_store._lock:
+                                    for _rsid, _r in current_results.items():
+                                        if not _r.success:
+                                            state_store._store.pop(_rsid, None)
                             return bool(success)
                         return False
 
@@ -2554,6 +2562,12 @@ class TaskManager:
                 if context is None:
                     continue
 
+                # AgentMemory는 group 단위로 공유되므로 failed_ids[0]이 다른 subtask일 수 있음
+                # (e.g. subtask 4,5가 같은 group → 4가 먼저 실패 기록 → subtask 5 replan 시 4로 오인)
+                # 루프 변수 failed_id로 강제 오버라이드해 정확한 subtask를 재계획하도록 수정
+                if context.failed_subtask_id != failed_id:
+                    context.failed_subtask_id = failed_id
+
                 self._fb_log_line("Action: group-level redecomposition")
 
                 # 현재 문제/액션 정보 수집
@@ -2635,7 +2649,15 @@ class TaskManager:
                     if not dag_integrated:
                         self._fb_log_line("DAG integration: FAILED (skip LP reallocation)")
                         continue
-                    
+
+                    # DAG 통합 성공 → 재계획된 SID를 state_store에서 제거 (= PENDING 처리)
+                    # 루프 내 다음 failed_id의 integrate_replanned_subtasks_to_dag가
+                    # 이미 재계획된 SID를 FAILED로 오인해 DAG에서 제외하는 버그 방지
+                    if state_store is not None:
+                        with state_store._lock:
+                            for _rsid in replanned_ids:
+                                state_store._store.pop(_rsid, None)
+
                     # LP 재할당
                     if task_robot_ids is not None:
                         new_assignment = self.recompute_task_assignment_after_replan(

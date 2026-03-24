@@ -1,0 +1,28 @@
+(define (problem place-spoon-in-drawer2)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    spoon - object
+    drawer2 - object
+    diningTable - object
+    floor - object
+  )
+
+  (:init
+    (= (total-cost) 0)
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (at-location spoon diningTable)
+    (at-location drawer2 floor)
+    (not (object-open robot1 drawer2))
+    (not (holding robot1 spoon))
+  )
+
+  (:goal (and
+    (at-location spoon drawer2)
+    (object-close robot1 drawer2)
+  ))
+
+  (:metric minimize (total-cost))
+)

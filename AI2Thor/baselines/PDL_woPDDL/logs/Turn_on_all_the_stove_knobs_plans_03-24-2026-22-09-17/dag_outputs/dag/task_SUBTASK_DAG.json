@@ -1,0 +1,91 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Turn_on_StoveKnob1",
+      "objects": [
+        "robot1",
+        "stoveknob1",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "StoveKnob1 is at the floor",
+        "StoveKnob1 is switched off"
+      ],
+      "effects": [
+        "Robot1 is at StoveKnob1",
+        "StoveKnob1 is switched on",
+        "StoveKnob1 is not switched off"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Turn_on_StoveKnob2",
+      "objects": [
+        "robot1",
+        "stoveknob2"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "StoveKnob2 is on the floor",
+        "StoveKnob2 is switched off"
+      ],
+      "effects": [
+        "Robot1 is at StoveKnob2",
+        "StoveKnob2 is switched on",
+        "StoveKnob2 is not switched off"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Turn_on_StoveKnob3",
+      "objects": [
+        "robot1",
+        "stoveknob3"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the location of StoveKnob3"
+      ],
+      "effects": [
+        "StoveKnob3 is switched on by Robot1",
+        "StoveKnob3 is no longer switched off by Robot1"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Turn_on_StoveKnob4",
+      "objects": [
+        "robot1",
+        "stoveknob4",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the kitchen",
+        "stoveknob4 is at the floor",
+        "stoveknob4 is switched off"
+      ],
+      "effects": [
+        "robot1 is at stoveknob4",
+        "stoveknob4 is switched on",
+        "stoveknob4 is not switched off"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4
+    ]
+  }
+}

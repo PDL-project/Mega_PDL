@@ -799,18 +799,6 @@ class MultiRobotExecutor:
                         if err_msg != "":
                             action_success = False
                             print(f"[PutObject] Error: {err_msg}")
-                            # Auto-recovery: if receptacle closed, open then retry once
-                            if "CLOSED" in err_msg.upper():
-                                retry = act.get("retry", 0)
-                                if retry < 1:
-                                    self._enqueue_action({
-                                        'action': 'OpenObject',
-                                        'objectId': act['objectId'],
-                                        'agent_id': act['agent_id']
-                                    }, front=True)
-                                    new_act = dict(act)
-                                    new_act["retry"] = retry + 1
-                                    self._enqueue_action(new_act, front=True)
                         else:
                             self.success_exec += 1
                             self._record_agent_success(act['agent_id'])
@@ -1069,10 +1057,11 @@ class MultiRobotExecutor:
                         return True
 
         # fallback for legacy regex-style patterns
+        # re.match는 시작만 앵커링되어 "pen"이 "Pencil"에도 매칭되는 버그 방지를 위해 re.fullmatch 사용
         try:
             return bool(
-                re.match(p, object_id, re.IGNORECASE)
-                or re.match(p, object_type, re.IGNORECASE)
+                re.fullmatch(p, object_id, re.IGNORECASE)
+                or re.fullmatch(p, object_type, re.IGNORECASE)
             )
         except re.error:
             return False
@@ -2206,8 +2195,8 @@ class MultiRobotExecutor:
         atype, _, objs = self._parse_action(action_str)
 
         if atype == "gotoobject" and len(objs) >= 1:
-            # return value 체크: GoToObject 실패 시 이미 _fail_current_subtask 호출됨
-            self.GoToObject(agent_id, objs[0])
+            if self.GoToObject(agent_id, objs[0]):
+                self.success_exec += 1
 
         elif atype == "pickupobject" and len(objs) >= 1:
             if not self.GoToObject(agent_id, objs[0]):
@@ -2654,10 +2643,11 @@ class MultiRobotExecutor:
                     break
                 max_retries = 3
                 attempt = 0
+                # total_exec는 PDDL 액션 단위로 1회 카운트 (retry 제외)
+                self._subtask_exec_counts[plan.subtask_id] = self._subtask_exec_counts.get(plan.subtask_id, 0) + 1
+                self.total_exec += 1
                 while attempt < max_retries:
                     print(f"[Robot{plan.robot_id}] Action {i+1}/{len(plan.actions)}: {action}")
-                    self._subtask_exec_counts[plan.subtask_id] = self._subtask_exec_counts.get(plan.subtask_id, 0) + 1
-                    self.total_exec += 1
                     self._execute_pddl_action(agent_id, action)
                     # 액션 실행 후 실패가 발생하지 않았으면 완료 목록에 추가
                     if not self._subtask_failed.get(plan.subtask_id, False):

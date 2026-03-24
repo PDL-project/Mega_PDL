@@ -1,0 +1,2 @@
+gotoobject robot1 countertop1 (1)
+drophandobject robot1 bowl1 countertop1 (1)

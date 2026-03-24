@@ -1,0 +1,187 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Close_Cabinet1",
+      "objects": [
+        "robot1",
+        "cabinet1",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet1 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet1",
+        "Cabinet1 is closed"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Close_Cabinet2",
+      "objects": [
+        "robot1",
+        "cabinet2",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the kitchen",
+        "cabinet2 is open"
+      ],
+      "effects": [
+        "robot1 is at cabinet2",
+        "cabinet2 is closed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Close_Cabinet3",
+      "objects": [
+        "robot1",
+        "cabinet3",
+        "floor"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at floor",
+        "cabinet3 is at floor",
+        "cabinet3 is open"
+      ],
+      "effects": [
+        "cabinet3 is closed"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Close_Cabinet4",
+      "objects": [
+        "robot1",
+        "cabinet4",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at cabinet4"
+      ],
+      "effects": [
+        "Cabinet4 is closed",
+        "Cabinet4 is not open"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Close_Cabinet5",
+      "objects": [
+        "robot1",
+        "cabinet5",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the kitchen",
+        "cabinet5 is open"
+      ],
+      "effects": [
+        "robot1 is at cabinet5",
+        "cabinet5 is closed"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "subtask_06_Close_Cabinet6",
+      "objects": [
+        "robot1",
+        "cabinet6",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action and is at the floor.",
+        "Cabinet6 is open."
+      ],
+      "effects": [
+        "Robot1 is at cabinet6.",
+        "Cabinet6 is closed."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "subtask_07_Close_Cabinet7",
+      "objects": [
+        "robot1",
+        "cabinet7",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet7 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet7",
+        "Cabinet7 is closed"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "subtask_08_Close_Cabinet8",
+      "objects": [
+        "robot1",
+        "cabinet8",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet8 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet8",
+        "Cabinet8 is closed"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "subtask_09_Close_Cabinet9",
+      "objects": [
+        "robot1",
+        "cabinet9",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet9 is on the floor",
+        "Cabinet9 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet9",
+        "Cabinet9 is closed",
+        "Cabinet9 is not open"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
+  }
+}

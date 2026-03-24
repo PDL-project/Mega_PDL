@@ -1,0 +1,64 @@
+# Task Description: Wash the Mug.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding Mug
+#2. Robot not at Mug location
+
+# SubTask 2: Wash the Mug.
+    Skills Required: GoToObject, PickupObject, CleanObject, PutObject
+    Related Objects: mug(Location=counterTop), sink(Location=floor)
+
+GoToObject(robot1, mug)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 mug)
+
+PickupObject(robot1, mug, counterTop)
+   Preconditions:
+     (at-location mug counterTop)
+     (at robot1 mug)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 mug)
+
+GoToObject(robot1, sink)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sink)
+
+CleanObject(robot1, mug, sink)
+   Preconditions:
+     (not (inaction robot1))
+     (holding robot1 mug)
+     (at robot1 sink)
+     (is-sink sink)
+     (faucet-on)
+   Effects:
+     (cleaned robot1 mug)
+
+GoToObject(robot1, counterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 counterTop)
+
+PutObject(robot1, mug, counterTop)
+   Preconditions:
+     (holding robot1 mug)
+     (at robot1 counterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location mug counterTop)
+     (not (holding robot1 mug))
+
+Goal condition:
+(cleaned robot1 mug)
+(at-location mug counterTop)
+
+# Task Wash the Mug is done.

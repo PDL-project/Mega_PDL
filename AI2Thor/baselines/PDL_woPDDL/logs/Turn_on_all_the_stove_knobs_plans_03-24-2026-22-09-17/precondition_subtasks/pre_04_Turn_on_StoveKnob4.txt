@@ -1,0 +1,22 @@
+# SubTask 4: Turn on StoveKnob4.
+    Skills Required: GoToObject, SwitchOn
+    Related Objects: stoveKnob4(Location=floor)
+
+GoToObject(robot1, stoveKnob4)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 stoveKnob4)
+
+SwitchOn(robot1, stoveKnob4)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 stoveKnob4)
+   Effects:
+     (switch-on robot1 stoveKnob4)
+     (not (switch-off robot1 stoveKnob4))
+
+Goal condition:
+(switch-on robot1 stoveKnob4)
+
+# Task Turn on all the stove knobs is done.

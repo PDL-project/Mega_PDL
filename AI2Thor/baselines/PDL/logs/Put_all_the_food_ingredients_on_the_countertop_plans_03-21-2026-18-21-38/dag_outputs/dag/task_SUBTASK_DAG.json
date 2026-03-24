@@ -1,0 +1,146 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Apple_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "apple",
+        "fridge",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the floor.",
+        "Apple is located in the fridge.",
+        "Fridge is closed.",
+        "Robot1 is not holding the apple."
+      ],
+      "effects": [
+        "Apple is on the countertop.",
+        "Robot1 is not holding the apple.",
+        "Fridge is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Lettuce_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "lettuce",
+        "fridge",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Lettuce is in the fridge",
+        "Fridge is closed",
+        "Robot is not holding the lettuce"
+      ],
+      "effects": [
+        "Lettuce is on the countertop",
+        "Fridge is closed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_Egg_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "egg",
+        "countertop",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Egg is on the countertop.",
+        "Countertop is on the floor.",
+        "Robot1 is not holding the egg."
+      ],
+      "effects": [
+        "Egg is on the countertop.",
+        "Robot1 is not holding the egg."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Put_the_Bread_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "bread",
+        "countertop",
+        "kitchen",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Bread is at the countertop.",
+        "Countertop is at the floor.",
+        "Robot1 is not holding the bread."
+      ],
+      "effects": [
+        "Bread is on the countertop.",
+        "Robot1 is not holding the bread."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Put_the_Tomato_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "tomato",
+        "countertop",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Tomato is on the floor.",
+        "Countertop is on the floor.",
+        "Robot1 is not holding the tomato."
+      ],
+      "effects": [
+        "Tomato is on the countertop.",
+        "Robot1 is not holding the tomato."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "subtask_06_Put_the_Potato_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "potato",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the floor",
+        "Potato is at the countertop",
+        "Countertop is at the floor",
+        "Robot1 is not holding the potato"
+      ],
+      "effects": [
+        "Potato is on the countertop",
+        "Robot1 is not holding the potato"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  }
+}

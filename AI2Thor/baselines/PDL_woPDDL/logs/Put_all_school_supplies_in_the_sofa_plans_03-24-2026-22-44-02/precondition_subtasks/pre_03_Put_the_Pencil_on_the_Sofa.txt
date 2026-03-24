@@ -1,0 +1,47 @@
+# Task Description: Put the Pencil on the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding Laptop.
+# 2. Robot not at Laptop location.
+
+# SubTask 3: Put the Pencil on the Sofa.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Pencil(Location=CoffeeTable), Sofa(Location=Floor)
+
+GoToObject(robot1, Pencil)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Pencil)
+
+PickupObject(robot1, Pencil, CoffeeTable)
+   Preconditions:
+     (at-location Pencil CoffeeTable)
+     (at robot1 Pencil)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Pencil)
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, Pencil, Sofa)
+   Preconditions:
+     (holding robot1 Pencil)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location Pencil Sofa)
+     (not (holding robot1 Pencil))
+
+Goal condition:
+(at-location Pencil Sofa)
+
+# Task Put the Pencil on the Sofa is done.

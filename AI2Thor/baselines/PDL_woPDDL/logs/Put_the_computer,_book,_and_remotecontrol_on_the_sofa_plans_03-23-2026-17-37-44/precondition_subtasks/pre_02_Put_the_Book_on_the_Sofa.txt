@@ -1,0 +1,46 @@
+# Task Description: Put the Book on the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at Book location
+#2. Robot not holding Book
+#3. Sofa is available
+
+# SubTask 2: Put the Book on the Sofa.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Book(Location=Chair), Sofa(Location=Floor)
+
+GoToObject(robot1, Book)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Book)
+
+PickupObject(robot1, Book, Chair)
+   Preconditions:
+     (at-location Book Chair)
+     (at robot1 Book)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Book)
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, Book, Sofa)
+   Preconditions:
+     (holding robot1 Book)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location Book Sofa)
+     (not (holding robot1 Book))
+
+Goal condition:
+(at-location Book Sofa)

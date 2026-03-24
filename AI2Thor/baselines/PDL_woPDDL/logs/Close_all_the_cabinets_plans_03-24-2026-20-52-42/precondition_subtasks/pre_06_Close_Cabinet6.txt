@@ -1,0 +1,31 @@
+# Task Description: Close Cabinet6.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Cabinet6 is open
+
+# SubTask 6: Close Cabinet6.
+    Skills Required: GoToObject, CloseObject
+    Related Objects: cabinet6(Location=floor)
+
+GoToObject(robot1, cabinet6)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet6)
+
+CloseObject(robot1, cabinet6)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet6)
+   Effects:
+     (object-close robot1 cabinet6)
+     (not (object-open robot1 cabinet6))
+
+Goal condition: 
+(object-close robot1 cabinet6)
+
+# Task Close Cabinet6 is done.

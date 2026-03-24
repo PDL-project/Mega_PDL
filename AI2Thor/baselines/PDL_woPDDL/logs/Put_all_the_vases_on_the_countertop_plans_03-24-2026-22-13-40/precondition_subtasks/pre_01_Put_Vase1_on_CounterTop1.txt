@@ -1,0 +1,47 @@
+# Task Description: Put Vase1 on CounterTop1.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at vase1 location
+#2. Robot not holding vase1
+
+# SubTask 1: Put Vase1 on CounterTop1.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: vase1(Location=shelf), countertop1(Location=floor)
+
+GoToObject(robot1, vase1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 vase1)
+
+PickupObject(robot1, vase1, shelf)
+   Preconditions:
+     (at-location vase1 shelf)
+     (at robot1 vase1)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 vase1)
+
+GoToObject(robot1, countertop1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop1)
+
+PutObject(robot1, vase1, countertop1)
+   Preconditions:
+     (holding robot1 vase1)
+     (at robot1 countertop1)
+     (not (inaction robot1))
+   Effects:
+     (at-location vase1 countertop1)
+     (not (holding robot1 vase1))
+
+Goal condition:
+(at-location vase1 countertop1)
+
+# Task Put Vase1 on CounterTop1 is done.

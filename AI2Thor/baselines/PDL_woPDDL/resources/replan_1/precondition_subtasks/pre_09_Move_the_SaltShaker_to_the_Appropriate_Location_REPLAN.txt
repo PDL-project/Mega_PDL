@@ -1,0 +1,42 @@
+# Initial condition analyze due to previous subtask:
+#1. Robot at unknown location
+#2. Robot not holding saltshaker
+#3. Cabinet3 is empty and available for placement
+
+# SubTask 9: Move the SaltShaker to the Appropriate Location.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: saltshaker(Location=unknown), cabinet3(Location=floor)
+
+GoToObject(robot1, saltshaker)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 saltshaker)
+
+PickupObject(robot1, saltshaker, countertop1)
+   Preconditions:
+     (at-location saltshaker countertop1)
+     (at robot1 saltshaker)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 saltshaker)
+     (not (at-location saltshaker countertop1))
+
+GoToObject(robot1, cabinet3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet3)
+
+PutObject(robot1, saltshaker, cabinet3)
+   Preconditions:
+     (holding robot1 saltshaker)
+     (at robot1 cabinet3)
+     (not (inaction robot1))
+     (not (object-close robot1 cabinet3))
+   Effects:
+     (at-location saltshaker cabinet3)
+     (not (holding robot1 saltshaker))
+
+Goal condition:
+(at-location saltshaker cabinet3)

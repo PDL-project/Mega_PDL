@@ -4,10 +4,8 @@
     "error_message": null,
     "effects": null,
     "completed_actions": [
-      "gotoobject robot1 drawer3 (1)",
-      "openobject robot1 drawer3 (1)",
-      "drophandobject robot1 spatula drawer3 (1)",
-      "closeobject robot1 drawer3 (1)"
+      "gotoobject robot1 countertop1 (1)",
+      "drophandobject robot1 bowl1 countertop1 (1)"
     ]
   }
 }

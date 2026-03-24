@@ -1,0 +1,57 @@
+# Task Description: Slice the Lettuce.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analysis due to previous subtask:
+# 1. Robot not holding lettuce.
+# 2. Robot not at lettuce location.
+# 3. Robot not holding butter knife.
+
+# SubTask 2: Slice the Lettuce.
+    Skills Required: GoToObject, PickupObject, SliceObject, PutObject
+    Related Objects: Lettuce(Location=CounterTop), ButterKnife(Location=CounterTop)
+
+GoToObject(robot1, Lettuce)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Lettuce)
+
+SliceObject(robot1, Lettuce, CounterTop)
+   Preconditions:
+     (at-location Lettuce CounterTop)
+     (at robot1 Lettuce)
+     (not (inaction robot1))
+   Effects:
+     (sliced Lettuce)
+
+PickupObject(robot1, Lettuce, CounterTop)
+   Preconditions:
+     (at-location Lettuce CounterTop)
+     (at robot1 Lettuce)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Lettuce)
+
+GoToObject(robot1, CounterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop)
+
+PutObject(robot1, Lettuce, CounterTop)
+   Preconditions:
+     (holding robot1 Lettuce)
+     (at robot1 CounterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location Lettuce CounterTop)
+     (not (holding robot1 Lettuce))
+
+Goal condition:
+(sliced Lettuce)
+(at-location Lettuce CounterTop)
+
+# Task Slice the Lettuce is done.

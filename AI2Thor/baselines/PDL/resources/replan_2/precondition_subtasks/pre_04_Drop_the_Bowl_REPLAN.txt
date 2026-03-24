@@ -1,0 +1,33 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot1 is at position (x=-1.40, y=0.90, z=1.39)
+#2. Robot1 is holding a Bowl
+#3. Countertop1 is an open surface and can accept more objects
+
+# SubTask 1: Drop the Bowl on Countertop1.
+    Skills Required: GoToObject, DropHandObject
+    Related Objects: Bowl(Location=robot1), Countertop1(Location=floor)
+
+GoToObject(robot1, Countertop1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Countertop1)
+
+DropHandObject(robot1, Bowl, Countertop1)
+   Preconditions:
+     (holding robot1 Bowl)
+     (at robot1 Countertop1)
+     (not (inaction robot1))
+     (not (is-fridge Countertop1))
+     (not (object-close robot1 Countertop1))
+   Effects:
+     (at-location Bowl Countertop1)
+     (not (holding robot1 Bowl))
+     (not (inaction robot1))
+
+Goal condition: 
+(at-location Bowl Countertop1)

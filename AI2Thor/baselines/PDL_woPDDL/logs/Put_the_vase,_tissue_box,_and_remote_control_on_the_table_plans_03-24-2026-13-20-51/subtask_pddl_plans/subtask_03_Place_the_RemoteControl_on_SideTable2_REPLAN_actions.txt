@@ -1,0 +1,2 @@
+gotoobject robot1 armchair1 (1)
+drophandobject robot1 remotecontrol armchair1 (1)

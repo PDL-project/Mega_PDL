@@ -1,0 +1,4 @@
+gotoobject robot1 apple (1)
+pickupobject robot1 apple countertop (1)
+gotoobject robot1 bowl (1)
+drophandobject robot1 apple bowl (1)

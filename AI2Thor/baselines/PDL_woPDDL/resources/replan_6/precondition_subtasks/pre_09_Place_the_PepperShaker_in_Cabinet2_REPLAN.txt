@@ -1,0 +1,63 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot at pepperShaker location
+#2. Robot not holding pepperShaker
+#3. cabinet2 is not full
+
+# SubTask 4: Place the PepperShaker in Cabinet2.
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: pepperShaker(Location=unknown), cabinet2(Location=floor)
+
+GoToObject(robot1, pepperShaker)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pepperShaker)
+
+PickupObject(robot1, pepperShaker, countertop1)
+   Preconditions:
+     (at-location pepperShaker countertop1)
+     (at robot1 pepperShaker)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 pepperShaker)
+     (not (at-location pepperShaker countertop1))
+
+GoToObject(robot1, cabinet2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet2)
+
+OpenObject(robot1, cabinet2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet2)
+   Effects:
+     (object-open robot1 cabinet2)
+     (not (object-close robot1 cabinet2))
+
+PutObject(robot1, pepperShaker, cabinet2)
+   Preconditions:
+     (holding robot1 pepperShaker)
+     (at robot1 cabinet2)
+     (not (inaction robot1))
+     (not (object-close robot1 cabinet2))
+   Effects:
+     (at-location pepperShaker cabinet2)
+     (not (holding robot1 pepperShaker))
+
+CloseObject(robot1, cabinet2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet2)
+     (object-open robot1 cabinet2)
+   Effects:
+     (object-close robot1 cabinet2)
+     (not (object-open robot1 cabinet2))
+
+Goal condition: 
+(at-location pepperShaker cabinet2)

@@ -1,0 +1,3 @@
+pickupobject robot1 soapbottle floor (1)
+gotoobject robot1 countertop (1)
+drophandobject robot1 soapbottle countertop (1)

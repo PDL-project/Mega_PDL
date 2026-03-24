@@ -1,0 +1,45 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at apple location
+#2. Robot not holding apple
+#3. Bowl is available for placement
+
+# SubTask 1: Move the Apple to the Appropriate Location.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: apple(Location=unknown), bowl(Location=unknown)
+
+GoToObject(robot1, Apple)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Apple)
+
+PickupObject(robot1, Apple, CounterTop)
+   Preconditions:
+     (at-location Apple CounterTop)
+     (at robot1 Apple)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Apple)
+     (not (at-location Apple CounterTop))
+
+GoToObject(robot1, Bowl)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Bowl)
+
+PutObject(robot1, Apple, Bowl)
+   Preconditions:
+     (holding robot1 Apple)
+     (at robot1 Bowl)
+     (not (inaction robot1))
+   Effects:
+     (at-location Apple Bowl)
+     (not (holding robot1 Apple))
+
+Goal condition: 
+(at-location Apple Bowl)

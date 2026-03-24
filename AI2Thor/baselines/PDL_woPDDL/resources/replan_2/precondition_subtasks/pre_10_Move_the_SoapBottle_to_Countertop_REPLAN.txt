@@ -1,0 +1,58 @@
+# Already Achieved (from successful subtasks):
+- Subtask 1:
+    1. gotoobject robot1 apple (1) → (at robot1 apple)
+    2. pickupobject robot1 apple countertop1 (1) → (holding robot1 apple)
+    3. gotoobject robot1 bowl1 (1) → (at robot1 bowl)
+- Subtask 5:
+    1. gotoobject robot1 fridge (1) → (at robot1 lettuce)
+    2. openfridge robot1 fridge (1) → (holding robot1 lettuce)
+    3. putobjectinfridge robot1 lettuce fridge (1) → (at robot1 fridge)
+    4. closeobject robot1 fridge (1) → (at-location lettuce fridge); (not (holding robot1 lettuce)); (not (inaction robot1))
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot2 (treated as robot1 in PDDL) is holding Bread
+#2. Robot1 is holding Apple
+#3. SoapBottle is on the floor
+
+# SubTask 10: Move the SoapBottle to Countertop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: soapbottle(Location=floor), countertop(Location=floor)
+
+GoToObject(robot1, soapbottle)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 soapbottle)
+
+PickupObject(robot1, soapbottle, floor)
+   Preconditions:
+     (at-location soapbottle floor)
+     (at robot1 soapbottle)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 soapbottle)
+     (not (at-location soapbottle floor))
+
+GoToObject(robot1, countertop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop)
+
+PutObject(robot1, soapbottle, countertop)
+   Preconditions:
+     (holding robot1 soapbottle)
+     (at robot1 countertop)
+     (not (inaction robot1))
+   Effects:
+     (at-location soapbottle countertop)
+     (not (holding robot1 soapbottle))
+
+Goal condition:
+(at-location soapbottle countertop)
+
+# Task Move the SoapBottle to Countertop is done.

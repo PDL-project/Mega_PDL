@@ -1,0 +1,119 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Place_the_Apple_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "apple",
+        "countertop1",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is in the kitchen.",
+        "Apple is on the floor.",
+        "Countertop1 is on the floor.",
+        "Robot1 is not holding the apple."
+      ],
+      "effects": [
+        "Apple is on countertop1.",
+        "Robot1 is not holding the apple."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Place_the_Potato_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "potato",
+        "countertop1",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Potato is on the floor.",
+        "Robot1 is not holding the potato."
+      ],
+      "effects": [
+        "Potato is on countertop1.",
+        "Robot1 is not holding the potato."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Place_the_Tomato_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "tomato",
+        "countertop1",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the floor",
+        "Tomato is at the floor",
+        "Robot is not holding the tomato"
+      ],
+      "effects": [
+        "Tomato is on the countertop",
+        "Robot is not holding the tomato"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Place_the_Bowl_on_the_Countertop_REPLAN",
+      "objects": [
+        "robot1",
+        "bowl",
+        "countertop1"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is holding the bowl",
+        "robot1 is at the floor",
+        "countertop1 is at the floor"
+      ],
+      "effects": [
+        "bowl is at countertop1",
+        "robot1 is not holding the bowl",
+        "robot1 is not in action"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Place_the_Bread_on_the_Countertop_REPLAN",
+      "objects": [
+        "robot1",
+        "bread",
+        "bowl1",
+        "cabinet1",
+        "drawer1",
+        "floor"
+      ],
+      "preconds": [
+        "robot1 is holding bowl1",
+        "bread is on the floor",
+        "robot1 is in the kitchen",
+        "robot1 is close to cabinet1 and drawer1"
+      ],
+      "effects": [
+        "bread is placed in drawer1",
+        "robot1 is not holding bread",
+        "robot1 is close to drawer1"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  }
+}

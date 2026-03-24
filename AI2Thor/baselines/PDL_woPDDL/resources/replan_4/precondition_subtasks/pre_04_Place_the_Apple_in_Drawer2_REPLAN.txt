@@ -1,0 +1,48 @@
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot1 is holding Apple
+#2. Robot1 is not at drawer2 location
+#3. Drawer2 is initially closed
+
+# SubTask 1: Place the Apple in Drawer3.
+    Skills Required: GoToObject, OpenObject, PutObject, CloseObject
+    Related Objects: apple(Location=robot1), drawer3(Location=floor)
+
+GoToObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 drawer3)
+
+OpenObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer3)
+   Effects:
+     (object-open robot1 drawer3)
+     (not (object-close robot1 drawer3))
+
+PutObject(robot1, apple, drawer3)
+   Preconditions:
+     (holding robot1 apple)
+     (at robot1 drawer3)
+     (not (inaction robot1))
+     (not (object-close robot1 drawer3))
+   Effects:
+     (at-location apple drawer3)
+     (not (holding robot1 apple))
+
+CloseObject(robot1, drawer3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer3)
+     (object-open robot1 drawer3)
+   Effects:
+     (object-close robot1 drawer3)
+     (not (object-open robot1 drawer3))
+
+Goal condition: 
+(at-location apple drawer3)
