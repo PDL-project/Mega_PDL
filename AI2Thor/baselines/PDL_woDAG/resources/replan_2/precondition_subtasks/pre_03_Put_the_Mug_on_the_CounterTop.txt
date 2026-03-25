@@ -1,0 +1,47 @@
+# Task Description: Put the Mug on the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at mug location
+#2. Robot not holding mug
+
+# SubTask 3: Put the Mug on the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: mug(Location=floor), counterTop(Location=floor)
+
+GoToObject(robot1, mug)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 mug)
+
+PickupObject(robot1, mug, floor)
+   Preconditions:
+     (at-location mug floor)
+     (at robot1 mug)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 mug)
+
+GoToObject(robot1, counterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 counterTop)
+
+PutObject(robot1, mug, counterTop)
+   Preconditions:
+     (holding robot1 mug)
+     (at robot1 counterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location mug counterTop)
+     (not (holding robot1 mug))
+
+Goal condition:
+(at-location mug counterTop)
+
+# Task Put the butter knife, bowl, and mug on the countertop is done.

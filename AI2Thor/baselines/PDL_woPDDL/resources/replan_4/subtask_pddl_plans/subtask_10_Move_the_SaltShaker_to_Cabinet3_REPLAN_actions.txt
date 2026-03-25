@@ -1,5 +1,0 @@
-gotoobject robot1 saltshaker (1)
-pickupobject robot1 saltshaker floor (1)
-gotoobject robot1 cabinet3 (1)
-drophandobject robot1 saltshaker cabinet3 (1)
-closeobject robot1 cabinet3 (1)

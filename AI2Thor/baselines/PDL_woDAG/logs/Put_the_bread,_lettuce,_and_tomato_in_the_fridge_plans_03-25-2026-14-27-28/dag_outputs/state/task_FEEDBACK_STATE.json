@@ -1,0 +1,41 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 bread (1)",
+      "pickupobject robot1 bread countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 bread fridge (1)",
+      "closeobject robot1 fridge (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 lettuce (1)",
+      "pickupobject robot1 lettuce countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 lettuce fridge (1)",
+      "closeobject robot1 fridge (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 tomato (1)",
+      "pickupobject robot1 tomato countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 tomato fridge (1)",
+      "closeobject robot1 fridge (1)"
+    ]
+  }
+}

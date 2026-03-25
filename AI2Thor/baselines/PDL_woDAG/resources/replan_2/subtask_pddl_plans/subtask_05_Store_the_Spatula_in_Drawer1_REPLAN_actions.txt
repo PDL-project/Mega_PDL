@@ -1,4 +1,0 @@
-gotoobject robot1 drawer1 (1)
-openobject robot1 drawer1 (1)
-drophandobject robot1 spatula drawer1 (1)
-closeobject robot1 drawer1 (1)

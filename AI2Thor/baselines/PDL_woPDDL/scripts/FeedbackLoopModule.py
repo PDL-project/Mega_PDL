@@ -486,12 +486,6 @@ Your new plan must account for this current state — do NOT repeat these action
 ## Execution error
 {error_message}
 
-## Domain (reference)
-{domain_content[:3000]}...
-
-## Problem (reference)
-{problem_content[:2000]}...
-
 ## Rules
 - Output ONLY one action per line, in the same format as the current plan (e.g. "gotoobject robot1 apple (1)").
 - Use the same domain actions and object names from the problem.

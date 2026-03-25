@@ -1,4 +1,0 @@
-gotoobject robot1 fridge (1)
-openfridge robot1 fridge (1)
-putobjectinfridge robot1 lettuce fridge (1)
-closeobject robot1 fridge (1)

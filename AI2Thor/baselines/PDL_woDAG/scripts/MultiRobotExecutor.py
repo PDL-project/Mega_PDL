@@ -64,7 +64,8 @@ _TASK_NAME_MAP = {
     "Put all kitchenware in the cardboard box": "3_put_all_kitchenware_box",
     "Tidy up the living room by placing all items in their appropriate positions": "5_tidy_up_livingroom",
     "Clear the kitchen floor by placing items at their appropriate positions": "4_clear_floor_kitchen",
-    "Put all the forks and spoons in the drawer": "6_put_silverware_in_drawer",
+    "Put all the forks, spoons, butter knives, and spatulas in the drawer": "6_put_silverware_in_drawer",
+    "Put all the food ingredients on the countertop": "7_put_ingredients_on_counter",
     "Clear the table by placing items at their appropriate positions": "4_clear_table_kitchen",
     "Clear the kitchen central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",
     "Clear the central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",  # config_type4 variant
@@ -659,6 +660,76 @@ class MultiRobotExecutor:
 
         #print(f"[Executor] Loaded {len(plan_actions)} subtask plans")
         return plan_actions
+
+    def reload_plans_for_sids(
+        self,
+        sids_to_remove: set,
+        sids_to_add: set,
+        new_assignment: Dict[int, int],
+        new_parallel_groups: Dict[int, List[int]],
+    ) -> None:
+        """
+        그룹 단위 reload: 재플래닝된 subtask ID들만 선택적으로 교체.
+        다른 그룹의 assignment/plans/results는 건드리지 않음.
+        """
+        # 1. 제거: 교체된 구버전 SID (new에 없는 것만 완전 제거)
+        truly_removed = sids_to_remove - sids_to_add
+        for sid in truly_removed:
+            self.assignment.pop(sid, None)
+            self.subtask_plans.pop(sid, None)
+            self._subtask_results.pop(sid, None)
+
+        # 2. sid → 새 parallel_group 역방향 맵 (통합 DAG 기준, 전체 재계산됨)
+        sid_to_new_pg: Dict[int, int] = {}
+        for gid, gsids in new_parallel_groups.items():
+            for s in gsids:
+                sid_to_new_pg[s] = gid
+
+        # 3. 추가/갱신: 새 SID들 (assignment, plan 파일, subtask_plans)
+        plan_files = [f for f in os.listdir(self.plans_path) if f.endswith("_actions.txt")]
+        for sid in sids_to_add:
+            if sid in new_assignment:
+                self.assignment[sid] = new_assignment[sid]
+            # stale 결과 제거 (다른 subtask가 같은 ID를 가졌던 경우 방지)
+            self._subtask_results.pop(sid, None)
+
+            # 플랜 파일 로드 (REPLAN 우선)
+            matching = sorted(
+                [f for f in plan_files if re.search(rf"subtask_{sid:02d}_", f)],
+                key=lambda f: (1 if "_REPLAN" in f else 0, f),
+                reverse=True,
+            )
+            if not matching:
+                continue
+            plan_file = matching[0]
+            plan_path = os.path.join(self.plans_path, plan_file)
+            with open(plan_path) as f:
+                actions = [ln.strip() for ln in f if ln.strip()]
+
+            robot_id = int(self.assignment.get(sid, 1))
+            subtask_name = plan_file.replace("_actions.txt", "")
+            self.subtask_plans[sid] = SubtaskPlan(
+                subtask_id=sid,
+                subtask_name=subtask_name,
+                robot_id=robot_id,
+                actions=actions,
+                parallel_group=sid_to_new_pg.get(sid, 0),
+            )
+
+        # 4. parallel_groups 전체 교체
+        # integrate_replanned_subtasks_to_dag가 DAG 전체를 재계산하므로
+        # group ID 매핑이 달라질 수 있어 부분 업데이트는 부정확함
+        self.parallel_groups = dict(new_parallel_groups)
+
+        # 5. 기존 SubtaskPlan들의 parallel_group 필드도 갱신
+        # 실행 루프는 executor.parallel_groups가 아니라 SubtaskPlan.parallel_group을 씀
+        for sid, plan in self.subtask_plans.items():
+            if sid in sid_to_new_pg:
+                plan.parallel_group = sid_to_new_pg[sid]
+
+        removed_str = sorted(truly_removed)
+        added_str = sorted(sids_to_add)
+        print(f"  ✓ Group-level reload: removed={removed_str}, added/updated={added_str}")
 
     # -----------------------------
     # Action Queue Executor 액션 실행기
@@ -1747,9 +1818,13 @@ class MultiRobotExecutor:
                         #print(f"[Robot{agent_id+1}] 요청: Robot{blocking+1} 길 비켜줘 ({dest_obj})")
                         yield_active_for = blocking
                         yield_wait_iters = 0
-                    count_since_update = 0
-                    time.sleep(0.1)
-                    continue
+                        count_since_update = 0
+                        time.sleep(0.1)
+                        continue
+                    else:
+                        # yield 거절(우선순위 낮음) → 얼지 말고 접근점 변경으로 돌파
+                        need_approach_change = True
+                        need_yield = False
 
             # --- 접근점 변경 ---
             if need_approach_change:
@@ -1768,6 +1843,29 @@ class MultiRobotExecutor:
 
             # 정상 이동 가능 시 경로 최적화 액션 수행
             if count_since_update < 5:
+                # 접근 지점에 다른 로봇이 점령 중이면 미리 다음 접근점으로 건너뜀 (spinning 방지)
+                _crp_x, _crp_z = crp[0][0], crp[0][2]
+                _crp_blocked = False
+                for _oid in range(self.no_robot):
+                    if _oid == agent_id:
+                        continue
+                    try:
+                        _op = self.controller.last_event.events[_oid].metadata["agent"]["position"]
+                        _dx = _op["x"] - _crp_x
+                        _dz = _op["z"] - _crp_z
+                        if (_dx*_dx + _dz*_dz) ** 0.5 < 0.4:
+                            _crp_blocked = True
+                            break
+                    except Exception:
+                        pass
+                if _crp_blocked:
+                    clost_node_location[0] += 1
+                    max_positions = max(4 * 4, len(self.reachable_positions) // 5)
+                    if clost_node_location[0] >= max_positions:
+                        clost_node_location[0] = 0
+                    crp = closest_node(dest_obj_pos, self.reachable_positions, 1, clost_node_location)
+                    time.sleep(0.05)
+                    continue
                 ok = self._enqueue_and_wait({
                     'action': 'ObjectNavExpertAction',
                     'position': dict(x=crp[0][0], y=crp[0][1], z=crp[0][2]),
@@ -2717,7 +2815,7 @@ class MultiRobotExecutor:
             agent_count = getattr(self, 'configured_agent_count', None) \
                           or (max(self.assignment.values()) if self.assignment else 1)
         if spawn_positions is None:
-            spawn_positions = getattr(self, 'saved_spawn_positions', None)
+            spawn_positions = None  # TODO: LP 스폰 임시 비활성화 (원복: getattr(self, 'saved_spawn_positions', None))
         self.start_ai2thor(floor_plan=floor_plan, agent_count=agent_count,
                            spawn_positions=spawn_positions)
         if task_description:
@@ -2849,7 +2947,7 @@ class MultiRobotExecutor:
         # configured_agent_count 우선 사용 (--num-agents 값); 없으면 assignment 최댓값 fallback
         agent_count = getattr(self, 'configured_agent_count', None) \
                       or (max(self.assignment.values()) if self.assignment else 1)
-        spawn_pos = getattr(self, 'saved_spawn_positions', None)
+        spawn_pos = None  # TODO: 결정론적 배치 실험 중 LP 스폰 임시 비활성화 (원복: getattr(self, 'saved_spawn_positions', None))
         self.start_ai2thor(floor_plan=floor_plan, agent_count=agent_count, spawn_positions=spawn_pos)
         if task_description:
             self._init_checker(task_description, self.scene_name)
@@ -2908,8 +3006,7 @@ class MultiRobotExecutor:
                 for p in to_run:
                     robot_plans[p.robot_id].append(p)
 
-                # 리플랜 직렬화 락: DAG 통합/executor reload는 동시 실행 불가
-                replan_lock = threading.Lock()
+                # 리플랜 스레드 목록 (락은 on_subtask_failed 콜백 내부에서 관리)
                 replan_threads: List[threading.Thread] = []
                 replan_threads_lock = threading.Lock()
                 replanned = False
@@ -2920,10 +3017,10 @@ class MultiRobotExecutor:
                     if not result or result.success or on_subtask_failed is None:
                         return
                     try:
-                        # DAG 통합/executor reload 직렬화 (LLM 호출은 각 그룹이 병렬 가능하나
-                        # 파일 쓰기/executor 상태 변경은 한 번에 하나씩)
-                        with replan_lock:
-                            replan_success = on_subtask_failed(result)
+                        # 락은 on_subtask_failed 콜백 내부에서 2단계로 관리:
+                        # Phase 1 (per-replan-group 락): LLM + PDDL — 다른 그룹과 병렬 가능
+                        # Phase 2 (전역 integrate 락): DAG 파일 write + executor reload — 직렬화
+                        replan_success = on_subtask_failed(result)
                         if replan_success:
                             replanned = True
                     except Exception as cb_e:

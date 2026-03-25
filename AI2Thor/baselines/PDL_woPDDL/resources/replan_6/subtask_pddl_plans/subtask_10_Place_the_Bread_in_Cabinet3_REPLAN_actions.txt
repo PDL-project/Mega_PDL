@@ -1,4 +1,0 @@
-gotoobject robot1 cabinet3 (1)
-openobject robot1 cabinet3 (1)
-drophandobject robot1 bread cabinet3 (1)
-closeobject robot1 cabinet3 (1)

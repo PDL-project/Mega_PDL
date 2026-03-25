@@ -37,17 +37,15 @@ import actions # resources/actions.py (로봇 액션 정의 등)
 import robots  # resources/robots.py (로봇 스킬/질량 정보 등)
 
 from DAG_Module import DAGGenerator # plan 기반 DAG(병렬성) 생성 모듈
-from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
+from LP_Module import assign_subtasks_llm
 
 from MultiRobotExecutor import MultiRobotExecutor, SubTaskExecutionResult, _TASK_NAME_MAP, _TASK_NAME_MAP_LOWER # 멀티 로봇 실행 코드 생성/실행 관리
 from AI2Thor.Tasks.get_scene_init import get_scene_initializer  # preinit용
 from auto_config import AutoConfig # config 로딩/세팅 자동화
 
 from FeedbackLoopModule import (
-    load_subtask_dag_edges,
     load_subtask_precond_effects,
     load_subtask_action_effects,
-    load_subtask_dag_parallel_groups,
     PartialReplanner,
     GroupAgent,
     subtask_has_dependency,
@@ -773,47 +771,15 @@ class TaskManager:
                 #print("parsed decomposed plan:\n", parsed_subtasks)
                 #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
-                precondition_subtasks = self._generate_precondition_subtasks(parsed_subtasks, domain_content, self.available_robot_skills, objects_ai)
-                self.precondition_subtasks.append(precondition_subtasks) 
-                print("✓ Precondition Decomposed Plan generated")
-                #print("Precondition Decomposed Plan:\n", precondition_subtasks)
-                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+                # 2. [woPDDL] LLM이 직접 action sequence 생성 (도메인/PDDL/FastDownward 없이)
+                self._generate_nl_action_plans(parsed_subtasks, objects_ai)
+                print("✓ NL Action plans generated (woPDDL)")
 
-                for item in precondition_subtasks:
-                    sid = item.get("subtask_id", -1)
-                    title = item.get("subtask_title", "untitled")
-                    text = item.get("pre_goal_text", "")
-
-                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-                    filename = f"pre_{sid:02d}_{safe_title}.txt"   # 확장자 txt 추천 (PDDL problem이 아니라서)
-
-                    out_path = os.path.join(self.file_processor.precondition_subtasks_path, filename)
-                    self.file_processor.write_file(out_path, text)
-
-                # 2. 서브테스크에 대한 pddl problem 정의
-                subtask_pddl_problems = self._generate_subtask_pddl_problems(precondition_subtasks, domain_content, self.available_robot_skills, objects_ai)
-                self.subtask_pddl_problems.append(subtask_pddl_problems)
-
-                print("✓ PDDL problems generated")
-                #print("PDDL problems plan:\n", subtask_pddl_problems)
-                #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-
-                for item in subtask_pddl_problems:
-                    sid = item["subtask_id"]
-                    title = item["subtask_title"]
-                    pddl_text = item["problem_text"]
-
-                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-                    filename = f"subtask_{sid:02d}_{safe_title}.pddl"
-
-                    out_path = os.path.join(self.file_processor.subtask_pddl_problems_path, filename)
-                    self.file_processor.write_file(out_path, pddl_text)
-
-                # 3. FastDownward 돌려서, pddl plan 생성
-                validated_plan = self._validate_and_plan()
-
-                # 4. pddl plan기반 DAG 생성
-                self.generate_dag() #DAG 생성 (병렬성 분석)
+                # 3. [woDAG] DAG 생성 없음 - 모든 subtask 순차 실행
+                self.subtask_dag = None
+                _seq_sids = sorted([st["id"] for st in parsed_subtasks])
+                _sequential_parallel_groups = {sid: [sid] for sid in _seq_sids}
+                print("✓ Sequential groups assigned (woDAG)")
 
                 # 5a. 시뮬레이터에서 로봇 스폰 좌표 + 오브젝트 좌표 가져오기 (거리 기반 LP용)
                 robot_positions = None
@@ -825,28 +791,21 @@ class TaskManager:
                     self.robot_spawn_positions = robot_positions
                     print(f"✓ Robot spawn positions: {robot_positions}")
 
-                # 5b. 작업할당
+                # 5b. 작업할당 (binding_pairs, parallel_groups 없음)
                 plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
 
-                binding_pairs = binding_pairs_from_subtask_dag(self.subtask_dag)
-
-                # parallel_groups를 LP에 전달하여 같은 그룹 내 분산 배정 유도
-                pg_for_lp = None
-                if self.subtask_dag and hasattr(self.subtask_dag, 'parallel_groups'):
-                    pg_for_lp = {str(k): v for k, v in self.subtask_dag.parallel_groups.items()}
-
                 assignment = assign_subtasks_llm(
-                    subtasks=parsed_subtasks,  # _decomposed_plan_to_subtasks() 결과 (id, skills 들어있어야 함)
-                    robot_ids=task_robot_ids,  # 예: [1,2,3]
-                    robots_db=robots.robots,   # robots.py의 robots 리스트
+                    subtasks=parsed_subtasks,
+                    robot_ids=task_robot_ids,
+                    robots_db=robots.robots,
                     plan_actions_by_subtask=plan_actions_by_sid,
-                    objects_ai=self.objects_ai,  # 저장해둔 objects_ai 문자열/리스트
+                    objects_ai=self.objects_ai,
                     llm=self.llm,
                     gpt_version=self.gpt_version,
-                    binding_pairs=binding_pairs,
+                    binding_pairs=[],
                     robot_positions=robot_positions,
                     object_positions=object_positions,
-                    parallel_groups=pg_for_lp,
+                    parallel_groups=None,
                 )
 
                 # 작업 할당 결과 출력
@@ -889,6 +848,8 @@ class TaskManager:
                     executor.record_video = True
                     executor.video_output_path = _vid_dir
                     #print(f"[Record] Video output → {_vid_dir}")
+                # [woDAG] run() 이전에 설정해야 load_plan_actions()가 올바른 group으로 로드함
+                executor.parallel_groups = _sequential_parallel_groups
                 execution_code = executor.run(
                     task_idx=task_idx,
                     task_name="task",
@@ -972,9 +933,8 @@ class TaskManager:
                             return bool(success)
                         return False
 
-                    # DAG 엣지 기반 연결 컴포넌트로 그룹 구성
-                    # (엣지로 연결된 서브태스크 = 한 그룹, 고립된 서브태스크 = 단독 그룹)
-                    _dag_edges_fb = load_subtask_dag_edges(self.base_path, task_name_fb)
+                    # [woDAG] DAG 없음 - 각 subtask가 독립 그룹 (엣지 없음)
+                    _dag_edges_fb = []
                     _all_sids_fb = [sid for sids in executor.parallel_groups.values() for sid in sids]
                     _parent_fb = {sid: sid for sid in _all_sids_fb}
 
@@ -1479,7 +1439,238 @@ class TaskManager:
         # 현재 header는 action 이전까지 잘라온 것이므로 보통 아직 domain의 마지막 ')'는 없음.
         subdomain = header.rstrip() + "\n" + missing_comment + "\n\n" + "\n\n".join(selected_blocks) + "\n\n)"
         return subdomain
-    
+
+    # ------------------------------------------------------------------ #
+    # [woPDDL] PDDL 없이 LLM이 직접 action sequence 생성                   #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _format_objects_with_pddl_names(objects_ai) -> str:
+        """
+        objects_ai 리스트를 PDDL 스타일 이름(타입+카운팅)으로 변환하여 문자열로 반환.
+        LLM이 fork1, drawer2 같은 정확한 오브젝트 이름을 알 수 있도록 함.
+        예: fork1 (Fork) - location: Drawer, pos: (x=1.00, y=0.50, z=2.00)
+        """
+        if not objects_ai or isinstance(objects_ai, str):
+            return str(objects_ai)
+        type_counter: Dict[str, int] = {}
+        lines = []
+        for obj in objects_ai:
+            obj_type = obj.get("name", "Unknown")
+            type_counter[obj_type] = type_counter.get(obj_type, 0) + 1
+            pddl_name = f"{obj_type.lower()}{type_counter[obj_type]}"
+            locs = ", ".join(obj.get("locations", ["unknown"]))
+            p = obj.get("position", {})
+            lines.append(
+                f"{pddl_name} ({obj_type}) - location: {locs}, "
+                f"pos: (x={p.get('x', 0):.2f}, y={p.get('y', 0):.2f}, z={p.get('z', 0):.2f})"
+            )
+        return "\n".join(lines)
+
+    def _generate_nl_action_plans(self, parsed_subtasks: List[Dict[str, Any]], objects_ai: str) -> None:
+        """
+        [woPDDL ablation] PDDL 도메인/solver 없이 LLM이 직접 action sequence를 생성.
+        각 subtask에 대해 available skills + objects만을 참조하여 action list를 생성하고
+        subtask_pddl_plans/subtask_XX_title_actions.txt 에 저장 (executor 호환 포맷).
+        """
+        plans_dir = self.file_processor.subtask_pddl_plans_path
+
+        action_format_example = (
+            "gotoobject robot1 fork1 (1)\n"
+            "pickupobject robot1 fork1 table1 (1)\n"
+            "gotoobject robot1 drawer1 (1)\n"
+            "openobject robot1 drawer1 (1)\n"
+            "drophandobject robot1 fork1 drawer1 (1)\n"
+            "closeobject robot1 drawer1 (1)"
+        )
+
+        objects_ai_formatted = self._format_objects_with_pddl_names(
+            getattr(self, "objects_ai_raw", None) or objects_ai
+        )
+
+        print(objects_ai_formatted)
+
+        for st in parsed_subtasks:
+            sub_id = st.get("id")
+            title = st.get("title", "").strip()
+            st_skills = st.get("skills", [])
+            st_objects = st.get("objects", [])
+
+            prompt = (
+                "You are a robot action planner.\n"
+                "Generate a minimal sequence of robot actions to complete the given subtask.\n\n"
+                f"AVAILABLE ACTIONS (use ONLY these exact names, lowercase):\n{st_skills}\n\n"
+                "ALL OBJECTS IN THE ENVIRONMENT (use these exact names in your plan):\n"
+                "Format: pddl_name (ObjectType) - location: ..., pos: ...\n"
+                f"{objects_ai_formatted}\n\n"
+                f"OBJECTS RELEVANT TO THIS SUBTASK:\n{st_objects}\n\n"
+                f"SUBTASK: {title}\n\n"
+                "OUTPUT FORMAT RULES:\n"
+                "- One action per line\n"
+                "- Use lowercase action names\n"
+                "- Always use 'robot1' as the robot name\n"
+                "- Append ' (1)' at the end of each line\n"
+                "- No explanations, no markdown, no numbering\n\n"
+                "EXAMPLE OUTPUT:\n"
+                f"{action_format_example}\n\n"
+                "Now generate the action sequence for the subtask above:"
+            )
+
+            text = ""
+            try:
+                if "gpt" not in self.gpt_version:
+                    _, text = self.llm.query_model(prompt, self.gpt_version, max_tokens=800, stop=["def"], frequency_penalty=0.0)
+                else:
+                    messages = [{"role": "user", "content": prompt}]
+                    _, text = self.llm.query_model(messages, self.gpt_version, max_tokens=800, frequency_penalty=0.0)
+            except Exception as e:
+                print(f"  Warning: NL action plan generation failed for subtask {sub_id}: {e}")
+
+            # 액션 라인 파싱: actionname으로 시작하는 줄만 추출
+            action_lines = []
+            action_pattern = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*\s+\S+')
+            for line in text.splitlines():
+                line = line.strip()
+                # 번호 제거 ("1. ", "1) " 등)
+                line = re.sub(r'^\d+[\.\)]\s*', '', line)
+                # 마크다운 코드블록 제거
+                if line.startswith('```') or line.startswith('#'):
+                    continue
+                if action_pattern.match(line):
+                    # 말미에 (1) 없으면 추가
+                    if not re.search(r'\(\d+\)\s*$', line):
+                        line = line + " (1)"
+                    action_lines.append(line)
+
+            safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+            filename = f"subtask_{sub_id:02d}_{safe_title}_actions.txt"
+            out_path = os.path.join(plans_dir, filename)
+            self.file_processor.write_file(out_path, "\n".join(action_lines))
+            print(f"  Subtask {sub_id}: {len(action_lines)} actions → {filename}")
+
+    def _regenerate_nl_action_plans_for_replan(
+        self,
+        redecomposed_subtasks: List[Dict[str, Any]],
+        live_objects: str,
+        context,
+        success_effects_text: str = "",
+        failed_progress_text: str = "",
+        local_env_text: str = "",
+    ) -> Optional[Dict[int, List[str]]]:
+        """
+        [woPDDL ablation] 재계획 시 PDDL 없이 LLM이 직접 새 action sequence를 생성.
+        실패 컨텍스트(완료 액션, 환경 상태, 성공 효과)를 자연어로 주입.
+        반환: {subtask_id: [action, ...]} 또는 빈 dict(실패)
+        """
+        plans_dir = self.file_processor.subtask_pddl_plans_path
+
+        action_format_example = (
+            "gotoobject robot1 fork1 (1)\n"
+            "pickupobject robot1 fork1 table1 (1)\n"
+            "gotoobject robot1 drawer1 (1)\n"
+            "openobject robot1 drawer1 (1)\n"
+            "drophandobject robot1 fork1 drawer1 (1)\n"
+            "closeobject robot1 drawer1 (1)"
+        )
+
+        new_plans: Dict[int, List[str]] = {}
+
+        for st in redecomposed_subtasks:
+            sub_id = st.get("id")
+            title = st.get("title", "").strip()
+            st_skills = st.get("skills", [])
+            st_objects = st.get("objects", [])
+            is_failed = (sub_id == getattr(context, "failed_subtask_id", None))
+
+            prompt = (
+                "You are a robot action replanner.\n"
+                "A previous action plan failed. Generate a corrected action sequence.\n\n"
+            )
+
+            if is_failed:
+                prompt += (
+                    "## Failure Information\n"
+                    f"- Failed subtask: {title}\n"
+                    f"- Failure reason: {getattr(context, 'failure_reason', '(unknown)')}\n"
+                    f"- Actions completed before failure (= current robot state):\n"
+                    f"{failed_progress_text if failed_progress_text else '  (none)'}\n\n"
+                    "NOTE: The completed actions above represent the robot's CURRENT STATE. "
+                    "Do NOT repeat actions whose effects are already achieved.\n\n"
+                )
+
+            if success_effects_text:
+                prompt += (
+                    "## Already Achieved (from successfully completed subtasks — DO NOT REPEAT)\n"
+                    f"{success_effects_text}\n\n"
+                )
+
+            if local_env_text:
+                prompt += f"## Current Environment State\n{local_env_text}\n\n"
+
+            live_objects_formatted = self._format_objects_with_pddl_names(live_objects)
+            prompt += (
+                f"AVAILABLE ACTIONS (use ONLY these exact names, lowercase):\n{st_skills}\n\n"
+                "ALL OBJECTS IN THE ENVIRONMENT (use these exact names in your plan):\n"
+                "Format: pddl_name (ObjectType) - location: ..., pos: ...\n"
+                f"{live_objects_formatted}\n\n"
+                f"OBJECTS RELEVANT TO THIS SUBTASK:\n{st_objects}\n\n"
+                f"SUBTASK TO REPLAN: {title}\n\n"
+                "OUTPUT FORMAT RULES:\n"
+                "- One action per line\n"
+                "- Use lowercase action names\n"
+                "- Always use 'robot1' as the robot name\n"
+                "- Append ' (1)' at the end of each line\n"
+                "- No explanations, no markdown, no numbering\n\n"
+                "EXAMPLE OUTPUT:\n"
+                f"{action_format_example}\n\n"
+                "Now generate the corrected action sequence:"
+            )
+
+            text = ""
+            try:
+                if "gpt" not in self.gpt_version:
+                    _, text = self.llm.query_model(prompt, self.gpt_version, max_tokens=800, stop=["def"], frequency_penalty=0.0)
+                else:
+                    messages = [{"role": "user", "content": prompt}]
+                    _, text = self.llm.query_model(messages, self.gpt_version, max_tokens=800, frequency_penalty=0.0)
+            except Exception as e:
+                print(f"  Warning: NL replan generation failed for subtask {sub_id}: {e}")
+
+            action_lines = []
+            action_pattern = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*\s+\S+')
+            for line in text.splitlines():
+                line = line.strip()
+                line = re.sub(r'^\d+[\.\)]\s*', '', line)
+                if line.startswith('```') or line.startswith('#'):
+                    continue
+                if action_pattern.match(line):
+                    if not re.search(r'\(\d+\)\s*$', line):
+                        line = line + " (1)"
+                    action_lines.append(line)
+
+            if not action_lines:
+                print(f"    Subtask {sub_id}: ✗ No actions generated")
+                continue
+
+            # 기존 파일 정리 후 저장
+            prefix = f"subtask_{sub_id:02d}_"
+            for old_f in os.listdir(plans_dir):
+                if old_f.startswith(prefix) and old_f.endswith("_actions.txt"):
+                    try:
+                        os.remove(os.path.join(plans_dir, old_f))
+                    except Exception:
+                        pass
+
+            safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
+            filename = f"subtask_{sub_id:02d}_{safe_title}_REPLAN_actions.txt"
+            out_path = os.path.join(plans_dir, filename)
+            self.file_processor.write_file(out_path, "\n".join(action_lines))
+            print(f"    Subtask {sub_id}: ✓ {len(action_lines)} actions → {filename}")
+
+            new_plans[sub_id] = action_lines
+
+        return new_plans
+
     def _generate_precondition_subtasks(self, parsed_subtasks: List[Dict[str, Any]], domain_content: str, robots: List[dict], objects_ai: str) -> List[Dict[str, Any]]:
         """
         서브태스크 리스트를 입력받아, 각 서브태스크별로 LLM을 호출해 PDDL problem을 위한 precondition과 goal을 추가해 반환해주는 함수
@@ -2452,8 +2643,8 @@ class TaskManager:
             # executor가 plan 파일을 읽는 경로도 versioned 폴더로 갱신
             executor.plans_path = self.file_processor.subtask_pddl_plans_path
 
-        # 현재 subtask dependency graph를 불러오기
-        edges = load_subtask_dag_edges(self.base_path, task_name)
+        # [woDAG] DAG 없음 - 엣지 없음
+        edges = []
         
         # subtask_id → group_id 역방향 맵 (pre-created agents의 메모리에서 직접 구성)
         _subtask_to_gid: Dict[int, int] = {}
@@ -3117,150 +3308,18 @@ class TaskManager:
             
             print(f"  Redecomposed into {len(redecomposed_subtasks)} new subtasks")
             
-            # Precondition 및 PDDL Problem 생성
-            #print("  Generating preconditions and PDDL problems...")
-            try:
-                # Precondition 생성 (성공 effects를 초기 상태로 반영)
-                precondition_subtasks = self._generate_reprecondition_subtasks(
-                    redecomposed_subtasks,
-                    domain_content,
-                    self.available_robot_skills,
-                    live_objects,
-                    context=context,
-                    success_effects_text=success_effects_text,
-                    local_env_text=local_env_text,
-                    original_task=original_task,
-                    executor=executor,
-                )
-
-
-                # 성공 effects를 초기 상태에 명시적으로 추가
-                if success_effects_text:
-                    for item in precondition_subtasks:
-                        pre_text = item.get("pre_goal_text", "")
-                        # precondition 텍스트에 성공 effects 주입
-                        enhanced_pre = f"# Already Achieved (from successful subtasks):\n{success_effects_text}\n\n{pre_text}"
-                        item["pre_goal_text"] = enhanced_pre
-
-                # PDDL Problem 생성: executor를 context에 attach해서 receptacle 정보 접근
-                if not hasattr(context, 'executor'):
-                    context.executor = executor
-                subtask_pddl_problems = self._regenerate_subtask_pddl_problems(
-                    precondition_subtasks,
-                    domain_content,
-                    self.available_robot_skills,
-                    live_objects,
-                    context=context,
-                )
-                
-            except Exception as e:
-                print(f"  ERROR: Failed to generate PDDL: {e}")
-                import traceback
-                traceback.print_exc()
-                return None
-            
-            # 파일 저장
-            print("  Saving generated files...")
-            try:
-                for item in precondition_subtasks:
-                    sid = item.get("subtask_id", -1)
-                    title = item.get("subtask_title", "untitled")
-                    text = item.get("pre_goal_text", "")
-
-                    # 같은 subtask_id의 기존 precondition 파일 제거 (중복 방지)
-                    precond_dir = self.file_processor.precondition_subtasks_path
-                    for old_f in os.listdir(precond_dir):
-                        if old_f.startswith(f"pre_{sid:02d}_") and old_f.endswith(".txt"):
-                            try:
-                                os.remove(os.path.join(precond_dir, old_f))
-                            except Exception:
-                                pass
-
-                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-                    filename = f"pre_{sid:02d}_{safe_title}_REPLAN.txt"
-                    out_path = os.path.join(precond_dir, filename)
-                    self.file_processor.write_file(out_path, text)
-
-                for item in subtask_pddl_problems:
-                    sid = item["subtask_id"]
-                    title = item["subtask_title"]
-                    pddl_text = item["problem_text"]
-
-                    # 같은 subtask_id의 기존 pddl problem 파일 제거 (중복 방지)
-                    for old_f in os.listdir(problems_dir):
-                        if old_f.startswith(f"subtask_{sid:02d}_") and old_f.endswith(".pddl"):
-                            try:
-                                os.remove(os.path.join(problems_dir, old_f))
-                            except Exception:
-                                pass
-
-                    safe_title = re.sub(r'[^a-zA-Z0-9_\-]+', '_', title).strip('_')
-                    filename = f"subtask_{sid:02d}_{safe_title}_REPLAN.pddl"
-                    out_path = os.path.join(problems_dir, filename)
-                    self.file_processor.write_file(out_path, pddl_text)
-            except Exception as e:
-                print(f"  ERROR: Failed to save files: {e}")
-                return None
-
-            # Validation
-            print("  Validating regenerated PDDL problems (replan)...")
-            try:
-                self._run_replan_validator(subtask_pddl_problems, precondition_subtasks, domain_content)
-            except Exception as e:
-                print(f"  Warning: PDDL validation step failed: {e}")
-                import traceback
-                traceback.print_exc()
-
-            # 플래너 실행하여 액션 생성
-            print("  Running planner for new subtasks...")
-            new_plans: Dict[int, List[str]] = {}
-
-            for item in subtask_pddl_problems:
-                sid = item["subtask_id"]
-                plans_dir = self.file_processor.subtask_pddl_plans_path
-                prefix = f"subtask_{sid:02d}_"
-                # 동일 sid의 과거 action 파일 제거 (stale/중복 방지)
-                for old_f in os.listdir(plans_dir):
-                    if old_f.startswith(prefix) and old_f.endswith("_actions.txt"):
-                        try:
-                            os.remove(os.path.join(plans_dir, old_f))
-                        except Exception:
-                            pass
-
-                ok, plan_actions = self.run_planner_for_subtask_id(sid)
-
-                if ok and plan_actions:
-                    new_plans[sid] = plan_actions
-                    print(f"    Subtask {sid}: ✓ {len(plan_actions)} actions")
-                    # [Issue 2 Fix] REPLAN 액션 파일이 생성됐으면 같은 subtask_id의 원본 파일 삭제
-                    plans_dir = self.file_processor.subtask_pddl_plans_path
-                    prefix = f"subtask_{sid:02d}_"
-                    for old_f in os.listdir(plans_dir):
-                        if (old_f.startswith(prefix)
-                                and old_f.endswith("_actions.txt")
-                                and "_REPLAN" not in old_f):
-                            try:
-                                os.remove(os.path.join(plans_dir, old_f))
-                                print(f"  [Cleanup] Removed duplicate original: {old_f}")
-                            except Exception:
-                                pass
-                else:
-                    # planner 실패 시 생성된 빈 파일 정리
-                    for old_f in os.listdir(plans_dir):
-                        if not (old_f.startswith(prefix) and old_f.endswith("_actions.txt")):
-                            continue
-                        fpath = os.path.join(plans_dir, old_f)
-                        try:
-                            if os.path.getsize(fpath) == 0:
-                                os.remove(fpath)
-                        except Exception:
-                            pass
-                    print(f"    Subtask {sid}: ✗ Planning failed")
-            
+            # [woPDDL] PDDL 없이 LLM이 직접 새 action sequence 생성
+            new_plans = self._regenerate_nl_action_plans_for_replan(
+                redecomposed_subtasks=redecomposed_subtasks,
+                live_objects=live_objects,
+                context=context,
+                success_effects_text=success_effects_text,
+                failed_progress_text=failed_progress_text,
+                local_env_text=local_env_text,
+            )
             if not new_plans:
                 print("  ERROR: No valid plans generated")
                 return None
-            
             print(f"\n  ✓ Successfully generated {len(new_plans)} new plans")
             print(f"{'='*60}\n")
             return new_plans
@@ -3725,19 +3784,9 @@ class TaskManager:
             # 3. Plan actions 로드
             plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
             
-            # 4. Binding pairs 계산
-            from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
-            
-            # subtask_dag 객체 형태로 변환 (간단한 래퍼)
-            class SubtaskDAGWrapper:
-                def __init__(self, dag_dict):
-                    self.nodes = dag_dict["nodes"]
-                    self.edges = dag_dict["edges"]
-                    self.parallel_groups = dag_dict["parallel_groups"]
-            
-            subtask_dag_obj = SubtaskDAGWrapper(integrated_dag)
-            binding_pairs = binding_pairs_from_subtask_dag(subtask_dag_obj)
-            
+            # 4. [woDAG] binding pairs 없음
+            binding_pairs = []
+
             #print(f"  ✓ Computed {len(binding_pairs)} binding pairs")
             
             # 5. 로봇/오브젝트 위치 가져오기 (거리 기반 최적화)
@@ -4042,7 +4091,9 @@ def main():
 
             print(f"\n----Test set tasks----\n{test_tasks}\nTotal: {len(test_tasks)} tasks\n")
 
-            objects_ai = f"\n\nobjects = {PDDLUtils.get_ai2_thor_objects(floor_plan_num, task_description=task_str)}"
+            objects_ai_raw = PDDLUtils.get_ai2_thor_objects(floor_plan_num, task_description=task_str)
+            objects_ai = f"\n\nobjects = {objects_ai_raw}"
+            task_manager.objects_ai_raw = objects_ai_raw
 
             task_manager.process_tasks(test_tasks, robots_test_tasks, objects_ai, floor_plan=floor_plan_num,
                 run_with_feedback=getattr(args, "run_with_feedback", False),

@@ -1,0 +1,41 @@
+# Initial condition analyze due to previous subtask:
+#1. Robot3 (robot1 in PDDL) is at position (x=-1.25, y=0.90, z=-1.50)
+#2. Robot3 (robot1 in PDDL) is not holding anything
+#3. ButterKnife is on the floor at position (x=-0.7848857641220093, y=0.0053337980061769485, z=0.08746656775474548)
+#4. CounterTop is not found in the scene, but available receptacles are identified
+
+# SubTask 1: Place the ButterKnife on the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: butterknife(Location=floor), countertop(Location=unknown)
+
+GoToObject(robot1, butterknife)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 butterknife)
+
+PickupObject(robot1, butterknife, floor)
+   Preconditions:
+     (at-location butterknife floor)
+     (at robot1 butterknife)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 butterknife)
+
+GoToObject(robot1, countertop3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop3)
+
+PutObject(robot1, butterknife, drawer1)
+   Preconditions:
+     (holding robot1 butterknife)
+     (at robot1 drawer1)
+     (not (inaction robot1))
+   Effects:
+     (at-location butterknife drawer1)
+     (not (holding robot1 butterknife))
+
+Goal condition:
+(at-location butterknife drawer1)

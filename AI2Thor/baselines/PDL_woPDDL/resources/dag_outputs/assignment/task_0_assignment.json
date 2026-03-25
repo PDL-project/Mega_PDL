@@ -3,83 +3,41 @@
   "agent_count": 3,
   "assignment": {
     "1": 1,
-    "2": 3,
-    "3": 2,
-    "4": 3,
-    "5": 1,
-    "6": 2,
-    "7": 1,
-    "8": 3,
-    "9": 2,
-    "10": 1
+    "2": 2,
+    "3": 3
   },
   "subtasks": [
     {
       "id": 1,
-      "title": "Move the Apple to the appropriate location.",
+      "title": "Put the Vase on the CoffeeTable.",
       "robot": 1
     },
     {
       "id": 2,
-      "title": "Move the Bread to the appropriate location.",
-      "robot": 3
+      "title": "Put the TissueBox on the CoffeeTable.",
+      "robot": 2
     },
     {
       "id": 3,
-      "title": "Move the ButterKnife to the appropriate location.",
-      "robot": 2
-    },
-    {
-      "id": 4,
-      "title": "Move the Fork to the appropriate location.",
+      "title": "Put the RemoteControl on the CoffeeTable.",
       "robot": 3
-    },
-    {
-      "id": 5,
-      "title": "Move the Lettuce to the appropriate location.",
-      "robot": 1
-    },
-    {
-      "id": 6,
-      "title": "Move the Mug to the appropriate location.",
-      "robot": 2
-    },
-    {
-      "id": 7,
-      "title": "Move the Pan to the appropriate location.",
-      "robot": 1
-    },
-    {
-      "id": 8,
-      "title": "Move the PepperShaker to the appropriate location.",
-      "robot": 3
-    },
-    {
-      "id": 9,
-      "title": "Move the SaltShaker to the appropriate location.",
-      "robot": 2
-    },
-    {
-      "id": 10,
-      "title": "Move the SoapBottle to the appropriate location.",
-      "robot": 1
     }
   ],
   "robot_spawn_positions": {
     "1": [
-      1.0,
-      0.900999128818512,
-      2.0
+      -0.75,
+      0.9026566743850708,
+      4.5
     ],
     "2": [
-      -0.75,
-      0.900999128818512,
-      -1.5
+      -4.0,
+      0.9026566743850708,
+      3.0
     ],
     "3": [
-      2.0,
-      0.900999128818512,
-      -0.25
+      -2.5,
+      0.9026566743850708,
+      2.5
     ]
   }
 }

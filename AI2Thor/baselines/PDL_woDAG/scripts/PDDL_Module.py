@@ -37,17 +37,15 @@ import actions # resources/actions.py (로봇 액션 정의 등)
 import robots  # resources/robots.py (로봇 스킬/질량 정보 등)
 
 from DAG_Module import DAGGenerator # plan 기반 DAG(병렬성) 생성 모듈
-from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
+from LP_Module import assign_subtasks_llm
 
 from MultiRobotExecutor import MultiRobotExecutor, SubTaskExecutionResult, _TASK_NAME_MAP, _TASK_NAME_MAP_LOWER # 멀티 로봇 실행 코드 생성/실행 관리
 from AI2Thor.Tasks.get_scene_init import get_scene_initializer  # preinit용
 from auto_config import AutoConfig # config 로딩/세팅 자동화
 
 from FeedbackLoopModule import (
-    load_subtask_dag_edges,
     load_subtask_precond_effects,
     load_subtask_action_effects,
-    load_subtask_dag_parallel_groups,
     PartialReplanner,
     GroupAgent,
     subtask_has_dependency,
@@ -812,8 +810,11 @@ class TaskManager:
                 # 3. FastDownward 돌려서, pddl plan 생성
                 validated_plan = self._validate_and_plan()
 
-                # 4. pddl plan기반 DAG 생성
-                self.generate_dag() #DAG 생성 (병렬성 분석)
+                # 4. [woDAG] DAG 생성 없음 - 모든 subtask 순차 실행
+                self.subtask_dag = None
+                _seq_sids = sorted([st["id"] for st in parsed_subtasks])
+                _sequential_parallel_groups = {sid: [sid] for sid in _seq_sids}
+                print("✓ Sequential groups assigned (woDAG)")
 
                 # 5a. 시뮬레이터에서 로봇 스폰 좌표 + 오브젝트 좌표 가져오기 (거리 기반 LP용)
                 robot_positions = None
@@ -828,25 +829,18 @@ class TaskManager:
                 # 5b. 작업할당
                 plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
 
-                binding_pairs = binding_pairs_from_subtask_dag(self.subtask_dag)
-
-                # parallel_groups를 LP에 전달하여 같은 그룹 내 분산 배정 유도
-                pg_for_lp = None
-                if self.subtask_dag and hasattr(self.subtask_dag, 'parallel_groups'):
-                    pg_for_lp = {str(k): v for k, v in self.subtask_dag.parallel_groups.items()}
-
                 assignment = assign_subtasks_llm(
-                    subtasks=parsed_subtasks,  # _decomposed_plan_to_subtasks() 결과 (id, skills 들어있어야 함)
-                    robot_ids=task_robot_ids,  # 예: [1,2,3]
-                    robots_db=robots.robots,   # robots.py의 robots 리스트
+                    subtasks=parsed_subtasks,
+                    robot_ids=task_robot_ids,
+                    robots_db=robots.robots,
                     plan_actions_by_subtask=plan_actions_by_sid,
-                    objects_ai=self.objects_ai,  # 저장해둔 objects_ai 문자열/리스트
+                    objects_ai=self.objects_ai,
                     llm=self.llm,
                     gpt_version=self.gpt_version,
-                    binding_pairs=binding_pairs,
+                    binding_pairs=[],
                     robot_positions=robot_positions,
                     object_positions=object_positions,
-                    parallel_groups=pg_for_lp,
+                    parallel_groups=None,
                 )
 
                 # 작업 할당 결과 출력
@@ -889,6 +883,8 @@ class TaskManager:
                     executor.record_video = True
                     executor.video_output_path = _vid_dir
                     #print(f"[Record] Video output → {_vid_dir}")
+                # [woDAG] run() 이전에 설정해야 load_plan_actions()가 올바른 group으로 로드함
+                executor.parallel_groups = _sequential_parallel_groups
                 execution_code = executor.run(
                     task_idx=task_idx,
                     task_name="task",
@@ -972,9 +968,8 @@ class TaskManager:
                             return bool(success)
                         return False
 
-                    # DAG 엣지 기반 연결 컴포넌트로 그룹 구성
-                    # (엣지로 연결된 서브태스크 = 한 그룹, 고립된 서브태스크 = 단독 그룹)
-                    _dag_edges_fb = load_subtask_dag_edges(self.base_path, task_name_fb)
+                    # [woDAG] DAG 없음 - 각 subtask가 독립 그룹 (엣지 없음)
+                    _dag_edges_fb = []
                     _all_sids_fb = [sid for sids in executor.parallel_groups.values() for sid in sids]
                     _parent_fb = {sid: sid for sid in _all_sids_fb}
 
@@ -2452,8 +2447,8 @@ class TaskManager:
             # executor가 plan 파일을 읽는 경로도 versioned 폴더로 갱신
             executor.plans_path = self.file_processor.subtask_pddl_plans_path
 
-        # 현재 subtask dependency graph를 불러오기
-        edges = load_subtask_dag_edges(self.base_path, task_name)
+        # [woDAG] DAG 없음 - 엣지 없음
+        edges = []
         
         # subtask_id → group_id 역방향 맵 (pre-created agents의 메모리에서 직접 구성)
         _subtask_to_gid: Dict[int, int] = {}
@@ -3725,18 +3720,8 @@ class TaskManager:
             # 3. Plan actions 로드
             plan_actions_by_sid = self._load_plan_actions_by_subtask_id()
             
-            # 4. Binding pairs 계산
-            from LP_Module import assign_subtasks_llm, binding_pairs_from_subtask_dag
-            
-            # subtask_dag 객체 형태로 변환 (간단한 래퍼)
-            class SubtaskDAGWrapper:
-                def __init__(self, dag_dict):
-                    self.nodes = dag_dict["nodes"]
-                    self.edges = dag_dict["edges"]
-                    self.parallel_groups = dag_dict["parallel_groups"]
-            
-            subtask_dag_obj = SubtaskDAGWrapper(integrated_dag)
-            binding_pairs = binding_pairs_from_subtask_dag(subtask_dag_obj)
+            # 4. [woDAG] Binding pairs 없음
+            binding_pairs = []
             
             #print(f"  ✓ Computed {len(binding_pairs)} binding pairs")
             
