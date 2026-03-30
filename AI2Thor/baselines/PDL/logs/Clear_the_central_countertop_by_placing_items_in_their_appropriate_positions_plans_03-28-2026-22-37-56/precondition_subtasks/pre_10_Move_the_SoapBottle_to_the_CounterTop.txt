@@ -1,0 +1,53 @@
+# Task Description: Move the SoapBottle to the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding Spatula.
+# 2. Robot not at Spatula location.
+
+# SubTask 10: Move the SoapBottle to the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: soapBottle(Location=CounterTop), CounterTop3(Location=Floor)
+
+GoToObject(robot1, soapBottle)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 soapBottle)
+
+PickupObject(robot1, soapBottle, CounterTop)
+   Preconditions:
+     (at-location soapBottle CounterTop)
+     (at robot1 soapBottle)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 soapBottle)
+     (not (hand-empty robot1))
+     (not (at-location soapBottle CounterTop))
+
+GoToObject(robot1, CounterTop3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop3)
+
+PutObject(robot1, soapBottle, CounterTop3)
+   Preconditions:
+     (holding robot1 soapBottle)
+     (at robot1 CounterTop3)
+     (not (inaction robot1))
+     (not (is-fridge CounterTop3))
+     (not (object-close robot1 CounterTop3))
+   Effects:
+     (at-location soapBottle CounterTop3)
+     (not (holding robot1 soapBottle))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location soapBottle CounterTop3)
+
+# Task Move the SoapBottle to the CounterTop is done.

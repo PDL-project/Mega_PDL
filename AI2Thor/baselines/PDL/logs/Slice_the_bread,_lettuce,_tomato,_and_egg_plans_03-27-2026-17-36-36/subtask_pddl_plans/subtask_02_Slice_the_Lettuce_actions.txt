@@ -1,0 +1,2 @@
+gotoobject robot1 lettuce (1)
+sliceobject robot1 lettuce countertop (1)

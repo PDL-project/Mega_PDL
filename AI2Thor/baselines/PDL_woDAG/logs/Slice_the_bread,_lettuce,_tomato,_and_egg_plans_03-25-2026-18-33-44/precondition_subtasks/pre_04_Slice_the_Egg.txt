@@ -1,0 +1,33 @@
+# Task Description: Slice the Egg.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at egg location
+#2. Robot not holding egg
+#3. Knife is in the drawer
+
+# SubTask 4: Slice the Egg.
+    Skills Required: GoToObject, PickupObject, SliceObject, PutObject
+    Related Objects: Egg(Location=CounterTop), Knife(Location=Drawer)
+
+GoToObject(robot1, Egg)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Egg)
+
+SliceObject(robot1, Egg, CounterTop)
+   Preconditions:
+     (at-location Egg CounterTop)
+     (at robot1 Egg)
+     (not (inaction robot1))
+   Effects:
+     (sliced Egg)
+
+Goal condition:
+(sliced Egg)
+
+# Task Slice the Egg is done.

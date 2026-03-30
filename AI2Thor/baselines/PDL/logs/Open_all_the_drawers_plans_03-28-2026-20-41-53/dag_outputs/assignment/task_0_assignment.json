@@ -1,0 +1,79 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 1,
+    "5": 2,
+    "6": 3,
+    "7": 1,
+    "8": 2,
+    "9": 3
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Open Drawer1.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Open Drawer2.",
+      "robot": 2
+    },
+    {
+      "id": 3,
+      "title": "Open Drawer3.",
+      "robot": 3
+    },
+    {
+      "id": 4,
+      "title": "Open Drawer4.",
+      "robot": 1
+    },
+    {
+      "id": 5,
+      "title": "Open Drawer5.",
+      "robot": 2
+    },
+    {
+      "id": 6,
+      "title": "Open Drawer6.",
+      "robot": 3
+    },
+    {
+      "id": 7,
+      "title": "Open Drawer7.",
+      "robot": 1
+    },
+    {
+      "id": 8,
+      "title": "Open Drawer8.",
+      "robot": 2
+    },
+    {
+      "id": 9,
+      "title": "Open Drawer9.",
+      "robot": 3
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      0.75,
+      0.900999128818512,
+      -1.5
+    ],
+    "2": [
+      2.0,
+      0.900999128818512,
+      1.75
+    ],
+    "3": [
+      -1.0,
+      0.900999128818512,
+      1.0
+    ]
+  }
+}

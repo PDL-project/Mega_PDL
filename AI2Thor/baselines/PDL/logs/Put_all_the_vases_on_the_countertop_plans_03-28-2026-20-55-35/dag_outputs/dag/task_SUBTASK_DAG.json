@@ -1,0 +1,53 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_Vase1_on_CounterTop1",
+      "objects": [
+        "robot1",
+        "vase1",
+        "shelf1",
+        "countertop1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is in the kitchen.",
+        "Robot1 is not holding anything.",
+        "Vase1 is on shelf1."
+      ],
+      "effects": [
+        "Vase1 is on countertop1.",
+        "Robot1 is not holding vase1.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_Vase2_on_CounterTop2",
+      "objects": [
+        "robot1",
+        "vase2",
+        "shelf2",
+        "countertop2"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is in the kitchen",
+        "Robot1's hand is empty",
+        "Vase2 is on shelf2"
+      ],
+      "effects": [
+        "Vase2 is on countertop2",
+        "Robot1's hand is empty"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ]
+  }
+}

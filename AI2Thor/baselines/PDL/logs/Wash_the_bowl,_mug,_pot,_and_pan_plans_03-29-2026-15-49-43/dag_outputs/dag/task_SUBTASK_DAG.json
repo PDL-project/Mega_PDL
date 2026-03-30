@@ -1,0 +1,152 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Wash_the_Bowl",
+      "objects": [
+        "robot1",
+        "bowl",
+        "sink",
+        "faucet",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Robot's hand is empty",
+        "Bowl is on the countertop",
+        "Sink and faucet are on the floor"
+      ],
+      "effects": [
+        "Bowl is cleaned",
+        "Bowl is placed back on the countertop",
+        "Robot's hand is empty"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Wash_the_Mug",
+      "objects": [
+        "robot1",
+        "mug",
+        "sink",
+        "faucet",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Robot's hand is empty",
+        "Mug is on the countertop",
+        "Sink and faucet are on the floor",
+        "Faucet is off"
+      ],
+      "effects": [
+        "Mug is cleaned",
+        "Mug is on the countertop",
+        "Robot's hand is empty"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Wash_the_Pot",
+      "objects": [
+        "robot1",
+        "pot",
+        "sink",
+        "faucet",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Robot's hand is empty",
+        "Pot is on the countertop",
+        "Sink and faucet are on the floor",
+        "Faucet is off"
+      ],
+      "effects": [
+        "Pot is cleaned",
+        "Pot is on the countertop",
+        "Robot's hand is empty"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Wash_the_Pan",
+      "objects": [
+        "robot1",
+        "pan",
+        "sink",
+        "faucet",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Pan is at the countertop.",
+        "Sink is on the floor.",
+        "Faucet is off."
+      ],
+      "effects": [
+        "Pan is cleaned.",
+        "Pan is at the countertop.",
+        "Robot1's hand is empty."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Same sink and faucet used for washing"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same sink and faucet used for washing"
+    },
+    {
+      "from_id": 1,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same sink and faucet used for washing"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same sink and faucet used for washing"
+    },
+    {
+      "from_id": 2,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same sink and faucet used for washing"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same sink and faucet used for washing"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ]
+  }
+}

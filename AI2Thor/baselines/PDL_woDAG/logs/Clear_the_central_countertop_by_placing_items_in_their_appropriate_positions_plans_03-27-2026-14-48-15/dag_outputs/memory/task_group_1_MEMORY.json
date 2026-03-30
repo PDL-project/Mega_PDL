@@ -1,0 +1,12 @@
+{
+  "1": {
+    "state": "FAILED",
+    "error_message": "GoToObject: cannot find object 'robot3'",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 apple (1)",
+      "pickupobject robot1 apple countertop (1)",
+      "gotoobject robot1 bowl (1)"
+    ]
+  }
+}

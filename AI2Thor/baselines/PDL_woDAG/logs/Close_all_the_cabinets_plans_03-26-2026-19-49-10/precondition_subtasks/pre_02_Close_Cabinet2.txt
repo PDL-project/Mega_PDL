@@ -1,0 +1,24 @@
+# SubTask 2: Close Cabinet2.
+    Skills Required: GoToObject, CloseObject
+    Related Objects: cabinet2(Location=floor)
+
+# Initial condition:
+#1. Robot not at Cabinet2 location
+#2. Cabinet2 is open
+
+GoToObject(robot1, cabinet2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet2)
+
+CloseObject(robot1, cabinet2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet2)
+   Effects:
+     (object-close robot1 cabinet2)
+     (not (object-open robot1 cabinet2))
+
+Goal condition:
+(object-close robot1 cabinet2)

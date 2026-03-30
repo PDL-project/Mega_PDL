@@ -1,0 +1,11 @@
+{
+  "3": {
+    "state": "FAILED",
+    "error_message": "GoToObject: cannot find object 'sinkbasin1'",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 pot (1)",
+      "pickupobject robot1 pot countertop3 (1)"
+    ]
+  }
+}

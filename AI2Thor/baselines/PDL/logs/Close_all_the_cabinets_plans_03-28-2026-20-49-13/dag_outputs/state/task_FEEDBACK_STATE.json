@@ -1,0 +1,83 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet1 (1)",
+      "closeobject robot1 cabinet1 (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet2 (1)",
+      "closeobject robot1 cabinet2 (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet3 (1)",
+      "closeobject robot1 cabinet3 (1)"
+    ]
+  },
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet4 (1)",
+      "closeobject robot1 cabinet4 (1)"
+    ]
+  },
+  "5": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet5 (1)",
+      "closeobject robot1 cabinet5 (1)"
+    ]
+  },
+  "6": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet6 (1)",
+      "closeobject robot1 cabinet6 (1)"
+    ]
+  },
+  "7": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet7 (1)",
+      "closeobject robot1 cabinet7 (1)"
+    ]
+  },
+  "8": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet8 (1)",
+      "closeobject robot1 cabinet8 (1)"
+    ]
+  },
+  "9": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 cabinet9 (1)",
+      "closeobject robot1 cabinet9 (1)"
+    ]
+  }
+}

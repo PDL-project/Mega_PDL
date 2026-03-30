@@ -1,0 +1,2 @@
+gotoobject robot1 sinkbasin1 (1)
+cleanobject robot1 pot sinkbasin1 (1)

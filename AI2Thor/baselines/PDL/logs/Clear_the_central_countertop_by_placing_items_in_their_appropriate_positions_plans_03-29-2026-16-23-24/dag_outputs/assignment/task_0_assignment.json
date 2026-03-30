@@ -1,0 +1,85 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 2,
+    "2": 3,
+    "3": 3,
+    "4": 3,
+    "5": 3,
+    "6": 3,
+    "7": 3,
+    "8": 3,
+    "9": 3,
+    "10": 1
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Move the Apple to the CounterTop.",
+      "robot": 2
+    },
+    {
+      "id": 2,
+      "title": "Move the Bread to the Sink.",
+      "robot": 3
+    },
+    {
+      "id": 3,
+      "title": "Move the ButterKnife to the CounterTop.",
+      "robot": 3
+    },
+    {
+      "id": 4,
+      "title": "Move the Fork to the CounterTop.",
+      "robot": 3
+    },
+    {
+      "id": 5,
+      "title": "Move the Lettuce to the CounterTop.",
+      "robot": 3
+    },
+    {
+      "id": 6,
+      "title": "Move the Mug to the CounterTop.",
+      "robot": 3
+    },
+    {
+      "id": 7,
+      "title": "Move the Potato to the CounterTop.",
+      "robot": 3
+    },
+    {
+      "id": 8,
+      "title": "Move the SoapBottle to the CounterTop.",
+      "robot": 3
+    },
+    {
+      "id": 9,
+      "title": "Move the Spatula to the CounterTop.",
+      "robot": 3
+    },
+    {
+      "id": 10,
+      "title": "Move the Tomato to the CounterTop.",
+      "robot": 1
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      0.25,
+      0.900999128818512,
+      2.0
+    ],
+    "2": [
+      -1.5,
+      0.900999128818512,
+      1.75
+    ],
+    "3": [
+      0.0,
+      0.900999128818512,
+      -1.25
+    ]
+  }
+}

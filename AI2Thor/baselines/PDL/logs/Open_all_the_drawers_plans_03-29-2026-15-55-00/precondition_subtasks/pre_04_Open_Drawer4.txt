@@ -1,0 +1,31 @@
+# Task Description: Open Drawer4.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Drawer4 is closed
+
+# SubTask 4: Open Drawer4.
+    Skills Required: GoToObject, OpenObject
+    Related Objects: drawer4(Location=floor)
+
+GoToObject(robot1, drawer4)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 drawer4)
+
+OpenObject(robot1, drawer4)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer4)
+   Effects:
+     (object-open robot1 drawer4)
+     (not (object-close robot1 drawer4))
+
+Goal condition:
+(object-open robot1 drawer4)
+
+# Task Open Drawer4 is done.

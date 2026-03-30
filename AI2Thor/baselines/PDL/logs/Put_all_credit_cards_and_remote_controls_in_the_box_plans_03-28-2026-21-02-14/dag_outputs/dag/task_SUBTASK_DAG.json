@@ -1,0 +1,68 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_CreditCard_in_the_Box",
+      "objects": [
+        "robot1",
+        "creditcard",
+        "box",
+        "diningtable"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Creditcard is on the diningtable.",
+        "Box is on the floor.",
+        "Robot1 is close to the box."
+      ],
+      "effects": [
+        "Creditcard is in the box.",
+        "Robot1 is close to the box.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_RemoteControl_in_the_Box",
+      "objects": [
+        "robot1",
+        "remotecontrol",
+        "box",
+        "sidetable1",
+        "kitchen"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the kitchen",
+        "robot1's hand is empty",
+        "remotecontrol is at sidetable1",
+        "box is on the floor",
+        "robot1 is close to the box"
+      ],
+      "effects": [
+        "remotecontrol is in the box",
+        "robot1 is close to the box",
+        "robot1's hand is empty"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both subtasks put objects into the same box"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ]
+  }
+}

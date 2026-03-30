@@ -1,0 +1,51 @@
+# Task Description: Move the PaperTowelRoll to the appropriate location.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analysis due to previous subtask:
+# 1. Robot not holding PaperTowelRoll.
+# 2. Robot not at PaperTowelRoll location.
+
+# SubTask 6: Move the PaperTowelRoll to the appropriate location.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: paperTowelRoll(Location=CounterTop), cabinet4(Location=Floor)
+
+GoToObject(robot1, paperTowelRoll)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 paperTowelRoll)
+
+PickupObject(robot1, paperTowelRoll, CounterTop)
+   Preconditions:
+     (at-location paperTowelRoll CounterTop)
+     (at robot1 paperTowelRoll)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 paperTowelRoll)
+     (not (hand-empty robot1))
+     (not (at-location paperTowelRoll CounterTop))
+
+GoToObject(robot1, cabinet4)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet4)
+
+PutObject(robot1, paperTowelRoll, cabinet4)
+   Preconditions:
+     (holding robot1 paperTowelRoll)
+     (at robot1 cabinet4)
+     (not (inaction robot1))
+   Effects:
+     (at-location paperTowelRoll cabinet4)
+     (not (holding robot1 paperTowelRoll))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location paperTowelRoll cabinet4)
+
+# Task Move the PaperTowelRoll to the appropriate location is done.

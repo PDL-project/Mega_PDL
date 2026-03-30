@@ -1,0 +1,39 @@
+# SubTask 5: Move the Plate to the Sofa.
+    Skills Required: GoToObject, PickupObject, GoToObject, PutObject
+    Related Objects: Plate(Location=DiningTable), Sofa(Location=Floor)
+
+GoToObject(robot1, Plate)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Plate)
+
+PickupObject(robot1, Plate, DiningTable)
+   Preconditions:
+     (at-location Plate DiningTable)
+     (at robot1 Plate)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 Plate)
+     (not (hand-empty robot1))
+     (not (at-location Plate DiningTable))
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, Plate, Sofa)
+   Preconditions:
+     (holding robot1 Plate)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location Plate Sofa)
+     (not (holding robot1 Plate))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location Plate Sofa)

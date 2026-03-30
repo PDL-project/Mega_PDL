@@ -1,0 +1,2 @@
+gotoobject robot1 sinkbasin1 (1)
+drophandobject robot1 mug sinkbasin1 (1)

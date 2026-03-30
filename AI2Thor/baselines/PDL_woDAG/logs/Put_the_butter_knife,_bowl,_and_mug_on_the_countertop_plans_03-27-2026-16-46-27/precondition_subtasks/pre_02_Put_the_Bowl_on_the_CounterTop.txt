@@ -1,0 +1,51 @@
+# Task Description: Put the Bowl on the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding Bowl
+#2. Robot not at Bowl location
+
+# SubTask 2: Put the Bowl on the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Bowl(Location=Floor), CounterTop2(Location=Floor)
+
+GoToObject(robot1, Bowl)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Bowl)
+
+PickupObject(robot1, Bowl, Floor)
+   Preconditions:
+     (at-location Bowl Floor)
+     (at robot1 Bowl)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 Bowl)
+     (not (hand-empty robot1))
+     (not (at-location Bowl Floor))
+
+GoToObject(robot1, CounterTop2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop2)
+
+PutObject(robot1, Bowl, CounterTop2)
+   Preconditions:
+     (holding robot1 Bowl)
+     (at robot1 CounterTop2)
+     (not (inaction robot1))
+   Effects:
+     (at-location Bowl CounterTop2)
+     (not (holding robot1 Bowl))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location Bowl CounterTop2)
+
+# Task Put the Bowl on the CounterTop is done.

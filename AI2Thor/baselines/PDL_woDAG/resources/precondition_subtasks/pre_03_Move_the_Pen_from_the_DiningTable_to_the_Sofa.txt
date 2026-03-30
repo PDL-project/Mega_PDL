@@ -1,0 +1,49 @@
+# Task Description: Move the Pen from the DiningTable to the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding Pen
+# 2. Pen is on the DiningTable
+
+# SubTask 3: Move the Pen from the DiningTable to the Sofa.
+    Skills Required: GoToObject, PickupObject, GoToObject, PutObject
+    Related Objects: Pen(Location=DiningTable), Sofa(Location=Floor)
+
+GoToObject(robot1, Pen)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Pen)
+
+PickupObject(robot1, Pen, DiningTable)
+   Preconditions:
+     (at-location Pen DiningTable)
+     (at robot1 Pen)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 Pen)
+     (not (hand-empty robot1))
+     (not (at-location Pen DiningTable))
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, Pen, Sofa)
+   Preconditions:
+     (holding robot1 Pen)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location Pen Sofa)
+     (not (holding robot1 Pen))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location Pen Sofa)

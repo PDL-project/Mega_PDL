@@ -1,0 +1,51 @@
+# Task Description: Place the Apple on the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at apple location
+#2. Robot not holding apple
+
+# SubTask 1: Place the Apple on the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: apple(Location=floor), countertop1(Location=floor)
+
+GoToObject(robot1, apple)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 apple)
+
+PickupObject(robot1, apple, floor)
+   Preconditions:
+     (at-location apple floor)
+     (at robot1 apple)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 apple)
+     (not (hand-empty robot1))
+     (not (at-location apple floor))
+
+GoToObject(robot1, countertop1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop1)
+
+PutObject(robot1, apple, countertop1)
+   Preconditions:
+     (holding robot1 apple)
+     (at robot1 countertop1)
+     (not (inaction robot1))
+   Effects:
+     (at-location apple countertop1)
+     (not (holding robot1 apple))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location apple countertop1)
+
+# Task Place the Apple on the CounterTop is done.

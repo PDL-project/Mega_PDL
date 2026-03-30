@@ -1,0 +1,13 @@
+{
+  "9": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 saltshaker (1)",
+      "pickupobject robot1 saltshaker countertop (1)",
+      "gotoobject robot1 countertop2 (1)",
+      "drophandobject robot1 saltshaker countertop2 (1)"
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+# Task Description: Put the TissueBox on the CoffeeTable.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding TissueBox
+#2. Robot not at TissueBox location
+
+# SubTask 2: Put the TissueBox on the CoffeeTable.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: TissueBox(Location=TVStand), CoffeeTable(Location=Floor)
+
+GoToObject(robot1, TissueBox)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 TissueBox)
+
+PickupObject(robot1, TissueBox, TVStand)
+   Preconditions:
+     (at-location TissueBox TVStand)
+     (at robot1 TissueBox)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 TissueBox)
+     (not (hand-empty robot1))
+     (not (at-location TissueBox TVStand))
+
+GoToObject(robot1, CoffeeTable)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CoffeeTable)
+
+PutObject(robot1, TissueBox, CoffeeTable)
+   Preconditions:
+     (holding robot1 TissueBox)
+     (at robot1 CoffeeTable)
+     (not (inaction robot1))
+   Effects:
+     (at-location TissueBox CoffeeTable)
+     (not (holding robot1 TissueBox))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location TissueBox CoffeeTable)
+
+# Task Put the TissueBox on the CoffeeTable is done.

@@ -1,0 +1,31 @@
+# Task Description: Switch off the Light.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at light switch location
+
+# SubTask 2: Switch off the Light.
+    Skills Required: GoToObject, SwitchOff
+    Related Objects: LightSwitch(Location=Floor)
+
+GoToObject(robot1, LightSwitch)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 LightSwitch)
+
+SwitchOff(robot1, LightSwitch)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 LightSwitch)
+   Effects:
+     (switch-off robot1 LightSwitch)
+     (not (switch-on robot1 LightSwitch))
+
+Goal condition: 
+(switch-off robot1 LightSwitch)
+
+# Task Make the living room dark is done.

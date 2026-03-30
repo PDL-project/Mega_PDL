@@ -1,0 +1,79 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 1,
+    "5": 2,
+    "6": 3,
+    "7": 1,
+    "8": 2,
+    "9": 3
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Close Cabinet1.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Close Cabinet2.",
+      "robot": 2
+    },
+    {
+      "id": 3,
+      "title": "Close Cabinet3.",
+      "robot": 3
+    },
+    {
+      "id": 4,
+      "title": "Close Cabinet7.",
+      "robot": 1
+    },
+    {
+      "id": 5,
+      "title": "Close Cabinet4.",
+      "robot": 2
+    },
+    {
+      "id": 6,
+      "title": "Close Cabinet5.",
+      "robot": 3
+    },
+    {
+      "id": 7,
+      "title": "Close Cabinet6.",
+      "robot": 1
+    },
+    {
+      "id": 8,
+      "title": "Close Cabinet8.",
+      "robot": 2
+    },
+    {
+      "id": 9,
+      "title": "Close Cabinet9.",
+      "robot": 3
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      1.5,
+      0.900999128818512,
+      2.0
+    ],
+    "2": [
+      0.0,
+      0.900999128818512,
+      -1.75
+    ],
+    "3": [
+      -1.0,
+      0.900999128818512,
+      0.75
+    ]
+  }
+}

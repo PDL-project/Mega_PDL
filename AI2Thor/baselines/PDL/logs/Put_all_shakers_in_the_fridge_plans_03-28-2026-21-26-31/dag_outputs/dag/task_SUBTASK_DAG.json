@@ -1,0 +1,64 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_SaltShaker_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "saltshaker",
+        "fridge",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding the saltshaker.",
+        "Fridge is initially closed.",
+        "Saltshaker is on the countertop.",
+        "Robot is in the kitchen."
+      ],
+      "effects": [
+        "Saltshaker is in the fridge.",
+        "Fridge is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_PepperShaker_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "pepperShaker",
+        "fridge",
+        "kitchen",
+        "counterTop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is in the kitchen.",
+        "Robot's hand is empty.",
+        "PepperShaker is on the counterTop.",
+        "Fridge is closed."
+      ],
+      "effects": [
+        "PepperShaker is in the fridge.",
+        "Fridge is closed."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both subtasks use the same fridge, which must be opened/closed"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ]
+  }
+}

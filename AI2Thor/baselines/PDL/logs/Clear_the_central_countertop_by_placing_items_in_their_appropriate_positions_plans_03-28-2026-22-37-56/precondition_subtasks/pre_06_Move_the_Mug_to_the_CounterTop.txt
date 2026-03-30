@@ -1,0 +1,51 @@
+# Task Description: Move the Mug to the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding PaperTowelRoll.
+# 2. Robot not at PaperTowelRoll location.
+
+# SubTask 6: Move the Mug to the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: mug(Location=CounterTop), CounterTop2(Location=Floor)
+
+GoToObject(robot1, mug)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 mug)
+
+PickupObject(robot1, mug, CounterTop)
+   Preconditions:
+     (at-location mug CounterTop)
+     (at robot1 mug)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 mug)
+     (not (hand-empty robot1))
+     (not (at-location mug CounterTop))
+
+GoToObject(robot1, CounterTop2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop2)
+
+PutObject(robot1, mug, CounterTop2)
+   Preconditions:
+     (holding robot1 mug)
+     (at robot1 CounterTop2)
+     (not (inaction robot1))
+   Effects:
+     (at-location mug CounterTop2)
+     (not (holding robot1 mug))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location mug CounterTop2)
+
+# Task Move the Mug to the CounterTop is done.

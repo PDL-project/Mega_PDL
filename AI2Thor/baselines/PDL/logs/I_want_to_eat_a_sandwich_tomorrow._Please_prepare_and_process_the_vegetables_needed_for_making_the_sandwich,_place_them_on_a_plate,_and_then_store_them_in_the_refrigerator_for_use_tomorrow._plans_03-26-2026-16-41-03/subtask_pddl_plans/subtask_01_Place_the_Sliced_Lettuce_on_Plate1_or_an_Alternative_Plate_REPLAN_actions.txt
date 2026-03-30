@@ -1,0 +1,1 @@
+drophandobject robot1 lettuce plate1 (1)

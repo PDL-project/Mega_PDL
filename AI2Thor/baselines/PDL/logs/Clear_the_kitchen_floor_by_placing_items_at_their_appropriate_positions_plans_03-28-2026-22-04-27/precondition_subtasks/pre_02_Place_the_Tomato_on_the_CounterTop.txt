@@ -1,0 +1,51 @@
+# Task Description: Place the Tomato on the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at tomato location
+#2. Robot not holding tomato
+
+# SubTask 2: Place the Tomato on the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: tomato(Location=floor), countertop(Location=floor)
+
+GoToObject(robot1, tomato)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 tomato)
+
+PickupObject(robot1, tomato, floor)
+   Preconditions:
+     (at-location tomato floor)
+     (at robot1 tomato)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 tomato)
+     (not (hand-empty robot1))
+     (not (at-location tomato floor))
+
+GoToObject(robot1, countertop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 countertop)
+
+PutObject(robot1, tomato, countertop)
+   Preconditions:
+     (holding robot1 tomato)
+     (at robot1 countertop)
+     (not (inaction robot1))
+   Effects:
+     (at-location tomato countertop)
+     (not (holding robot1 tomato))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location tomato countertop)
+
+# Task Place the Tomato on the CounterTop is done.

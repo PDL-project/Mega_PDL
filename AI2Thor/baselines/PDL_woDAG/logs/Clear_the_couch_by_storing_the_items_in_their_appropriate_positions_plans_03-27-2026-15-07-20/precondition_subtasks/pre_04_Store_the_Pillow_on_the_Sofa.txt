@@ -1,0 +1,51 @@
+# Task Description: Store the Pillow on the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at pillow location
+#2. Robot not holding pillow
+
+# SubTask 4: Store the Pillow on the Sofa.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: pillow(Location=sofa), sofa(Location=floor)
+
+GoToObject(robot1, pillow)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pillow)
+
+PickupObject(robot1, pillow, sofa)
+   Preconditions:
+     (at-location pillow sofa)
+     (at robot1 pillow)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 pillow)
+     (not (hand-empty robot1))
+     (not (at-location pillow sofa))
+
+GoToObject(robot1, sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sofa)
+
+PutObject(robot1, pillow, sofa)
+   Preconditions:
+     (holding robot1 pillow)
+     (at robot1 sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location pillow sofa)
+     (not (holding robot1 pillow))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location pillow sofa)
+
+# Task Clear the couch by storing the items in their appropriate positions is done.

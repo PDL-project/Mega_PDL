@@ -1,0 +1,55 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 3,
+    "2": 2,
+    "3": 1,
+    "4": 2,
+    "5": 1
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Move the Book to the Sofa.",
+      "robot": 3
+    },
+    {
+      "id": 2,
+      "title": "Move the Newspaper to the Sofa.",
+      "robot": 2
+    },
+    {
+      "id": 3,
+      "title": "Move the Pen to the Sofa.",
+      "robot": 1
+    },
+    {
+      "id": 4,
+      "title": "Move the Pencil to the Sofa.",
+      "robot": 2
+    },
+    {
+      "id": 5,
+      "title": "Move the Plate to the Sofa.",
+      "robot": 1
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      -4.5,
+      0.9026566743850708,
+      4.0
+    ],
+    "2": [
+      -4.25,
+      0.9026566743850708,
+      2.0
+    ],
+    "3": [
+      -1.25,
+      0.9026566743850708,
+      2.25
+    ]
+  }
+}

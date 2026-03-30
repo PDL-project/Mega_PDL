@@ -1,3 +1,0 @@
-pickupobject robot1 butterknife floor (1)
-gotoobject robot1 countertop (1)
-drophandobject robot1 butterknife countertop (1)

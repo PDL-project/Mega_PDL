@@ -854,7 +854,7 @@ class TaskManager:
                     validated_plan = self._validate_and_plan()
 
                     # 4. pddl plan기반 DAG 생성
-                    self.generate_dag()
+                    self.generate_dag(task_description=task)
 
                     # 5a. 시뮬레이터에서 로봇 스폰 좌표 + 오브젝트 좌표 가져오기 (거리 기반 LP용)
                     robot_positions = None
@@ -936,27 +936,52 @@ class TaskManager:
                 )
                 print("✓ Multi-robot execution code generated")
 
-                # 7. 피드백 루프: 실행 후 실패 시 Subtask Manager LLM / Central LLM으로 재계획 후 재실행
+                # 7. 시뮬레이터 실행 (피드백 루프 유무와 관계없이 floor_plan이 있으면 실행)
+                if floor_plan is not None and not run_with_feedback:
+                    print("\n✓ Running execution without feedback loop...")
+                    results = executor.execute_in_ai2thor_with_feedback(
+                        floor_plan,
+                        task_name="task",
+                        task_description=task,
+                        state_store=None,
+                        on_subtask_failed=None,
+                        group_agents=None,
+                    )
+                    failed = [sid for sid, r in results.items() if not r.success]
+                    if not failed:
+                        print("All subtasks succeeded.")
+                    else:
+                        print(f"{len(failed)} subtask(s) failed: {failed}")
+
+                # 피드백 루프: 실행 후 실패 시 Subtask Manager LLM / Central LLM으로 재계획 후 재실행
                 if run_with_feedback and floor_plan is not None:
                     print("\n✓ Running execution with feedback loop...")
                     task_name_fb = "task"
                     state_store = SharedTaskStateStore(self.base_path, task_name_fb)
                     replan_retry_per_subtask = {}  # subtask_id -> retry count
+                    global_replan_count = [0]       # 전체 리플랜 횟수 (mutable container)
+                    MAX_GLOBAL_REPLAN = 6
 
                     def _on_subtask_failed(failed_result):
                         """재계획 시도 후 새 플랜 로드 여부 반환."""
                         sid = failed_result.subtask_id
+                        # 전체 리플랜 횟수 초과 시 즉시 중단
+                        if global_replan_count[0] >= MAX_GLOBAL_REPLAN:
+                            print(f"[Feedback] Global replan limit ({MAX_GLOBAL_REPLAN}) reached, stopping all replanning")
+                            return False
                         # 이미 drop된 subtask는 재계획 불필요
                         if sid in executor._dropped_subtasks:
                             #print(f"[Feedback] Subtask {sid} already dropped, skipping replan")
                             return False
                         count = replan_retry_per_subtask.get(sid, 0)
                         if count >= max_replan_retries:
-                            #print(f"[Feedback] Max replan retries ({max_replan_retries}) for subtask {sid} reached, skipping replan")
+                            print(f"[Feedback] Max replan retries ({max_replan_retries}) for subtask {sid} reached, dropping subtask")
+                            executor._dropped_subtasks.add(sid)
                             return False
 
                         #print(f"[Feedback] Immediate replan triggered by subtask {sid} (retry {count+1}/{max_replan_retries})")
                         replan_retry_per_subtask[sid] = count + 1
+                        global_replan_count[0] += 1
 
                         # Bug fix: current_results를 재플래닝 그룹 SID로만 한정.
                         # (병렬실행그룹 전체를 넘기면 두 스레드가 같은 실패를 보고
@@ -1756,7 +1781,29 @@ class TaskManager:
                         except Exception:
                             pass
 
-                    
+                    # 로컬 메모리에서 toggle 상태 추론 (라이브 컨트롤러 불필요)
+                    toggle_state = {}  # object_name -> "on"/"off"
+                    acts_by_sid = getattr(context, "completed_actions_by_subtask", {}) or {}
+                    for sid in sorted(acts_by_sid.keys()):
+                        for act in (acts_by_sid.get(sid) or []):
+                            act_lower = act.strip().lower()
+                            m_on = re.match(r'switchon\s+\S+\s+(\S+)', act_lower)
+                            if m_on:
+                                toggle_state[m_on.group(1)] = "on"
+                            m_off = re.match(r'switchoff\s+\S+\s+(\S+)', act_lower)
+                            if m_off:
+                                toggle_state[m_off.group(1)] = "off"
+                    if toggle_state:
+                        toggle_lines = []
+                        for obj_name, state in sorted(toggle_state.items()):
+                            if state == "on":
+                                toggle_lines.append(f"  - {obj_name} is currently ON → include ({obj_name}-on) in :init if applicable, do NOT plan SwitchOn")
+                            else:
+                                toggle_lines.append(f"  - {obj_name} is currently OFF → do NOT include ({obj_name}-on) in :init, plan SwitchOn if needed")
+                        if toggle_lines:
+                            prompt += "### Toggle State (inferred from completed actions)\n"
+                            prompt += "\n".join(toggle_lines) + "\n\n"
+
                     prompt += (
                         "CRITICAL: Use the above context to determine the EXACT :init state for the PDDL problem.\n"
                         "In particular:\n"
@@ -1764,6 +1811,7 @@ class TaskManager:
                         "  - If the drawer/receptacle is already OPEN, put (object-open robot1 <receptacle>) in :init.\n"
                         "  - If the target receptacle is an ENCLOSED container (drawer, fridge, cabinet) and FULL (occupied), pick a DIFFERENT empty enclosed container.\n"
                         "  - NEVER change the target to a different receptacle type if the subtask explicitly names countertop, shelf, or table — these open surfaces always accept more objects.\n"
+                        "  - If faucet is already ON (see Toggle State above), include (faucet-on) in :init and skip SwitchOn.\n"
                         "  - Reflect any partial completion effects from the completed actions above.\n\n"
                     )
 
@@ -1912,7 +1960,10 @@ class TaskManager:
                 prompt += "   - If putting an object INTO an openable receptacle, :goal should include (object-close robot1 <receptacle>)\n"
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
-                prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
+                prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n"
+                prompt += "   FAUCET: use (is-faucet faucet) and (faucet-on) in :init when faucet is involved (required for SwitchOff to clear faucet-on)\n"
+                prompt += "   SINK: use (is-sink sink) in :init when sink is involved\n"
+                prompt += "6) ROBOT HAND: always include (hand-empty robot1) in :init — the robot starts each subtask with an empty hand.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -2036,6 +2087,29 @@ class TaskManager:
                         except Exception:
                             pass
 
+                    # 로컬 메모리에서 toggle 상태 추론
+                    toggle_state = {}
+                    acts_by_sid = getattr(context, "completed_actions_by_subtask", {}) or {}
+                    for sid in sorted(acts_by_sid.keys()):
+                        for act in (acts_by_sid.get(sid) or []):
+                            act_lower = act.strip().lower()
+                            m_on = re.match(r'switchon\s+\S+\s+(\S+)', act_lower)
+                            if m_on:
+                                toggle_state[m_on.group(1)] = "on"
+                            m_off = re.match(r'switchoff\s+\S+\s+(\S+)', act_lower)
+                            if m_off:
+                                toggle_state[m_off.group(1)] = "off"
+                    if toggle_state:
+                        toggle_lines = []
+                        for obj_name, state in sorted(toggle_state.items()):
+                            if state == "on":
+                                toggle_lines.append(f"  - {obj_name} is currently ON → include ({obj_name}-on) in :init if applicable, do NOT plan SwitchOn")
+                            else:
+                                toggle_lines.append(f"  - {obj_name} is currently OFF → do NOT include ({obj_name}-on) in :init, plan SwitchOn if needed")
+                        if toggle_lines:
+                            prompt += "### Toggle State (inferred from completed actions)\n"
+                            prompt += "\n".join(toggle_lines) + "\n\n"
+
                     prompt += (
                         "CRITICAL: Use the above context to determine the EXACT :init state for the PDDL problem.\n"
                         "In particular:\n"
@@ -2043,6 +2117,7 @@ class TaskManager:
                         "  - If the drawer/receptacle is already OPEN, put (object-open robot1 <receptacle>) in :init.\n"
                         "  - If the target receptacle is an ENCLOSED container (drawer, fridge, cabinet) and FULL (occupied), pick a DIFFERENT empty enclosed container.\n"
                         "  - NEVER change the target to a different receptacle type if the subtask explicitly names countertop, shelf, or table — these open surfaces always accept more objects.\n"
+                        "  - If faucet is already ON (see Toggle State above), include (faucet-on) in :init and skip SwitchOn.\n"
                         "  - Reflect any partial completion effects from the completed actions above.\n\n"
                     )
 
@@ -2079,7 +2154,10 @@ class TaskManager:
                 prompt += "   - If putting an object INTO an openable receptacle, :goal should include (object-close robot1 <receptacle>)\n"
                 prompt += "   - PutObject REQUIRES (not (object-close ?r ?loc)), so the planner must OpenObject first\n"
                 prompt += "   - For NON-OPENABLE receptacles: do NOT add (object-close), just use PutObject directly\n"
-                prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n\n"
+                prompt += "5) FRIDGE: use (is-fridge fridge) and (not (fridge-open fridge)) in :init (see Example 3)\n"
+                prompt += "   FAUCET: use (is-faucet faucet) and (faucet-on) in :init when faucet is involved (required for SwitchOff to clear faucet-on)\n"
+                prompt += "   SINK: use (is-sink sink) in :init when sink is involved\n"
+                prompt += "6) ROBOT HAND: always include (hand-empty robot1) in :init — the robot starts each subtask with an empty hand.\n\n"
 
                 
                 if "gpt" not in self.gpt_version:
@@ -2114,7 +2192,7 @@ class TaskManager:
         except Exception as e:
             raise PDDLError(f"Error in validation and planning: {str(e)}")
 
-    def generate_dag(self) -> None:
+    def generate_dag(self, task_description: str = "") -> None:
         """LLM을 사용하여 plan의 DAG 생성 (병렬성 분석)"""
         try:
             #print("\n[DAG] Generating DAG for parallelism analysis...")
@@ -2176,9 +2254,9 @@ class TaskManager:
                 )
                 summaries.append(s)
 
-            # 서브테스크 DAG 생성 + 저장
-            task_name = "task"  # 원하면 task 이름 넣어도 됨
-            subtask_dag = dag_generator.build_subtask_dag(task_name=task_name, summaries=summaries)
+            # 서브테스크 DAG 생성 + 저장 (파일명은 "task" 고정, 프롬프트에만 task_description 전달)
+            task_name = "task"
+            subtask_dag = dag_generator.build_subtask_dag(task_name=task_name, summaries=summaries, task_goal=task_description)
             self.subtask_dag = subtask_dag
 
             subtask_json = os.path.join(dag_output_dir, f"{task_name}_SUBTASK_DAG.json")
@@ -2234,32 +2312,22 @@ class TaskManager:
 
 
                 prompt = (
-                    "You are a strict PDDL problem validator and repair system for Fast Downward.\n"
-                    "The DOMAIN is the single source of truth.\n"
-                    "Your job is to minimally repair the PROBLEM to make it consistent with the DOMAIN "
-                    "and solvable. Do NOT rewrite from scratch — preserve the original intent.\n\n"
+                    "You are a strict PDDL structural validator for Fast Downward.\n"
+                    "The DOMAIN is the single source of truth for type and predicate definitions.\n"
+                    "Your ONLY job is to fix structural errors that would prevent the PDDL planner from parsing or running the problem file.\n"
+                    "Do NOT rewrite from scratch. Do NOT change the semantic content.\n\n"
 
-                    "PRESERVATION RULES (do NOT override these unless clearly wrong):\n"
-                    "- PRESERVE all runtime state predicates explicitly set in the original :init:\n"
-                    "  (holding robot1 X), (at robot1 X), (faucet-on), (object-open robot1 X), (fridge-open X)\n"
-                    "  These reflect the actual world state from previous subtask execution.\n"
-                    "- PRESERVE all objects listed in the original :objects — do not remove them.\n"
-                    "- PRESERVE the original :goal conditions — do not remove or simplify them.\n\n"
+                    "WHAT YOU MAY FIX (structural errors only):\n"
+                    "- Fix the (:domain ...) name if it does not match the actual domain file name.\n"
+                    "- Add to :objects any object that is referenced in :init or :goal but not declared.\n"
+                    "- Remove predicates from :init or :goal that use predicate names or parameter types not defined in the domain.\n"
+                    "- Ensure (:metric minimize (total-cost)) and (= (total-cost) 0) are present if the domain uses action-costs.\n\n"
 
-                    "CRITICAL RULES for receptacles:\n"
-                    "OPENABLE objects (Drawer, Cabinet, Safe, Microwave, Dishwasher, Toilet, ShowerDoor, Box):\n"
-                    "- Include (object-close robot1 <receptacle>) in :init ONLY IF the original :init does not already set them open.\n"
-                    "- PutObject requires (not (object-close ?r ?loc)), so planner MUST OpenObject first\n"
-                    "- If placing into them, :goal should include (object-close robot1 <receptacle>)\n"
-                    "- If the subtask is ONLY about opening, the goal should include (object-open) but NOT (object-close)\n"
-                    "NON-OPENABLE objects (CounterTop, StoveBurner, CoffeeMachine, DiningTable, Shelf, SinkBasin, Plate, Bed, Sofa, Desk, GarbageCan, Bathtub):\n"
-                    "- Do NOT include (object-close) for these. PutObject works directly.\n"
-                    "FRIDGE: use (is-fridge fridge) in :init. Use (not (fridge-open fridge)) ONLY IF fridge-open is not already set in original :init.\n\n"
-                    "SINK / FAUCET: If CleanObject is needed:\n"
-                    "- Include a SinkBasin object in :objects with (is-sink <sink>) in :init.\n"
-                    "- Include a Faucet object in :objects with (is-faucet <faucet>) in :init.\n"
-                    "- If (faucet-on) is already in the original :init, PRESERVE it — do NOT change it to (not (faucet-on)).\n"
-                    "- If (faucet-on) is NOT in the original :init, use (not (faucet-on)) as the default.\n\n"
+                    "WHAT YOU MUST NOT CHANGE:\n"
+                    "- Do NOT add, remove, or modify any predicate in :init beyond the structural fixes above.\n"
+                    "- Do NOT add or remove any predicate from :goal.\n"
+                    "- Do NOT infer or assume any world state (e.g., do NOT add fridge-open, object-close, holding, faucet-on).\n"
+                    "- Do NOT remove objects from :objects.\n\n"
 
                     f"precondition Description (to be check preconditions):\n{precondition_content}\n\n"
                     f"Domain Description (authoritative):\n{domain_content}\n\n"
@@ -2333,27 +2401,17 @@ class TaskManager:
                 "Your job is to minimally repair the PROBLEM to make it consistent with the DOMAIN "
                 "and solvable. Do NOT rewrite from scratch — preserve the original intent.\n\n"
 
-                "PRESERVATION RULES (do NOT override these unless clearly wrong):\n"
-                "- PRESERVE all runtime state predicates explicitly set in the original :init:\n"
-                "  (holding robot1 X), (at robot1 X), (faucet-on), (object-open robot1 X), (fridge-open X)\n"
-                "  These reflect the actual world state from previous subtask execution.\n"
-                "- PRESERVE all objects listed in the original :objects — do not remove them.\n"
-                "- PRESERVE the original :goal conditions — do not remove or simplify them.\n\n"
+                "WHAT YOU MAY FIX (structural errors only):\n"
+                "- Fix the (:domain ...) name if it does not match the actual domain file name.\n"
+                "- Add to :objects any object that is referenced in :init or :goal but not declared.\n"
+                "- Remove predicates from :init or :goal that use predicate names or parameter types not defined in the domain.\n"
+                "- Ensure (:metric minimize (total-cost)) and (= (total-cost) 0) are present if the domain uses action-costs.\n\n"
 
-                "CRITICAL RULES for receptacles:\n"
-                "OPENABLE objects (Drawer, Cabinet, Safe, Microwave, Dishwasher, Toilet, ShowerDoor, Box):\n"
-                "- Include (object-close robot1 <receptacle>) in :init ONLY IF the original :init does not already set them open.\n"
-                "- PutObject requires (not (object-close ?r ?loc)), so planner MUST OpenObject first\n"
-                "- If placing into them, :goal should include (object-close robot1 <receptacle>)\n"
-                "- If the subtask is ONLY about opening, the goal should include (object-open) but NOT (object-close)\n"
-                "NON-OPENABLE objects (CounterTop, StoveBurner, CoffeeMachine, DiningTable, Shelf, SinkBasin, Plate, Bed, Sofa, Desk, GarbageCan, Bathtub):\n"
-                "- Do NOT include (object-close) for these. PutObject works directly.\n"
-                "FRIDGE: use (is-fridge fridge) in :init. Use (not (fridge-open fridge)) ONLY IF fridge-open is not already set in original :init.\n\n"
-                "SINK / FAUCET: If CleanObject is needed:\n"
-                "- Include a SinkBasin object in :objects with (is-sink <sink>) in :init.\n"
-                "- Include a Faucet object in :objects with (is-faucet <faucet>) in :init.\n"
-                "- If (faucet-on) is already in the original :init, PRESERVE it — do NOT change it to (not (faucet-on)).\n"
-                "- If (faucet-on) is NOT in the original :init, use (not (faucet-on)) as the default.\n\n"
+                "WHAT YOU MUST NOT CHANGE:\n"
+                "- Do NOT add, remove, or modify any predicate in :init beyond the structural fixes above.\n"
+                "- Do NOT add or remove any predicate from :goal.\n"
+                "- Do NOT infer or assume any world state (e.g., do NOT add fridge-open, object-close, holding, faucet-on).\n"
+                "- Do NOT remove objects from :objects.\n\n"
 
                 f"precondition Description (to be check preconditions):\n{precondition_content}\n\n"
                 f"Domain Description (authoritative):\n{domain_content}\n\n"

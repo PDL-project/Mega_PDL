@@ -1,0 +1,118 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Move_the_Book_to_the_Sofa",
+      "objects": [
+        "robot1",
+        "book",
+        "diningtable",
+        "sofa"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Book is at the diningtable."
+      ],
+      "effects": [
+        "Book is at the sofa.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Move_the_Newspaper_to_the_Sofa",
+      "objects": [
+        "robot1",
+        "newspaper",
+        "diningtable",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Newspaper is at the dining table."
+      ],
+      "effects": [
+        "Newspaper is at the sofa.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Move_the_Pen_to_the_Sofa",
+      "objects": [
+        "robot1",
+        "pen",
+        "diningtable",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is in the kitchen",
+        "Robot1's hand is empty",
+        "Pen is on the dining table"
+      ],
+      "effects": [
+        "Pen is on the sofa",
+        "Robot1's hand is empty"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Move_the_Pencil_to_the_Sofa",
+      "objects": [
+        "robot1",
+        "pencil",
+        "diningtable",
+        "sofa"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Robot1's hand is empty.",
+        "Pencil is on the diningtable."
+      ],
+      "effects": [
+        "Pencil is on the sofa.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Move_the_Plate_to_the_Sofa",
+      "objects": [
+        "robot1",
+        "plate",
+        "diningtable",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Plate is at the dining table"
+      ],
+      "effects": [
+        "Plate is at the sofa",
+        "Robot1's hand is empty"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  }
+}

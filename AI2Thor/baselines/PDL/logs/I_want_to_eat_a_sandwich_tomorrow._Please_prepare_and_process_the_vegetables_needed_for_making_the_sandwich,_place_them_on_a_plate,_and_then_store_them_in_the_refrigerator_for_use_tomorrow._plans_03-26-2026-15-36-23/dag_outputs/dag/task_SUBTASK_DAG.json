@@ -1,0 +1,86 @@
+{
+  "nodes": [
+    {
+      "id": 2,
+      "name": "subtask_02_Slice_the_Tomato",
+      "objects": [
+        "robot1",
+        "knife",
+        "tomato",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Knife is at the countertop",
+        "Tomato is at the countertop",
+        "Robot1 is not holding the knife",
+        "Robot1 is not holding the tomato"
+      ],
+      "effects": [
+        "Tomato is sliced"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Store_the_Plate_with_Vegetables_in_the_Fridge_REPLAN",
+      "objects": [
+        "robot1",
+        "plate",
+        "lettuce",
+        "fridge",
+        "robot3",
+        "kitchen",
+        "countertop1"
+      ],
+      "preconds": [
+        "Robot1 is at the kitchen.",
+        "Robot1 is holding lettuce.",
+        "Plate is at robot3.",
+        "Fridge is closed."
+      ],
+      "effects": [
+        "Plate is stored in the fridge.",
+        "Lettuce is on the plate.",
+        "Fridge is closed.",
+        "Robot1 is close to the fridge."
+      ]
+    },
+    {
+      "id": 1,
+      "name": "subtask_01_Place_the_Sliced_Lettuce_on_Countertop1_REPLAN",
+      "objects": [
+        "robot1",
+        "lettuce",
+        "countertop1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1 is holding the lettuce.",
+        "Countertop1 is located in the kitchen."
+      ],
+      "effects": [
+        "Lettuce is placed on countertop1.",
+        "Robot1 is not holding the lettuce."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 4,
+      "to_id": 1
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      2,
+      4
+    ],
+    "1": [
+      1
+    ]
+  }
+}

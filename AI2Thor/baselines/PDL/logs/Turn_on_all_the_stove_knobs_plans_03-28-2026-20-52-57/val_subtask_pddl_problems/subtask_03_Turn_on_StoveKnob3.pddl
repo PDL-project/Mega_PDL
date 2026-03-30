@@ -1,0 +1,25 @@
+(define (problem turn-on-stoveknob3)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    stoveknob3 - object
+    floor - object
+    kitchen - object
+  )
+
+  (:init
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (hand-empty robot1)
+    (at-location stoveknob3 floor)
+    (switch-off robot1 stoveknob3)
+    (= (total-cost) 0)
+  )
+
+  (:goal (and
+    (switch-on robot1 stoveknob3)
+  ))
+
+  (:metric minimize (total-cost))
+)

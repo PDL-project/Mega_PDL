@@ -1,0 +1,208 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Close_Cabinet1",
+      "objects": [
+        "robot1",
+        "cabinet1",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the floor",
+        "Cabinet1 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet1",
+        "Cabinet1 is closed"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Close_Cabinet2",
+      "objects": [
+        "robot1",
+        "cabinet2"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet2 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet2",
+        "Cabinet2 is closed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Close_Cabinet3",
+      "objects": [
+        "robot1",
+        "cabinet3",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet3 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet3",
+        "Cabinet3 is closed"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Close_Cabinet7",
+      "objects": [
+        "robot1",
+        "cabinet7",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the kitchen",
+        "robot1's hand is empty",
+        "cabinet7 is on the floor",
+        "cabinet7 is open"
+      ],
+      "effects": [
+        "cabinet7 is closed"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Close_Cabinet4",
+      "objects": [
+        "robot1",
+        "cabinet4",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet4 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet4",
+        "Cabinet4 is closed"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "subtask_06_Close_Cabinet5",
+      "objects": [
+        "robot1",
+        "cabinet5",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet5 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet5",
+        "Cabinet5 is closed"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "subtask_07_Close_Cabinet6",
+      "objects": [
+        "robot1",
+        "cabinet6",
+        "floor"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at floor",
+        "robot1's hand is empty",
+        "cabinet6 is at floor",
+        "cabinet6 is open"
+      ],
+      "effects": [
+        "cabinet6 is closed"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "subtask_08_Close_Cabinet8",
+      "objects": [
+        "robot1",
+        "cabinet8"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Cabinet8 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet8",
+        "Cabinet8 is closed"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "subtask_09_Close_Cabinet9",
+      "objects": [
+        "robot1",
+        "cabinet9",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the floor",
+        "Cabinet9 is open"
+      ],
+      "effects": [
+        "Robot1 is at cabinet9",
+        "Cabinet9 is closed"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 9,
+      "dependency_type": "resource",
+      "reason": "Both subtasks involve robot1 at the floor"
+    },
+    {
+      "from_id": 7,
+      "to_id": 9,
+      "dependency_type": "resource",
+      "reason": "Both subtasks involve robot1 at the floor"
+    },
+    {
+      "from_id": 4,
+      "to_id": 7,
+      "dependency_type": "resource",
+      "reason": "Both subtasks involve robot1 at the floor"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8
+    ],
+    "1": [
+      7
+    ],
+    "2": [
+      9
+    ]
+  }
+}

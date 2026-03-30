@@ -1,0 +1,51 @@
+# Task Description: Move the Newspaper to the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at Newspaper location
+#2. Robot not holding Newspaper
+
+# SubTask 2: Move the Newspaper to the Sofa.
+    Skills Required: GoToObject, PickupObject, GoToObject, PutObject
+    Related Objects: Newspaper(Location=DiningTable), Sofa(Location=Floor)
+
+GoToObject(robot1, Newspaper)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Newspaper)
+
+PickupObject(robot1, Newspaper, DiningTable)
+   Preconditions:
+     (at-location Newspaper DiningTable)
+     (at robot1 Newspaper)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 Newspaper)
+     (not (hand-empty robot1))
+     (not (at-location Newspaper DiningTable))
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, Newspaper, Sofa)
+   Preconditions:
+     (holding robot1 Newspaper)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location Newspaper Sofa)
+     (not (holding robot1 Newspaper))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location Newspaper Sofa)
+
+# Task Move the Newspaper to the Sofa is done.

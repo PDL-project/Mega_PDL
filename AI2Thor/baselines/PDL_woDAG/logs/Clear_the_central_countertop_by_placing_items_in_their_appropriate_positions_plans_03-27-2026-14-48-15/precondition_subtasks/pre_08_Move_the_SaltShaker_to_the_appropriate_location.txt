@@ -1,0 +1,51 @@
+# Task Description: Move the SaltShaker to the appropriate location.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analysis due to previous subtask:
+# 1. Robot not holding SaltShaker.
+# 2. Robot not at SaltShaker location.
+
+# SubTask 8: Move the SaltShaker to the appropriate location.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: saltShaker(Location=CounterTop), cabinet6(Location=Floor)
+
+GoToObject(robot1, saltShaker)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 saltShaker)
+
+PickupObject(robot1, saltShaker, CounterTop)
+   Preconditions:
+     (at-location saltShaker CounterTop)
+     (at robot1 saltShaker)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 saltShaker)
+     (not (hand-empty robot1))
+     (not (at-location saltShaker CounterTop))
+
+GoToObject(robot1, cabinet6)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet6)
+
+PutObject(robot1, saltShaker, cabinet6)
+   Preconditions:
+     (holding robot1 saltShaker)
+     (at robot1 cabinet6)
+     (not (inaction robot1))
+   Effects:
+     (at-location saltShaker cabinet6)
+     (not (holding robot1 saltShaker))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location saltShaker cabinet6)
+
+# Task Move the SaltShaker to the appropriate location is done.

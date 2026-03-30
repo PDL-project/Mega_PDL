@@ -1,0 +1,97 @@
+{
+  "nodes": [
+    {
+      "id": 2,
+      "name": "subtask_02_Slice_the_Tomato",
+      "objects": [
+        "robot1",
+        "knife",
+        "tomato",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Knife is at the countertop",
+        "Tomato is at the countertop"
+      ],
+      "effects": [
+        "Tomato is sliced",
+        "Tomato is at the countertop"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Slice_the_Bread",
+      "objects": [
+        "robot1",
+        "knife",
+        "bread",
+        "countertop",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Knife is at the countertop",
+        "Bread is at the countertop"
+      ],
+      "effects": [
+        "Bread is sliced",
+        "Bread is at the countertop"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Store_the_Plate_with_Sliced_Vegetables_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "plate",
+        "fridge",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Plate is on the countertop.",
+        "Fridge is on the floor.",
+        "Fridge is closed.",
+        "Robot is not holding the plate."
+      ],
+      "effects": [
+        "Plate is stored in the fridge.",
+        "Fridge is closed."
+      ]
+    },
+    {
+      "id": 1,
+      "name": "subtask_01_Place_the_Sliced_Lettuce_on_Plate1_or_an_Alternative_Plate_REPLAN",
+      "objects": [
+        "robot1",
+        "lettuce",
+        "plate1"
+      ],
+      "preconds": [
+        "robot1 is holding lettuce",
+        "robot1 is at plate1",
+        "robot1 is not inaction"
+      ],
+      "effects": [
+        "lettuce is at location plate1",
+        "robot1 is not holding lettuce",
+        "robot1 is not inaction"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      5
+    ]
+  }
+}

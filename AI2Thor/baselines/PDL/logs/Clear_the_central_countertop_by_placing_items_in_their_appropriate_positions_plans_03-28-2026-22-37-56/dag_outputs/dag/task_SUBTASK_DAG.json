@@ -1,0 +1,220 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Move_the_Apple_to_the_CounterTop",
+      "objects": [
+        "robot1",
+        "apple",
+        "countertop",
+        "countertop1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Apple is at the countertop."
+      ],
+      "effects": [
+        "Apple is at countertop1.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Move_the_ButterKnife_to_the_CounterTop",
+      "objects": [
+        "robot1",
+        "butterKnife",
+        "CounterTop",
+        "CounterTop2"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Robot's hand is empty",
+        "ButterKnife is at CounterTop"
+      ],
+      "effects": [
+        "ButterKnife is at CounterTop2",
+        "Robot's hand is empty"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Move_the_Fork_to_the_CounterTop",
+      "objects": [
+        "robot1",
+        "fork",
+        "countertop",
+        "countertop3"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Fork is at the countertop."
+      ],
+      "effects": [
+        "Fork is at countertop3.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "subtask_07_Move_the_PaperTowelRoll_to_the_CounterTop",
+      "objects": [
+        "robot1",
+        "paperTowelRoll",
+        "counterTop",
+        "counterTop3"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "PaperTowelRoll is at CounterTop."
+      ],
+      "effects": [
+        "PaperTowelRoll is at CounterTop3.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "subtask_08_Move_the_PepperShaker_to_the_CounterTop",
+      "objects": [
+        "robot1",
+        "peppershaker",
+        "countertop",
+        "countertop1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "PepperShaker is at the CounterTop."
+      ],
+      "effects": [
+        "PepperShaker is at CounterTop1.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "subtask_09_Move_the_SaltShaker_to_the_CounterTop",
+      "objects": [
+        "robot1",
+        "saltshaker",
+        "countertop",
+        "countertop2"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Saltshaker is at the countertop."
+      ],
+      "effects": [
+        "Saltshaker is at countertop2.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 11,
+      "name": "subtask_11_Move_the_Spatula_to_the_CounterTop",
+      "objects": [
+        "robot1",
+        "spatula",
+        "countertop",
+        "countertop1"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Robot1's hand is empty.",
+        "Spatula is at the countertop."
+      ],
+      "effects": [
+        "Spatula is at countertop1.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 13,
+      "name": "subtask_13_Move_the_Lettuce_to_Countertop1_REPLAN",
+      "objects": [
+        "robot1",
+        "lettuce",
+        "countertop1"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the location of the lettuce.",
+        "Robot1's hand is empty."
+      ],
+      "effects": [
+        "Lettuce is placed on Countertop1.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 16,
+      "name": "subtask_16_Move_the_Tomato_to_Countertop2_REPLAN",
+      "objects": [
+        "robot1",
+        "tomato",
+        "countertop2",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Tomato is on the floor.",
+        "Countertop2 is on the floor."
+      ],
+      "effects": [
+        "Tomato is on countertop2.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Move_the_Bread_to_the_Sink_REPLAN",
+      "objects": [
+        "robot1",
+        "bread",
+        "sinkbasin1",
+        "countertop1"
+      ],
+      "preconds": [
+        "Robot1 is at the floor.",
+        "Robot1 is not holding any object.",
+        "Bread is on the countertop.",
+        "Sinkbasin1 is on the floor."
+      ],
+      "effects": [
+        "Bread is at the sinkbasin1.",
+        "Robot1 is not holding any object."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      7,
+      8,
+      9,
+      11,
+      13,
+      16
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Close_the_Curtains",
+      "objects": [
+        "robot1",
+        "curtains"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the curtains"
+      ],
+      "effects": [
+        "Curtains are closed",
+        "Curtains are not open"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Switch_off_the_Light",
+      "objects": [
+        "robot1",
+        "lightswitch",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Lightswitch is on the floor",
+        "Lightswitch is on"
+      ],
+      "effects": [
+        "Robot1 is at the lightswitch",
+        "Lightswitch is switched off"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ]
+  }
+}

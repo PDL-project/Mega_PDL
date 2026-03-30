@@ -1,0 +1,51 @@
+# Task Description: Store the Pencil.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding Pencil
+#2. Robot not at Pencil location
+
+# SubTask 3: Store the Pencil.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: pencil(Location=sofa), sidetable3(Location=floor)
+
+GoToObject(robot1, pencil)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pencil)
+
+PickupObject(robot1, pencil, sofa)
+   Preconditions:
+     (at-location pencil sofa)
+     (at robot1 pencil)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 pencil)
+     (not (hand-empty robot1))
+     (not (at-location pencil sofa))
+
+GoToObject(robot1, sidetable3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sidetable3)
+
+PutObject(robot1, pencil, sidetable3)
+   Preconditions:
+     (holding robot1 pencil)
+     (at robot1 sidetable3)
+     (not (inaction robot1))
+   Effects:
+     (at-location pencil sidetable3)
+     (not (holding robot1 pencil))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location pencil sidetable3)
+
+# Task Store the Pencil is done.

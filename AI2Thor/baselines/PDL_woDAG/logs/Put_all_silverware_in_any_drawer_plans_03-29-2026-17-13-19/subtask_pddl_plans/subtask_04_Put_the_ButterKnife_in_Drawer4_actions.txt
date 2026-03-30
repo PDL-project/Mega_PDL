@@ -1,0 +1,6 @@
+gotoobject robot1 butterknife (1)
+pickupobject robot1 butterknife countertop (1)
+gotoobject robot1 drawer4 (1)
+openobject robot1 drawer4 (1)
+drophandobject robot1 butterknife drawer4 (1)
+closeobject robot1 drawer4 (1)

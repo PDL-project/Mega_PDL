@@ -1,0 +1,37 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Put the SaltShaker in the Fridge.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Put the PepperShaker in the Fridge.",
+      "robot": 2
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      1.5,
+      0.900999128818512,
+      -1.5
+    ],
+    "2": [
+      1.5,
+      0.900999128818512,
+      0.0
+    ],
+    "3": [
+      -0.75,
+      0.900999128818512,
+      1.25
+    ]
+  }
+}

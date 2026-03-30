@@ -1,0 +1,38 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 bread (1)",
+      "sliceobject robot1 bread countertop (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 lettuce (1)",
+      "sliceobject robot1 lettuce countertop (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 tomato (1)",
+      "sliceobject robot1 tomato countertop (1)"
+    ]
+  },
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 egg (1)",
+      "sliceobject robot1 egg countertop (1)"
+    ]
+  }
+}

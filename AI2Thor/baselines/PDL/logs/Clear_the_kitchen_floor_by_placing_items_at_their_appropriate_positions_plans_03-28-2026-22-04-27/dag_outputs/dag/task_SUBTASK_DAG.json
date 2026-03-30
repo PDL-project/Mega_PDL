@@ -1,0 +1,55 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Place_the_Apple_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "apple",
+        "countertop1",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the floor.",
+        "Robot1's hand is empty.",
+        "Apple is at the floor.",
+        "Countertop1 is at the floor."
+      ],
+      "effects": [
+        "Apple is on the countertop1.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Place_the_Tomato_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "tomato",
+        "countertop1",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Robot1's hand is empty.",
+        "Tomato is on the floor.",
+        "Countertop1 is on the floor."
+      ],
+      "effects": [
+        "Tomato is on countertop1.",
+        "Robot1's hand is empty."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2
+    ]
+  }
+}

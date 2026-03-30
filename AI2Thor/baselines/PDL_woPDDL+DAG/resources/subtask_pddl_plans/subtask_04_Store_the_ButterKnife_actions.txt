@@ -1,6 +1,0 @@
-gotoobject robot1 butterknife1 (1)
-pickupobject robot1 butterknife1 drawer1 (1)
-gotoobject robot1 drawer1 (1)
-openobject robot1 drawer1 (1)
-putobject robot1 butterknife1 drawer1 (1)
-closeobject robot1 drawer1 (1)

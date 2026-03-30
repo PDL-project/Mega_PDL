@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "task_name": "8_prep_sandwich_fridge",
+      "task_description": "I want to eat a sandwich tomorrow. Please prepare and process the vegetables needed for making the sandwich, place them on a plate, and then store them in the refrigerator for use tomorrow.",
+      "task_id": 42,
+      "task_type": "manipulation",
+      "task_timeout": 60,
+      "task_floorplans": [
+        "FloorPlan2",
+        "FloorPlan3",
+        "FloorPlan4",
+        "FloorPlan5",
+        "FloorPlan6"
+      ]
+    }
+  ]
+}

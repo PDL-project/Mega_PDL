@@ -1,0 +1,76 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_ButterKnife_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "butterKnife",
+        "counterTop",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is in the kitchen",
+        "robot1's hand is empty",
+        "butterKnife is on the floor"
+      ],
+      "effects": [
+        "butterKnife is on the counterTop",
+        "robot1's hand is empty"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Bowl_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "bowl",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Bowl is on the floor",
+        "Countertop is on the floor"
+      ],
+      "effects": [
+        "Bowl is on the countertop",
+        "Robot1's hand is empty"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_Mug_on_the_CounterTop",
+      "objects": [
+        "robot1",
+        "mug",
+        "countertop",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is in the kitchen.",
+        "Robot1 is not holding anything.",
+        "Mug is on the floor."
+      ],
+      "effects": [
+        "Mug is on the countertop.",
+        "Robot1 is not holding the mug.",
+        "Robot1's hand is empty."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3
+    ]
+  }
+}

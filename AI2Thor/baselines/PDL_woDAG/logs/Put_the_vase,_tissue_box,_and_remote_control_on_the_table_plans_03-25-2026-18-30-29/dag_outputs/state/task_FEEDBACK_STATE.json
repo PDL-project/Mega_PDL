@@ -1,0 +1,35 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 vase (1)",
+      "pickupobject robot1 vase sidetable1 (1)",
+      "gotoobject robot1 coffeetable (1)",
+      "drophandobject robot1 vase coffeetable (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 tissuebox (1)",
+      "pickupobject robot1 tissuebox tvstand (1)",
+      "gotoobject robot1 coffeetable (1)",
+      "drophandobject robot1 tissuebox coffeetable (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 remotecontrol (1)",
+      "pickupobject robot1 remotecontrol sidetable2 (1)",
+      "gotoobject robot1 coffeetable (1)",
+      "drophandobject robot1 remotecontrol coffeetable (1)"
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "task_idx": 0,
+  "agent_count": 4,
+  "assignment": {
+    "1": 4,
+    "2": 2
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Put the CreditCard in the Box.",
+      "robot": 4
+    },
+    {
+      "id": 2,
+      "title": "Put the RemoteControl in the Box.",
+      "robot": 2
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      -0.75,
+      0.9026566743850708,
+      4.0
+    ],
+    "2": [
+      -4.0,
+      0.9026566743850708,
+      1.25
+    ],
+    "3": [
+      -4.0,
+      0.9026566743850708,
+      3.5
+    ],
+    "4": [
+      -1.75,
+      0.9026566743850708,
+      2.5
+    ]
+  }
+}

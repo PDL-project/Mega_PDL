@@ -1,0 +1,6 @@
+gotoobject robot1 keychain (1)
+pickupobject robot1 keychain sidetable1 (1)
+gotoobject robot1 box (1)
+openobject robot1 box (1)
+drophandobject robot1 keychain box (1)
+closeobject robot1 box (1)

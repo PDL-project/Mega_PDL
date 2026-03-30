@@ -23,48 +23,36 @@ if scripts_path not in sys.path:
 from MultiRobotExecutor import MultiRobotExecutor, SubtaskPlan
 
 # --- Robot Assignment ---
-ASSIGNMENT = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 1}  # subtask_id -> robot_id
-PARALLEL_GROUPS = {1: [1], 2: [2], 3: [3], 4: [4], 5: [5], 6: [6]}  # group_id -> [subtask_ids]
-AGENT_COUNT = 5
-SPAWN_POSITIONS = {1: (-2.0, 0.9009992480278015, 3.0), 2: (-0.75, 0.9009992480278015, 1.25), 3: (0.25, 0.9009992480278015, 2.75), 4: (0.75, 0.9009992480278015, 1.0), 5: (-0.75, 0.9009992480278015, -0.5)}  # LP에서 결정된 스폰 좌표
+ASSIGNMENT = {1: 1, 2: 2, 3: 3, 4: 1}  # subtask_id -> robot_id
+PARALLEL_GROUPS = {1: [1], 2: [2], 3: [3], 4: [4]}  # group_id -> [subtask_ids]
+AGENT_COUNT = 3
+SPAWN_POSITIONS = {1: (-0.75, 0.9009992480278015, 2.75), 2: (0.75, 0.9009992480278015, 3.0), 3: (-2.5, 0.9009992480278015, 2.5)}  # LP에서 결정된 스폰 좌표
 
 # --- Subtask Plans ---
 SUBTASK_PLANS = {
     1: {
-        'name': 'subtask_01_Store_the_Fork',
+        'name': 'subtask_01_Put_the_Fork_in_Drawer1',
         'robot_id': 1,
-        'actions': ['gotoobject robot1 fork1 (1)', 'pickupobject robot1 fork1 countertop1 (1)', 'gotoobject robot1 drawer1 (1)', 'openobject robot1 drawer1 (1)', 'putobject robot1 fork1 drawer1 (1)', 'closeobject robot1 drawer1 (1)'],
+        'actions': ['gotoobject robot1 fork1 (1)', 'pickupobject robot1 fork1 (1)', 'gotoobject robot1 drawer11 (1)', 'openobject robot1 drawer11 (1)', 'putobject robot1 fork1 drawer11 (1)', 'closeobject robot1 drawer11 (1)'],
         'parallel_group': 1,
     },
     2: {
-        'name': 'subtask_02_Store_the_Spoon',
+        'name': 'subtask_02_Put_the_Spoon_in_Drawer1',
         'robot_id': 2,
-        'actions': ['gotoobject robot1 spoon1 (1)', 'pickupobject robot1 spoon1 countertop1 (1)', 'gotoobject robot1 drawer1 (1)', 'openobject robot1 drawer1 (1)', 'putobject robot1 spoon1 drawer1 (1)', 'closeobject robot1 drawer1 (1)'],
+        'actions': ['gotoobject robot1 spoon1 (1)', 'pickupobject robot1 spoon1 countertop11 (1)', 'gotoobject robot1 drawer11 (1)', 'openobject robot1 drawer11 (1)', 'putobject robot1 spoon1 drawer11 (1)', 'closeobject robot1 drawer11 (1)'],
         'parallel_group': 2,
     },
     3: {
-        'name': 'subtask_03_Store_the_Knife',
+        'name': 'subtask_03_Put_the_Knife_in_Drawer2',
         'robot_id': 3,
-        'actions': ['gotoobject robot1 knife1 (1)', 'pickupobject robot1 knife1 countertop1 (1)', 'gotoobject robot1 drawer1 (1)', 'openobject robot1 drawer1 (1)', 'putobject robot1 knife1 drawer1 (1)', 'closeobject robot1 drawer1 (1)'],
+        'actions': ['gotoobject robot1 knife1 (1)', 'pickupobject robot1 knife1 countertop11 (1)', 'gotoobject robot1 drawer21 (1)', 'openobject robot1 drawer21 (1)', 'putobject robot1 knife1 drawer21 (1)', 'closeobject robot1 drawer21 (1)'],
         'parallel_group': 3,
     },
     4: {
-        'name': 'subtask_04_Store_the_ButterKnife',
-        'robot_id': 4,
-        'actions': ['gotoobject robot1 butterknife1 (1)', 'pickupobject robot1 butterknife1 drawer1 (1)', 'gotoobject robot1 drawer1 (1)', 'openobject robot1 drawer1 (1)', 'putobject robot1 butterknife1 drawer1 (1)', 'closeobject robot1 drawer1 (1)'],
-        'parallel_group': 4,
-    },
-    5: {
-        'name': 'subtask_05_Store_the_Ladle',
-        'robot_id': 5,
-        'actions': ['gotoobject robot1 ladle1 (1)', 'pickupobject robot1 ladle1 countertop1 (1)', 'gotoobject robot1 drawer1 (1)', 'openobject robot1 drawer1 (1)', 'putobject robot1 ladle1 drawer1 (1)', 'closeobject robot1 drawer1 (1)'],
-        'parallel_group': 5,
-    },
-    6: {
-        'name': 'subtask_06_Store_the_Spatula',
+        'name': 'subtask_04_Put_the_ButterKnife_in_Drawer2',
         'robot_id': 1,
-        'actions': ['gotoobject robot1 spatula1 (1)', 'pickupobject robot1 spatula1 countertop1 (1)', 'gotoobject robot1 drawer1 (1)', 'openobject robot1 drawer1 (1)', 'putobject robot1 spatula1 drawer1 (1)', 'closeobject robot1 drawer1 (1)'],
-        'parallel_group': 6,
+        'actions': ['gotoobject robot1 drawer21 (1)', 'openobject robot1 drawer21 (1)', 'gotoobject robot1 butterknife1 (1)', 'pickupobject robot1 butterknife1 drawer11 (1)', 'gotoobject robot1 drawer21 (1)', 'putobject robot1 butterknife1 drawer21 (1)', 'closeobject robot1 drawer21 (1)'],
+        'parallel_group': 4,
     },
 }
 

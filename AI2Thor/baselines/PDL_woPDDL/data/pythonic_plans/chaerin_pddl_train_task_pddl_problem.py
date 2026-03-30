@@ -14,6 +14,7 @@
   (:init
     (not (inaction robot1))
     (at robot1 kitchen)
+    (hand-empty robot1)
     (at-location lightswitch floor)
     (switch-on robot1 lightswitch)
   )
@@ -43,13 +44,11 @@
     (not (inaction robot1))
 
     (at robot1 kitchen)
+    (hand-empty robot1)
 
     (at-location potato diningtable)
     (at-location knife diningtable)
     (at-location cuttingboard diningtable)
-
-    (not (holding robot1 potato))
-    (not (holding robot1 knife))
   )
 
   (:goal (and
@@ -76,17 +75,16 @@
   (:init
     (not (inaction robot1))
     (at robot1 kitchen)
+    (hand-empty robot1)
     (at-location apple countertop)
     (at-location fridge floor)
 
     (is-fridge fridge)
     (not (fridge-open fridge))
-    (not (holding robot1 apple))
   )
 
   (:goal (and
     (at-location apple fridge)
-    (not (holding robot1 apple))
   ))
 )
 
@@ -112,6 +110,7 @@
   (:init
     (not (inaction robot1))
     (at robot1 floor)
+    (hand-empty robot1)
     (at-location drawer1 floor)
     (object-close robot1 drawer1)
   )

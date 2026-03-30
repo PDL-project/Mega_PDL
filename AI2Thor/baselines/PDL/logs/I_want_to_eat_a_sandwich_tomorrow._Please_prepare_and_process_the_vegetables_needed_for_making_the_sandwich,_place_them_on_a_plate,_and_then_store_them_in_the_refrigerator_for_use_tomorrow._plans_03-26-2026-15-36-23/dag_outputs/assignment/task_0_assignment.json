@@ -1,0 +1,49 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 3
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Slice the Lettuce.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Slice the Tomato.",
+      "robot": 2
+    },
+    {
+      "id": 3,
+      "title": "Place Sliced Vegetables on Plate.",
+      "robot": 3
+    },
+    {
+      "id": 4,
+      "title": "Store the Plate with Vegetables in the Fridge.",
+      "robot": 3
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      -1.75,
+      0.9009992480278015,
+      2.5
+    ],
+    "2": [
+      0.75,
+      0.9009992480278015,
+      1.75
+    ],
+    "3": [
+      -0.25,
+      0.9009992480278015,
+      3.25
+    ]
+  }
+}

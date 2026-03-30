@@ -1,0 +1,37 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Put Vase1 on CounterTop1.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Put Vase2 on CounterTop2.",
+      "robot": 2
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      2.0,
+      0.900999128818512,
+      -1.0
+    ],
+    "2": [
+      2.0,
+      0.900999128818512,
+      1.75
+    ],
+    "3": [
+      -0.5,
+      0.900999128818512,
+      -1.75
+    ]
+  }
+}

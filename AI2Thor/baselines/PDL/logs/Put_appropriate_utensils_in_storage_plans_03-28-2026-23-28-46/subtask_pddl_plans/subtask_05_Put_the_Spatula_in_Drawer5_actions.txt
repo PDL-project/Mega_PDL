@@ -1,0 +1,6 @@
+gotoobject robot1 spatula (1)
+pickupobject robot1 spatula countertop (1)
+gotoobject robot1 drawer5 (1)
+openobject robot1 drawer5 (1)
+drophandobject robot1 spatula drawer5 (1)
+closeobject robot1 drawer5 (1)

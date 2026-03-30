@@ -1,0 +1,10 @@
+{
+  "3": {
+    "state": "FAILED",
+    "error_message": "GoToObject: cannot find object 'kitchen'",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 faucet (1)"
+    ]
+  }
+}

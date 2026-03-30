@@ -1,0 +1,149 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Slice_the_Apple",
+      "objects": [
+        "robot1",
+        "apple",
+        "knife",
+        "countertop",
+        "drawer1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Apple is on the countertop",
+        "Knife is in drawer1"
+      ],
+      "effects": [
+        "Apple is sliced",
+        "Apple is on the countertop"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Slice_the_Bread",
+      "objects": [
+        "robot1",
+        "bread",
+        "knife",
+        "countertop",
+        "drawer1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Bread is at the countertop",
+        "Knife is in drawer1",
+        "Robot1 is close to drawer1"
+      ],
+      "effects": [
+        "Bread is sliced"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Slice_the_Tomato",
+      "objects": [
+        "robot1",
+        "tomato",
+        "knife",
+        "countertop",
+        "drawer1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Robot's hand is empty",
+        "Tomato is on the countertop",
+        "Knife is in drawer1",
+        "Robot is close to drawer1"
+      ],
+      "effects": [
+        "Tomato is sliced"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Slice_the_Lettuce",
+      "objects": [
+        "robot1",
+        "lettuce",
+        "knife",
+        "countertop",
+        "drawer1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Robot's hand is empty",
+        "Lettuce is on the countertop",
+        "Knife is in drawer1",
+        "Robot is close to drawer1"
+      ],
+      "effects": [
+        "Lettuce is sliced"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Same knife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same knife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 1,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same knife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same knife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 2,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same knife object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same knife object - cannot be manipulated in parallel"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ]
+  }
+}

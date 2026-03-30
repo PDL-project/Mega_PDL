@@ -1,3 +1,7 @@
+# ROBOT CONSTRAINT:
+# Each robot can hold only ONE object at a time.
+# Never plan two PickupObject actions for the same robot without a PutObject or DropObject in between.
+
 # INSTANCE NAMING RULE:
 # When multiple instances of the same receptacle type exist in the scene
 # (e.g., Drawer1 and Drawer2, Fridge1 and Fridge2, CounterTop1 and CounterTop2),

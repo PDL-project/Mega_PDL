@@ -1,0 +1,27 @@
+(define (problem put-vase1-on-countertop1)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    vase1 - object
+    shelf1 - object
+    countertop1 - object
+    kitchen - object
+    floor - object
+  )
+
+  (:init
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (hand-empty robot1)
+    (at-location vase1 shelf1)
+    (at-location countertop1 floor)
+    (= (total-cost) 0)
+  )
+
+  (:goal (and
+    (at-location vase1 countertop1)
+  ))
+
+  (:metric minimize (total-cost))
+)

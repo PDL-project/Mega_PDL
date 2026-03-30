@@ -1,0 +1,49 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 1
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Store the KeyChain.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Store the Pen.",
+      "robot": 2
+    },
+    {
+      "id": 3,
+      "title": "Store the Pencil.",
+      "robot": 3
+    },
+    {
+      "id": 4,
+      "title": "Store the Pillow.",
+      "robot": 1
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      -1.75,
+      0.9026566743850708,
+      4.75
+    ],
+    "2": [
+      -2.0,
+      0.9026566743850708,
+      0.5
+    ],
+    "3": [
+      -4.5,
+      0.9026566743850708,
+      4.75
+    ]
+  }
+}

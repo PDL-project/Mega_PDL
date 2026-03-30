@@ -1,0 +1,131 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Fork_in_Drawer1",
+      "objects": [
+        "robot1",
+        "fork",
+        "drawer1",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Fork is at the countertop.",
+        "Drawer1 is close to Robot1."
+      ],
+      "effects": [
+        "Fork is in Drawer1.",
+        "Drawer1 is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Spoon_in_Drawer2",
+      "objects": [
+        "robot1",
+        "spoon",
+        "drawer2",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Spoon is at the countertop.",
+        "Drawer2 is at the floor.",
+        "Robot1 is close to drawer2."
+      ],
+      "effects": [
+        "Spoon is in drawer2.",
+        "Drawer2 is closed.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_Knife_in_Drawer3",
+      "objects": [
+        "robot1",
+        "knife",
+        "drawer3",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Knife is at the countertop.",
+        "Drawer3 is at the floor.",
+        "Robot1 is close to drawer3."
+      ],
+      "effects": [
+        "Knife is in drawer3.",
+        "Drawer3 is closed.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Put_the_Ladle_in_Drawer4",
+      "objects": [
+        "robot1",
+        "ladle",
+        "drawer4",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Ladle is on the countertop",
+        "Drawer4 is on the floor",
+        "Robot1 is close to drawer4"
+      ],
+      "effects": [
+        "Ladle is in drawer4",
+        "Drawer4 is closed"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "subtask_05_Put_the_Spatula_in_Drawer5",
+      "objects": [
+        "robot1",
+        "spatula",
+        "drawer5",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the floor",
+        "Robot1's hand is empty",
+        "Spatula is at the countertop",
+        "Drawer5 is at the floor",
+        "Drawer5 is closed"
+      ],
+      "effects": [
+        "Spatula is in Drawer5",
+        "Robot1 is close to Drawer5",
+        "Drawer5 is closed"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  }
+}

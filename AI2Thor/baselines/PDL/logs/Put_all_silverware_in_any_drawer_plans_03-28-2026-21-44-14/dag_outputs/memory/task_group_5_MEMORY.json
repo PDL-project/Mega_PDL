@@ -1,0 +1,28 @@
+{
+  "5": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 ladle (1)",
+      "pickupobject robot1 ladle countertop (1)",
+      "gotoobject robot1 drawer3 (1)",
+      "openobject robot1 drawer3 (1)",
+      "drophandobject robot1 ladle drawer3 (1)",
+      "closeobject robot1 drawer3 (1)"
+    ]
+  },
+  "6": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 spatula (1)",
+      "pickupobject robot1 spatula countertop (1)",
+      "gotoobject robot1 drawer3 (1)",
+      "openobject robot1 drawer3 (1)",
+      "drophandobject robot1 spatula drawer3 (1)",
+      "closeobject robot1 drawer3 (1)"
+    ]
+  }
+}

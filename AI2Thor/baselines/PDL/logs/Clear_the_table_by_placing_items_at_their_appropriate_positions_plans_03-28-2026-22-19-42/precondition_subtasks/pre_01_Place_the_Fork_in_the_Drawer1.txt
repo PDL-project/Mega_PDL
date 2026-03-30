@@ -1,0 +1,67 @@
+# Task Description: Place the Fork in the Drawer1.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding spoon.
+# 2. Robot not at spoon location.
+
+# SubTask 1: Place the Fork in the Drawer1.
+    Skills Required: GoToObject, PickupObject, OpenObject, PutObject, CloseObject
+    Related Objects: fork(Location=diningTable), drawer1(Location=floor)
+
+GoToObject(robot1, fork)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 fork)
+
+PickupObject(robot1, fork, diningTable)
+   Preconditions:
+     (at-location fork diningTable)
+     (at robot1 fork)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 fork)
+     (not (hand-empty robot1))
+     (not (at-location fork diningTable))
+
+GoToObject(robot1, drawer1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 drawer1)
+
+OpenObject(robot1, drawer1)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer1)
+   Effects:
+     (object-open robot1 drawer1)
+     (not (object-close robot1 drawer1))
+
+PutObject(robot1, fork, drawer1)
+   Preconditions:
+     (holding robot1 fork)
+     (at robot1 drawer1)
+     (not (inaction robot1))
+     (not (object-close robot1 drawer1))
+   Effects:
+     (at-location fork drawer1)
+     (not (holding robot1 fork))
+     (hand-empty robot1)
+
+CloseObject(robot1, drawer1)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 drawer1)
+     (object-open robot1 drawer1)
+   Effects:
+     (object-close robot1 drawer1)
+     (not (object-open robot1 drawer1))
+
+Goal condition:
+(at-location fork drawer1)

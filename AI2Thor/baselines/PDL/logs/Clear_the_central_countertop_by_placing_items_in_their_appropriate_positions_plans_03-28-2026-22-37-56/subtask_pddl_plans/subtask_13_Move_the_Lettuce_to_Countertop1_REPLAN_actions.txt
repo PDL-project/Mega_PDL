@@ -1,0 +1,4 @@
+gotoobject robot1 lettuce (1)
+pickupobject robot1 lettuce unknown (1)
+gotoobject robot1 countertop1 (1)
+drophandobject robot1 lettuce countertop1 (1)

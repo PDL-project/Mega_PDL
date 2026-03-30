@@ -1,0 +1,51 @@
+# Task Description: Move the PepperShaker to the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding SaltShaker.
+# 2. Robot not at SaltShaker location.
+
+# SubTask 8: Move the PepperShaker to the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: pepperShaker(Location=CounterTop), CounterTop1(Location=Floor)
+
+GoToObject(robot1, pepperShaker)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pepperShaker)
+
+PickupObject(robot1, pepperShaker, CounterTop)
+   Preconditions:
+     (at-location pepperShaker CounterTop)
+     (at robot1 pepperShaker)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 pepperShaker)
+     (not (hand-empty robot1))
+     (not (at-location pepperShaker CounterTop))
+
+GoToObject(robot1, CounterTop1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop1)
+
+PutObject(robot1, pepperShaker, CounterTop1)
+   Preconditions:
+     (holding robot1 pepperShaker)
+     (at robot1 CounterTop1)
+     (not (inaction robot1))
+   Effects:
+     (at-location pepperShaker CounterTop1)
+     (not (holding robot1 pepperShaker))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location pepperShaker CounterTop1)
+
+# Task Move the PepperShaker to the CounterTop is done.

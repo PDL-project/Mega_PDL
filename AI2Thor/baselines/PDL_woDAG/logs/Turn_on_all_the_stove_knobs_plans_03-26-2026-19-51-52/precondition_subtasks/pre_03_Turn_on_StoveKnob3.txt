@@ -1,0 +1,31 @@
+# Task Description: Turn on StoveKnob3.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not at StoveKnob3 location
+
+# SubTask 3: Turn on StoveKnob3.
+    Skills Required: GoToObject, SwitchOn
+    Related Objects: stoveKnob3(Location=floor)
+
+GoToObject(robot1, stoveKnob3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 stoveKnob3)
+
+SwitchOn(robot1, stoveKnob3)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 stoveKnob3)
+   Effects:
+     (switch-on robot1 stoveKnob3)
+     (not (switch-off robot1 stoveKnob3))
+
+Goal condition:
+(switch-on robot1 stoveKnob3)
+
+# Task Turn on StoveKnob3 is done.

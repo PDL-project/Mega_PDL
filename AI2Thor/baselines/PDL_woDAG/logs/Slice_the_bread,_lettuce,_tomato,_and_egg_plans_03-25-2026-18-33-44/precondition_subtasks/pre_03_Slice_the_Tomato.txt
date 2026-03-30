@@ -1,0 +1,57 @@
+# Task Description: Slice the Tomato.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analysis due to previous subtask:
+# 1. Robot not holding tomato.
+# 2. Robot not at tomato location.
+# 3. Robot not holding knife.
+
+# SubTask 3: Slice the Tomato.
+    Skills Required: GoToObject, PickupObject, SliceObject, PutObject
+    Related Objects: Tomato(Location=CounterTop), Knife(Location=Drawer)
+
+GoToObject(robot1, Tomato)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Tomato)
+
+SliceObject(robot1, Tomato, CounterTop)
+   Preconditions:
+     (at-location Tomato CounterTop)
+     (at robot1 Tomato)
+     (not (inaction robot1))
+   Effects:
+     (sliced Tomato)
+
+PickupObject(robot1, Tomato, CounterTop)
+   Preconditions:
+     (at-location Tomato CounterTop)
+     (at robot1 Tomato)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 Tomato)
+
+GoToObject(robot1, CounterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop)
+
+PutObject(robot1, Tomato, CounterTop)
+   Preconditions:
+     (holding robot1 Tomato)
+     (at robot1 CounterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location Tomato CounterTop)
+     (not (holding robot1 Tomato))
+
+Goal condition:
+(sliced Tomato)
+(at-location Tomato CounterTop)
+
+# Task Slice the Tomato is done.

@@ -1,0 +1,77 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Laptop_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "laptop",
+        "diningtable",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Laptop is at the dining table.",
+        "Sofa is on the floor."
+      ],
+      "effects": [
+        "Laptop is on the sofa.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Book_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "book",
+        "chair",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Book is at the chair.",
+        "Sofa is available."
+      ],
+      "effects": [
+        "Book is on the sofa.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_RemoteControl_on_the_Sofa",
+      "objects": [
+        "robot1",
+        "remotecontrol",
+        "sidetable",
+        "sofa"
+      ],
+      "preconds": [
+        "robot1 is not in action",
+        "robot1 is at the kitchen",
+        "robot1's hand is empty",
+        "remotecontrol is at sidetable"
+      ],
+      "effects": [
+        "remotecontrol is on the sofa",
+        "robot1's hand is empty"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3
+    ]
+  }
+}

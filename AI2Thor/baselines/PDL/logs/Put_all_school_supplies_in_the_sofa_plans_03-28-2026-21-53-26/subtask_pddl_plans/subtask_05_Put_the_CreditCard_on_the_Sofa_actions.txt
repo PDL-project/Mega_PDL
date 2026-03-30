@@ -1,0 +1,4 @@
+gotoobject robot1 creditcard (1)
+pickupobject robot1 creditcard diningtable (1)
+gotoobject robot1 sofa (1)
+drophandobject robot1 creditcard sofa (1)

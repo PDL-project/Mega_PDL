@@ -1,0 +1,6 @@
+gotoobject robot1 remotecontrol (1)
+pickupobject robot1 remotecontrol sidetable1 (1)
+gotoobject robot1 box (1)
+openobject robot1 box (1)
+drophandobject robot1 remotecontrol box (1)
+closeobject robot1 box (1)

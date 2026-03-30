@@ -1,0 +1,29 @@
+```pddl
+(define (problem put-apple-in-fridge)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    apple - object
+    fridge - object
+    countertop - object
+    floor - object
+  )
+
+  (:init
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (hand-empty robot1)
+    (at-location apple countertop)
+    (at-location fridge floor)
+
+    (is-fridge fridge)
+    (not (fridge-open fridge))
+  )
+
+  (:goal (and
+    (at-location apple fridge)
+    (not (fridge-open fridge))
+  ))
+)
+```

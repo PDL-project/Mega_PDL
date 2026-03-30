@@ -11,6 +11,7 @@
 
     ;; manipulation
     (holding ?r - robot ?o - object)
+    (hand-empty ?r - robot)        ;; robot is not holding anything
     (at-location ?o - object ?loc - object)
 
     ;; switches / device state
@@ -68,6 +69,7 @@
       (at-location ?o ?loc)
       (at ?r ?o)              ;; IMPORTANT: robot at object, not at location
       (not (inaction ?r))
+      (hand-empty ?r)         ;; robot must not be holding any object
       ;; if object is in a fridge, fridge must be open
       (imply (is-fridge ?loc) (fridge-open ?loc))
       ;; if object is in a closed receptacle, must open it first
@@ -75,6 +77,7 @@
     )
     :effect (and
       (holding ?r ?o)
+      (not (hand-empty ?r))
       (not (at-location ?o ?loc)) ;; object no longer at old location
       (not (inaction ?r))
       (increase (total-cost) 1)
@@ -95,6 +98,7 @@
     :effect (and
       (at-location ?o ?loc)
       (not (holding ?r ?o))
+      (hand-empty ?r)
       (not (inaction ?r))
       (increase (total-cost) 1)
     )
@@ -113,6 +117,7 @@
     :effect (and
       (at-location ?o ?f)
       (not (holding ?r ?o))
+      (hand-empty ?r)
       (not (inaction ?r))
       (increase (total-cost) 1)
     )
@@ -132,6 +137,7 @@
     :effect (and
       (at-location ?o ?loc)
       (not (holding ?r ?o))
+      (hand-empty ?r)
       (not (inaction ?r))
       (increase (total-cost) 1)
     )
@@ -152,6 +158,7 @@
     :effect (and
       (at-location ?o ?target)
       (not (holding ?r ?o))
+      (hand-empty ?r)
       (not (inaction ?r))
       (increase (total-cost) 10) ;; 높은 비용: 플래너가 PutObject를 선호하도록
     )

@@ -1,0 +1,26 @@
+(define (problem move-tomato-to-countertop2)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    tomato - object
+    countertop2 - object
+    floor - object
+    kitchen - object
+  )
+
+  (:init
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (hand-empty robot1)
+    (at-location tomato floor)
+    (at-location countertop2 floor)
+    (= (total-cost) 0)
+  )
+
+  (:goal (and
+    (at-location tomato countertop2)
+  ))
+
+  (:metric minimize (total-cost))
+)

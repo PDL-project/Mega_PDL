@@ -1,0 +1,2 @@
+gotoobject robot1 floorlamp (1)
+switchoff robot1 floorlamp (1)

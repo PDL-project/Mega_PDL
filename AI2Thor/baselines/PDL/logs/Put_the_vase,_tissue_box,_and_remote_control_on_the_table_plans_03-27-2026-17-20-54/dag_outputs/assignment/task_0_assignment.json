@@ -1,0 +1,43 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 3,
+    "3": 2
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Put the Vase on the CoffeeTable.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Put the TissueBox on the CoffeeTable.",
+      "robot": 3
+    },
+    {
+      "id": 3,
+      "title": "Put the RemoteControl on the CoffeeTable.",
+      "robot": 2
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      -0.25,
+      0.9026566743850708,
+      2.25
+    ],
+    "2": [
+      -4.75,
+      0.9026566743850708,
+      1.25
+    ],
+    "3": [
+      -1.75,
+      0.9026566743850708,
+      2.5
+    ]
+  }
+}

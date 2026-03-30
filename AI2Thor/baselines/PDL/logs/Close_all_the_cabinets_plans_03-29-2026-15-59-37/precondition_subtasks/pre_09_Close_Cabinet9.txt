@@ -1,0 +1,22 @@
+# SubTask 9: Close Cabinet9.
+    Skills Required: GoToObject, CloseObject
+    Related Objects: cabinet9(Location=floor)
+
+GoToObject(robot1, cabinet9)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet9)
+
+CloseObject(robot1, cabinet9)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 cabinet9)
+   Effects:
+     (object-close robot1 cabinet9)
+     (not (object-open robot1 cabinet9))
+
+Goal condition:
+(object-close robot1 cabinet9)
+
+# Task Close all the cabinets is done.

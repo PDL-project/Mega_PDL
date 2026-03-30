@@ -1,0 +1,52 @@
+# Task Description: Put the Watch in the Box.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at watch location
+#2. Robot not holding watch
+#3. Box is on the floor
+
+# SubTask 3: Put the Watch in the Box.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Watch(Location=SideTable), Box(Location=Floor)
+
+GoToObject(robot1, Watch)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Watch)
+
+PickupObject(robot1, Watch, SideTable)
+   Preconditions:
+     (at-location Watch SideTable)
+     (at robot1 Watch)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 Watch)
+     (not (hand-empty robot1))
+     (not (at-location Watch SideTable))
+
+GoToObject(robot1, Box)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Box)
+
+PutObject(robot1, Watch, Box)
+   Preconditions:
+     (holding robot1 Watch)
+     (at robot1 Box)
+     (not (inaction robot1))
+   Effects:
+     (at-location Watch Box)
+     (not (holding robot1 Watch))
+     (hand-empty robot1)
+
+Goal condition: 
+(at-location Watch Box)
+
+# Task Put the Watch in the Box is done.

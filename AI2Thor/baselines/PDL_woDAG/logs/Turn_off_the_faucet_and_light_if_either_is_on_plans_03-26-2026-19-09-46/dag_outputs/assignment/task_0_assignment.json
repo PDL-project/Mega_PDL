@@ -1,0 +1,37 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Turn off the Faucet.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Turn off the Light.",
+      "robot": 2
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      0.25,
+      0.900999128818512,
+      2.0
+    ],
+    "2": [
+      1.25,
+      0.900999128818512,
+      -1.0
+    ],
+    "3": [
+      -1.25,
+      0.900999128818512,
+      0.75
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+gotoobject robot1 pot (1)
+pickupobject robot1 pot countertop3 (1)
+gotoobject robot1 sink (1)
+cleanobject robot1 pot sink (1)

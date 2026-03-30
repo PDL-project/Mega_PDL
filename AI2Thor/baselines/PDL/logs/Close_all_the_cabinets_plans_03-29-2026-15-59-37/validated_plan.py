@@ -1,0 +1,24 @@
+(define (problem close-cabinet1)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    cabinet1 - object
+    floor - object
+  )
+
+  (:init
+    (not (inaction robot1))
+    (at robot1 floor)
+    (hand-empty robot1)
+    (at-location cabinet1 floor)
+    (object-open robot1 cabinet1)
+    (= (total-cost) 0)
+  )
+
+  (:goal (and
+    (object-close robot1 cabinet1)
+  ))
+
+  (:metric minimize (total-cost))
+)

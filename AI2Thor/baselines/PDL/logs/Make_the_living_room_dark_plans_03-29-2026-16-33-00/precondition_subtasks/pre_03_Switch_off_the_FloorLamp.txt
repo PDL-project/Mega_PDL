@@ -1,0 +1,31 @@
+# Task Description: Switch off the FloorLamp.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at FloorLamp location
+
+# SubTask 3: Switch off the FloorLamp.
+    Skills Required: GoToObject, SwitchOff
+    Related Objects: FloorLamp(Location=Floor)
+
+GoToObject(robot1, FloorLamp)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 FloorLamp)
+
+SwitchOff(robot1, FloorLamp)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 FloorLamp)
+   Effects:
+     (switch-off robot1 FloorLamp)
+     (not (switch-on robot1 FloorLamp))
+
+Goal condition: 
+(switch-off robot1 FloorLamp)
+
+# Task Switch off the FloorLamp is done.

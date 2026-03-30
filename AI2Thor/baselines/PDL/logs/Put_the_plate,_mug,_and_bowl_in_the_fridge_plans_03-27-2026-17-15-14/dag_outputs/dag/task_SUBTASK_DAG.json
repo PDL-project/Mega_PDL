@@ -1,0 +1,102 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Plate_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "plate",
+        "fridge",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not holding the plate.",
+        "Fridge is initially closed.",
+        "Robot is at the kitchen.",
+        "Plate is on the countertop."
+      ],
+      "effects": [
+        "Plate is inside the fridge.",
+        "Fridge is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Mug_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "mug",
+        "fridge",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Robot's hand is empty",
+        "Mug is on the countertop",
+        "Fridge is closed"
+      ],
+      "effects": [
+        "Mug is in the fridge",
+        "Fridge is closed"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_Bowl_in_the_Fridge",
+      "objects": [
+        "robot1",
+        "bowl",
+        "fridge",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not in action.",
+        "Robot is at the kitchen.",
+        "Robot's hand is empty.",
+        "Bowl is on the countertop.",
+        "Fridge is on the floor.",
+        "Fridge is closed."
+      ],
+      "effects": [
+        "Bowl is in the fridge.",
+        "Fridge is closed."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle instance - fridge must be opened/closed"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle instance - fridge must be opened/closed"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Shared target receptacle instance - fridge must be opened/closed"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ]
+  }
+}

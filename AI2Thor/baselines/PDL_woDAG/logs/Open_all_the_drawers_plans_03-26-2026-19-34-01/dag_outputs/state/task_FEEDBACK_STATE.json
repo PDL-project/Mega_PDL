@@ -1,0 +1,83 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer1 (1)",
+      "openobject robot1 drawer1 (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer2 (1)",
+      "openobject robot1 drawer2 (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer3 (1)",
+      "openobject robot1 drawer3 (1)"
+    ]
+  },
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer4 (1)",
+      "openobject robot1 drawer4 (1)"
+    ]
+  },
+  "5": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer5 (1)",
+      "openobject robot1 drawer5 (1)"
+    ]
+  },
+  "6": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer6 (1)",
+      "openobject robot1 drawer6 (1)"
+    ]
+  },
+  "7": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer7 (1)",
+      "openobject robot1 drawer7 (1)"
+    ]
+  },
+  "8": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer8 (1)",
+      "openobject robot1 drawer8 (1)"
+    ]
+  },
+  "9": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer9 (1)",
+      "openobject robot1 drawer9 (1)"
+    ]
+  }
+}

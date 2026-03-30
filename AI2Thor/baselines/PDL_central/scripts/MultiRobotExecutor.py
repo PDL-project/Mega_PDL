@@ -66,6 +66,7 @@ _TASK_NAME_MAP = {
     "Clear the kitchen floor by placing items at their appropriate positions": "4_clear_floor_kitchen",
     "Put all the forks, spoons, butter knives, and spatulas in the drawer": "6_put_silverware_in_drawer",
     "Put all the food ingredients on the countertop": "7_put_ingredients_on_counter",
+    "I want to eat a sandwich tomorrow. Please prepare and process the vegetables needed for making the sandwich, place them on a plate, and then store them in the refrigerator for use tomorrow.": "8_prep_sandwich_fridge",
     "Clear the table by placing items at their appropriate positions": "4_clear_table_kitchen",
     "Clear the kitchen central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",
     "Clear the central countertop by placing items in their appropriate positions": "4_clear_countertop_kitchen",  # config_type4 variant
@@ -2035,6 +2036,7 @@ class MultiRobotExecutor:
         success = self._enqueue_and_wait({
             'action': 'PutObject',
             'objectId': recp_id,
+            'forceAction': True,
             'agent_id': agent_id
         }, agent_id=agent_id, timeout=5.0)
         if not success:

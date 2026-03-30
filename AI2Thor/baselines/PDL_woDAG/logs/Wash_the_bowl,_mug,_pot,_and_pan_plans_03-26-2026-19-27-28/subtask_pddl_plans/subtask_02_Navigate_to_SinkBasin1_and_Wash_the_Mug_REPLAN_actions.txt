@@ -1,0 +1,3 @@
+gotoobject robot1 floor (1)
+gotoobject robot1 sinkbasin1 (1)
+cleanobject robot1 mug sinkbasin1 (1)

@@ -1,0 +1,19 @@
+{
+  "1": {
+    "state": "FAILED",
+    "error_message": "Curtains|-00.08|+02.42|+00.97 is not an Openable object",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 curtains (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 lightswitch (1)",
+      "switchoff robot1 lightswitch (1)"
+    ]
+  }
+}

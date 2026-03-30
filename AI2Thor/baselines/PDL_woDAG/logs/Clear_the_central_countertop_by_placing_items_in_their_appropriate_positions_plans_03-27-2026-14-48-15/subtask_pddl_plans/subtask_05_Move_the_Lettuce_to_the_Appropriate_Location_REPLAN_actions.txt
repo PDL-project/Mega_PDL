@@ -1,0 +1,8 @@
+gotoobject robot1 bowl1 (1)
+drophandobject robot1 apple bowl1 (1)
+gotoobject robot1 lettuce (1)
+pickupobject robot1 lettuce countertop3 (1)
+gotoobject robot1 cabinet1 (1)
+openobject robot1 cabinet1 (1)
+drophandobject robot1 lettuce cabinet1 (1)
+closeobject robot1 cabinet1 (1)

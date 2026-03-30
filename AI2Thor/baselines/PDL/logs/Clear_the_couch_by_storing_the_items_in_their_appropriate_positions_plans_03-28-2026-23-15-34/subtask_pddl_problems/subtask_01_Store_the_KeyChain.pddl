@@ -1,0 +1,25 @@
+```pddl
+(define (problem store-keychain)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    keychain - object
+    sidetable1 - object
+    sofa - object
+    kitchen - object
+  )
+
+  (:init
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (hand-empty robot1)
+    (at-location keychain sofa)
+    (at-location sidetable1 floor)
+  )
+
+  (:goal (and
+    (at-location keychain sidetable1)
+  ))
+)
+```

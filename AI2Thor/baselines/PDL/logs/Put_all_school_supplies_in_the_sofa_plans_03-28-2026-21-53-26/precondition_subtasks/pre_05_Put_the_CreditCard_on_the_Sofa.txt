@@ -1,0 +1,51 @@
+# Task Description: Put the CreditCard on the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding CreditCard
+#2. Robot not at CreditCard location
+
+# SubTask 5: Put the CreditCard on the Sofa.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: CreditCard(Location=DiningTable), Sofa(Location=Floor)
+
+GoToObject(robot1, CreditCard)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CreditCard)
+
+PickupObject(robot1, CreditCard, DiningTable)
+   Preconditions:
+     (at-location CreditCard DiningTable)
+     (at robot1 CreditCard)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 CreditCard)
+     (not (hand-empty robot1))
+     (not (at-location CreditCard DiningTable))
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, CreditCard, Sofa)
+   Preconditions:
+     (holding robot1 CreditCard)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location CreditCard Sofa)
+     (not (holding robot1 CreditCard))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location CreditCard Sofa)
+
+# Task Put the CreditCard on the Sofa is done.

@@ -1,0 +1,86 @@
+# Task Description: Wash the Pot.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding pot.
+# 2. Robot not at pot location.
+
+# SubTask 3: Wash the Pot.
+    Skills Required: GoToObject, PickupObject, CleanObject, PutObject
+    Related Objects: pot(Location=counterTop), sink(Location=floor)
+
+GoToObject(robot1, pot)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pot)
+
+PickupObject(robot1, pot, counterTop)
+   Preconditions:
+     (at-location pot counterTop)
+     (at robot1 pot)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 pot)
+     (not (hand-empty robot1))
+     (not (at-location pot counterTop))
+
+GoToObject(robot1, sink)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sink)
+
+SwitchOn(robot1, Faucet)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 Faucet)
+   Effects:
+     (faucet-on)
+     (not (inaction robot1))
+
+CleanObject(robot1, pot, sink)
+   Preconditions:
+     (not (inaction robot1))
+     (holding robot1 pot)
+     (at robot1 sink)
+     (is-sink sink)
+     (faucet-on)
+   Effects:
+     (cleaned robot1 pot)
+     (not (inaction robot1))
+
+SwitchOff(robot1, Faucet)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 Faucet)
+   Effects:
+     (not (faucet-on))
+     (not (inaction robot1))
+
+GoToObject(robot1, counterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 counterTop)
+
+PutObject(robot1, pot, counterTop)
+   Preconditions:
+     (holding robot1 pot)
+     (at robot1 counterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location pot counterTop)
+     (not (holding robot1 pot))
+     (hand-empty robot1)
+     (not (inaction robot1))
+
+Goal condition:
+(cleaned robot1 pot)
+(at-location pot counterTop)
+
+# Task Wash the Pot is done.

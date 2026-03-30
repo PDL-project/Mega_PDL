@@ -1,0 +1,31 @@
+# Task Description: Switch off the DeskLamp.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at DeskLamp location
+
+# SubTask 4: Switch off the DeskLamp.
+    Skills Required: GoToObject, SwitchOff
+    Related Objects: DeskLamp(Location=SideTable)
+
+GoToObject(robot1, DeskLamp)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 DeskLamp)
+
+SwitchOff(robot1, DeskLamp)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 DeskLamp)
+   Effects:
+     (switch-off robot1 DeskLamp)
+     (not (switch-on robot1 DeskLamp))
+
+Goal condition: 
+(switch-off robot1 DeskLamp)
+
+# Task Make the living room dark is done.

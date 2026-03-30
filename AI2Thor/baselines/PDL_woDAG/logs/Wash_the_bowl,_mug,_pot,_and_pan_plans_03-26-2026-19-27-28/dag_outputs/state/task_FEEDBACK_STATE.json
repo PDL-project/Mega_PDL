@@ -1,0 +1,38 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 faucet (1)",
+      "switchon robot1 faucet (1)",
+      "gotoobject robot1 bowl (1)",
+      "pickupobject robot1 bowl countertop (1)",
+      "gotoobject robot1 sink (1)",
+      "cleanobject robot1 bowl sink (1)",
+      "gotoobject robot1 countertop (1)",
+      "drophandobject robot1 bowl countertop (1)"
+    ]
+  },
+  "2": {
+    "state": "FAILED",
+    "error_message": "GoToObject: cannot find object 'sinkbasin1'",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 floor (1)"
+    ]
+  },
+  "3": {
+    "state": "FAILED",
+    "error_message": "GoToObject: cannot find object 'kitchen'",
+    "effects": null
+  },
+  "4": {
+    "state": "FAILED",
+    "error_message": "GoToObject: cannot find object 'sinkbasin1'",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 floor (1)"
+    ]
+  }
+}

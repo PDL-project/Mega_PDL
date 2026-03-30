@@ -1,0 +1,41 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 remotecontrol (1)",
+      "pickupobject robot1 remotecontrol sidetable1 (1)",
+      "gotoobject robot1 box (1)",
+      "openobject robot1 box (1)",
+      "drophandobject robot1 remotecontrol box (1)",
+      "closeobject robot1 box (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 keychain (1)",
+      "pickupobject robot1 keychain sidetable1 (1)",
+      "gotoobject robot1 box (1)",
+      "openobject robot1 box (1)",
+      "drophandobject robot1 keychain box (1)",
+      "closeobject robot1 box (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 watch (1)",
+      "pickupobject robot1 watch sidetable1 (1)",
+      "gotoobject robot1 box (1)",
+      "openobject robot1 box (1)",
+      "drophandobject robot1 watch box (1)",
+      "closeobject robot1 box (1)"
+    ]
+  }
+}

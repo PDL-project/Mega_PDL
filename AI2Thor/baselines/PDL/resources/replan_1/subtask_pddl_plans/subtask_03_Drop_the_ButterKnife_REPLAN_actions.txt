@@ -1,2 +1,0 @@
-gotoobject robot1 countertop1 (1)
-drophandobject robot1 butterknife countertop1 (1)

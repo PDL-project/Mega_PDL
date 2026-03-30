@@ -1,0 +1,24 @@
+# SubTask 2: Turn on StoveKnob2.
+    Skills Required: GoToObject, SwitchOn
+    Related Objects: stoveKnob2(Location=floor)
+
+# Initial condition:
+#1. Robot not at StoveKnob2 location
+#2. StoveKnob2 is off
+
+GoToObject(robot1, stoveKnob2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 stoveKnob2)
+
+SwitchOn(robot1, stoveKnob2)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 stoveKnob2)
+   Effects:
+     (switch-on robot1 stoveKnob2)
+     (not (switch-off robot1 stoveKnob2))
+
+Goal condition:
+(switch-on robot1 stoveKnob2)

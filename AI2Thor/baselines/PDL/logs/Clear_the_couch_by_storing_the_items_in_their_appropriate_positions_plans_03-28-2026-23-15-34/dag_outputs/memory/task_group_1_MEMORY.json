@@ -1,0 +1,13 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 keychain (1)",
+      "pickupobject robot1 keychain sofa (1)",
+      "gotoobject robot1 sidetable1 (1)",
+      "drophandobject robot1 keychain sidetable1 (1)"
+    ]
+  }
+}

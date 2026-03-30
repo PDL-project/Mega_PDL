@@ -1,0 +1,51 @@
+# Task Description: Store the Pen.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding Pen
+#2. Robot not at Pen location
+
+# SubTask 2: Store the Pen.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: pen(Location=sofa), sidetable2(Location=floor)
+
+GoToObject(robot1, pen)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pen)
+
+PickupObject(robot1, pen, sofa)
+   Preconditions:
+     (at-location pen sofa)
+     (at robot1 pen)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 pen)
+     (not (hand-empty robot1))
+     (not (at-location pen sofa))
+
+GoToObject(robot1, sidetable2)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sidetable2)
+
+PutObject(robot1, pen, sidetable2)
+   Preconditions:
+     (holding robot1 pen)
+     (at robot1 sidetable2)
+     (not (inaction robot1))
+   Effects:
+     (at-location pen sidetable2)
+     (not (holding robot1 pen))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location pen sidetable2)
+
+# Task Store the Pen is done.

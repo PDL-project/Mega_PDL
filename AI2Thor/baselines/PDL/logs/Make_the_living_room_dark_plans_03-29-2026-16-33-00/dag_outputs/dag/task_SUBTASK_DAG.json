@@ -1,0 +1,98 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Close_the_Curtains",
+      "objects": [
+        "robot1",
+        "curtains",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Curtains are at the floor.",
+        "Curtains are open."
+      ],
+      "effects": [
+        "Curtains are closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Switch_off_the_LightSwitch",
+      "objects": [
+        "robot1",
+        "lightswitch",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Lightswitch is on the floor",
+        "Lightswitch is switched on"
+      ],
+      "effects": [
+        "Robot1 is at the lightswitch",
+        "Lightswitch is switched off",
+        "Lightswitch is not switched on"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Switch_off_the_FloorLamp",
+      "objects": [
+        "robot1",
+        "floorlamp",
+        "floor"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the floor",
+        "Robot's hand is empty",
+        "Floorlamp is at the floor",
+        "Floorlamp is switched on"
+      ],
+      "effects": [
+        "Robot is at the floorlamp",
+        "Floorlamp is switched off",
+        "Floorlamp is not switched on"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Switch_off_the_DeskLamp",
+      "objects": [
+        "robot1",
+        "desklamp",
+        "sidetable",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "Desklamp is on the sidetable",
+        "Desklamp is switched on"
+      ],
+      "effects": [
+        "Robot1 is at the desklamp",
+        "Desklamp is switched off"
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3,
+      4
+    ]
+  }
+}

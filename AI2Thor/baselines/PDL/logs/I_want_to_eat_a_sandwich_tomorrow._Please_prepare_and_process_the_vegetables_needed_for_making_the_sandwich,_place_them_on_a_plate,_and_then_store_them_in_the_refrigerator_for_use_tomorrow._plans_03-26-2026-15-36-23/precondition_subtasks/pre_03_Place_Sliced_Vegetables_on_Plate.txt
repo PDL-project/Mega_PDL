@@ -1,0 +1,83 @@
+# Task Description: Place Sliced Vegetables on Plate.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding plate
+#2. Robot not at fridge location
+
+# SubTask 3: Place Sliced Vegetables on Plate.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: plate(Location=CounterTop), lettuce(Location=CounterTop), tomato(Location=CounterTop)
+
+# Initial Precondition analyze due to previous subtask:
+#1. Robot not holding plate
+#2. Robot not at fridge location
+
+GoToObject(robot1, lettuce)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 lettuce)
+
+PickupObject(robot1, lettuce, CounterTop)
+   Preconditions:
+     (at-location lettuce CounterTop)
+     (at robot1 lettuce)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 lettuce)
+     (not (at-location lettuce CounterTop))
+
+GoToObject(robot1, plate)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 plate)
+
+PutObject(robot1, lettuce, plate)
+   Preconditions:
+     (holding robot1 lettuce)
+     (at robot1 plate)
+     (not (inaction robot1))
+   Effects:
+     (at-location lettuce plate)
+     (not (holding robot1 lettuce))
+
+GoToObject(robot1, tomato)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 tomato)
+
+PickupObject(robot1, tomato, CounterTop)
+   Preconditions:
+     (at-location tomato CounterTop)
+     (at robot1 tomato)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 tomato)
+     (not (at-location tomato CounterTop))
+
+GoToObject(robot1, plate)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 plate)
+
+PutObject(robot1, tomato, plate)
+   Preconditions:
+     (holding robot1 tomato)
+     (at robot1 plate)
+     (not (inaction robot1))
+   Effects:
+     (at-location tomato plate)
+     (not (holding robot1 tomato))
+
+Goal condition:
+(at-location lettuce plate)
+(at-location tomato plate)
+
+# Task Place Sliced Vegetables on Plate is done.

@@ -1,0 +1,77 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Store_the_KeyChain",
+      "objects": [
+        "robot1",
+        "keychain",
+        "sidetable1",
+        "sofa",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Keychain is at the sofa."
+      ],
+      "effects": [
+        "Keychain is at sidetable1.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Store_the_Pen",
+      "objects": [
+        "robot1",
+        "pen",
+        "sofa",
+        "sidetable2",
+        "floor",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Robot1's hand is empty.",
+        "Pen is located on the sofa."
+      ],
+      "effects": [
+        "Pen is placed on sidetable2.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Store_the_Pencil",
+      "objects": [
+        "robot1",
+        "pencil",
+        "sofa",
+        "sidetable3",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Pencil is located at the sofa."
+      ],
+      "effects": [
+        "Pencil is located at sidetable3.",
+        "Robot1's hand is empty."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 1,
+    "2": 2,
+    "3": 2,
+    "4": 3
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Put the Fork in Drawer1.",
+      "robot": 1
+    },
+    {
+      "id": 2,
+      "title": "Put the Spoon in Drawer1.",
+      "robot": 2
+    },
+    {
+      "id": 3,
+      "title": "Put the Knife in Drawer2.",
+      "robot": 2
+    },
+    {
+      "id": 4,
+      "title": "Put the ButterKnife in Drawer2.",
+      "robot": 3
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      1.0,
+      0.9009992480278015,
+      0.75
+    ],
+    "2": [
+      0.25,
+      0.9009992480278015,
+      3.0
+    ],
+    "3": [
+      -2.0,
+      0.9009992480278015,
+      3.0
+    ]
+  }
+}

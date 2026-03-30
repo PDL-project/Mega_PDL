@@ -1,0 +1,2 @@
+gotoobject robot1 egg (1)
+sliceobject robot1 egg countertop (1)

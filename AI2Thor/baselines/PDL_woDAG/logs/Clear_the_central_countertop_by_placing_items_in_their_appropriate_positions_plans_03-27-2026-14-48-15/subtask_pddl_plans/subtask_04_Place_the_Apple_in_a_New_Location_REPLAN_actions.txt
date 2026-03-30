@@ -1,0 +1,2 @@
+gotoobject robot1 kitchen (1)
+putobject robot1 apple kitchen (1)

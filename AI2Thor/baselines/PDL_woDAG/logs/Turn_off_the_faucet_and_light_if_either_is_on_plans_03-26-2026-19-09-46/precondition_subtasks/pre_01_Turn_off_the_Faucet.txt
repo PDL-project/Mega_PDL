@@ -1,0 +1,34 @@
+# Task Description: Turn off the Faucet.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not at light switch location.
+# 2. Light is initially on.
+
+# SubTask 1: Turn off the Faucet.
+    Skills Required: GoToObject, SwitchOff
+    Related Objects: faucet(Location=floor)
+
+GoToObject(robot1, faucet)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 faucet)
+
+SwitchOff(robot1, faucet)
+   Preconditions:
+     (not (inaction robot1))
+     (at robot1 faucet)
+   Effects:
+     (switch-off robot1 faucet)
+     (not (switch-on robot1 faucet))
+     (not (faucet-on))
+
+Goal condition: 
+(switch-off robot1 faucet)
+(not (faucet-on))
+
+# Task Turn off the Faucet is done.

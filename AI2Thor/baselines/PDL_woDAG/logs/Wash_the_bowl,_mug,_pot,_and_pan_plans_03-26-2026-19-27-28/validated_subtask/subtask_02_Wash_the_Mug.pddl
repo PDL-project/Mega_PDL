@@ -1,0 +1,31 @@
+(define (problem wash-the-mug)
+  (:domain allactionrobot)
+
+  (:objects
+    robot1 - robot
+    mug - object
+    sink - object
+    faucet - object
+    countertop - object
+    kitchen - object
+    floor - object
+  )
+
+  (:init
+    (not (inaction robot1))
+    (at robot1 kitchen)
+    (hand-empty robot1)
+    (at-location mug countertop)
+    (at-location sink floor)
+    (is-sink sink)
+    (is-faucet faucet)
+    (= (total-cost) 0)
+  )
+
+  (:goal (and
+    (cleaned robot1 mug)
+    (at-location mug countertop)
+  ))
+
+  (:metric minimize (total-cost))
+)

@@ -1,0 +1,49 @@
+{
+  "task_idx": 0,
+  "agent_count": 3,
+  "assignment": {
+    "1": 3,
+    "2": 3,
+    "3": 2,
+    "4": 1
+  },
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Slice the Apple.",
+      "robot": 3
+    },
+    {
+      "id": 2,
+      "title": "Slice the Bread.",
+      "robot": 3
+    },
+    {
+      "id": 3,
+      "title": "Slice the Tomato.",
+      "robot": 2
+    },
+    {
+      "id": 4,
+      "title": "Slice the Lettuce.",
+      "robot": 1
+    }
+  ],
+  "robot_spawn_positions": {
+    "1": [
+      2.0,
+      0.900999128818512,
+      1.75
+    ],
+    "2": [
+      -1.5,
+      0.900999128818512,
+      1.75
+    ],
+    "3": [
+      -1.0,
+      0.900999128818512,
+      -0.5
+    ]
+  }
+}

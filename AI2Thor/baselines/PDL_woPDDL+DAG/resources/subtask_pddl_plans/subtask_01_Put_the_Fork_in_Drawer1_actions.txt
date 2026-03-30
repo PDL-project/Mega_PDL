@@ -1,0 +1,6 @@
+gotoobject robot1 fork1 (1)
+pickupobject robot1 fork1 (1)
+gotoobject robot1 drawer11 (1)
+openobject robot1 drawer11 (1)
+putobject robot1 fork1 drawer11 (1)
+closeobject robot1 drawer11 (1)

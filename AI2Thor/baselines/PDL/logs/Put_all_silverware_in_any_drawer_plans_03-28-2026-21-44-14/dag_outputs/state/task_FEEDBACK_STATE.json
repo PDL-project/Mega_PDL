@@ -1,0 +1,80 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 fork (1)",
+      "pickupobject robot1 fork countertop (1)",
+      "gotoobject robot1 drawer1 (1)",
+      "openobject robot1 drawer1 (1)",
+      "drophandobject robot1 fork drawer1 (1)",
+      "closeobject robot1 drawer1 (1)"
+    ]
+  },
+  "3": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 knife (1)",
+      "pickupobject robot1 knife countertop (1)",
+      "gotoobject robot1 drawer2 (1)",
+      "openobject robot1 drawer2 (1)",
+      "drophandobject robot1 knife drawer2 (1)",
+      "closeobject robot1 drawer2 (1)"
+    ]
+  },
+  "5": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 ladle (1)",
+      "pickupobject robot1 ladle countertop (1)",
+      "gotoobject robot1 drawer3 (1)",
+      "openobject robot1 drawer3 (1)",
+      "drophandobject robot1 ladle drawer3 (1)",
+      "closeobject robot1 drawer3 (1)"
+    ]
+  },
+  "2": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 spoon (1)",
+      "pickupobject robot1 spoon countertop1 (1)",
+      "gotoobject robot1 drawer4 (1)",
+      "openobject robot1 drawer4 (1)",
+      "drophandobject robot1 spoon drawer4 (1)",
+      "closeobject robot1 drawer4 (1)"
+    ]
+  },
+  "4": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 butterknife (1)",
+      "pickupobject robot1 butterknife countertop (1)",
+      "gotoobject robot1 drawer2 (1)",
+      "openobject robot1 drawer2 (1)",
+      "drophandobject robot1 butterknife drawer2 (1)",
+      "closeobject robot1 drawer2 (1)"
+    ]
+  },
+  "6": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 spatula (1)",
+      "pickupobject robot1 spatula countertop (1)",
+      "gotoobject robot1 drawer3 (1)",
+      "openobject robot1 drawer3 (1)",
+      "drophandobject robot1 spatula drawer3 (1)",
+      "closeobject robot1 drawer3 (1)"
+    ]
+  }
+}

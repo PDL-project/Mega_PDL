@@ -1,0 +1,2 @@
+gotoobject robot1 stoveknob2 (1)
+switchon robot1 stoveknob2 (1)

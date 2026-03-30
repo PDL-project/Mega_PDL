@@ -1,0 +1,51 @@
+# Task Description: Move the Lettuce to the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding Mug.
+# 2. Robot not at Mug location.
+
+# SubTask 5: Move the Lettuce to the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: lettuce(Location=CounterTop), CounterTop1(Location=Floor)
+
+GoToObject(robot1, lettuce)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 lettuce)
+
+PickupObject(robot1, lettuce, CounterTop)
+   Preconditions:
+     (at-location lettuce CounterTop)
+     (at robot1 lettuce)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 lettuce)
+     (not (hand-empty robot1))
+     (not (at-location lettuce CounterTop))
+
+GoToObject(robot1, CounterTop1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop1)
+
+PutObject(robot1, lettuce, CounterTop1)
+   Preconditions:
+     (holding robot1 lettuce)
+     (at robot1 CounterTop1)
+     (not (inaction robot1))
+   Effects:
+     (at-location lettuce CounterTop1)
+     (not (holding robot1 lettuce))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location lettuce CounterTop1)
+
+# Task Move the Lettuce to the CounterTop is done.

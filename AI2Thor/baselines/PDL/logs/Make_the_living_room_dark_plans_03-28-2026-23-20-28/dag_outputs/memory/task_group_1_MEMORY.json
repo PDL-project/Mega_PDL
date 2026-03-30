@@ -1,0 +1,10 @@
+{
+  "1": {
+    "state": "FAILED",
+    "error_message": "Curtains|-00.08|+02.42|+00.97 is not an Openable object",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 curtains (1)"
+    ]
+  }
+}

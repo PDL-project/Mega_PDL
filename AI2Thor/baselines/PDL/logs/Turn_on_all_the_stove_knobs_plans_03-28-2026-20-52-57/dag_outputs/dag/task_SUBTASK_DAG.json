@@ -1,0 +1,127 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Turn_on_StoveKnob1",
+      "objects": [
+        "robot1",
+        "stoveknob1"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "StoveKnob1 is at the floor",
+        "StoveKnob1 is switched off"
+      ],
+      "effects": [
+        "StoveKnob1 is switched on by Robot1"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Turn_on_StoveKnob2",
+      "objects": [
+        "robot1",
+        "stoveknob2"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "Robot1's hand is empty",
+        "StoveKnob2 is at the floor",
+        "StoveKnob2 is off"
+      ],
+      "effects": [
+        "Robot1 is at StoveKnob2",
+        "StoveKnob2 is switched on"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Turn_on_StoveKnob3",
+      "objects": [
+        "robot1",
+        "stoveknob3"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the kitchen",
+        "StoveKnob3 is off"
+      ],
+      "effects": [
+        "Robot1 is at StoveKnob3",
+        "StoveKnob3 is switched on"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Turn_on_StoveKnob4",
+      "objects": [
+        "robot1",
+        "stoveknob4"
+      ],
+      "preconds": [
+        "Robot1 is not in action",
+        "Robot1 is at the location of stoveknob4"
+      ],
+      "effects": [
+        "StoveKnob4 is switched on by Robot1",
+        "StoveKnob4 is no longer switched off by Robot1"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Same robot1 object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same robot1 object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 1,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same robot1 object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 2,
+      "to_id": 3,
+      "dependency_type": "resource",
+      "reason": "Same robot1 object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 2,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same robot1 object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same robot1 object - cannot be manipulated in parallel"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ]
+  }
+}

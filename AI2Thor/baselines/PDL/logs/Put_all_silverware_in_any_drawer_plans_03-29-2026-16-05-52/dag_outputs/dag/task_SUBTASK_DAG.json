@@ -1,0 +1,120 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Fork_in_Drawer1",
+      "objects": [
+        "robot1",
+        "fork",
+        "drawer1",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not holding the fork.",
+        "Drawer1 is closed.",
+        "Fork is on the countertop.",
+        "Robot1 is at the floor."
+      ],
+      "effects": [
+        "Fork is in Drawer1.",
+        "Drawer1 is closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_Spoon_in_Drawer1",
+      "objects": [
+        "robot1",
+        "spoon",
+        "drawer1",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Spoon is at the countertop.",
+        "Drawer1 is on the floor and closed."
+      ],
+      "effects": [
+        "Spoon is in drawer1.",
+        "Drawer1 is closed.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_Knife_in_Drawer2",
+      "objects": [
+        "robot1",
+        "knife",
+        "drawer2",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is at the kitchen.",
+        "Robot1's hand is empty.",
+        "Knife is on the countertop.",
+        "Drawer2 is on the floor.",
+        "Robot1 is close to drawer2."
+      ],
+      "effects": [
+        "Knife is in drawer2.",
+        "Drawer2 is closed.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Put_the_ButterKnife_in_Drawer2",
+      "objects": [
+        "robot1",
+        "butterKnife",
+        "drawer2",
+        "countertop",
+        "floor"
+      ],
+      "preconds": [
+        "Robot1 is at the countertop.",
+        "Robot1's hand is empty.",
+        "ButterKnife is on the countertop.",
+        "Drawer2 is closed and on the floor.",
+        "Robot1 is close to Drawer2."
+      ],
+      "effects": [
+        "ButterKnife is in Drawer2.",
+        "Drawer2 is closed.",
+        "Robot1's hand is empty."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Both subtasks use drawer1, which must be opened/closed"
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Both subtasks use drawer2, which must be opened/closed"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1,
+      3
+    ],
+    "1": [
+      2,
+      4
+    ]
+  }
+}

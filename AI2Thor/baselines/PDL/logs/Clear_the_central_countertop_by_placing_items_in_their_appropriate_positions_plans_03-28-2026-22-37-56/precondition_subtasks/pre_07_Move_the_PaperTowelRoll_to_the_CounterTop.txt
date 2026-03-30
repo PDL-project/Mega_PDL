@@ -1,0 +1,51 @@
+# Task Description: Move the PaperTowelRoll to the CounterTop.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding PepperShaker.
+# 2. Robot not at PepperShaker location.
+
+# SubTask 7: Move the PaperTowelRoll to the CounterTop.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: paperTowelRoll(Location=CounterTop), CounterTop3(Location=Floor)
+
+GoToObject(robot1, paperTowelRoll)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 paperTowelRoll)
+
+PickupObject(robot1, paperTowelRoll, CounterTop)
+   Preconditions:
+     (at-location paperTowelRoll CounterTop)
+     (at robot1 paperTowelRoll)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 paperTowelRoll)
+     (not (hand-empty robot1))
+     (not (at-location paperTowelRoll CounterTop))
+
+GoToObject(robot1, CounterTop3)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop3)
+
+PutObject(robot1, paperTowelRoll, CounterTop3)
+   Preconditions:
+     (holding robot1 paperTowelRoll)
+     (at robot1 CounterTop3)
+     (not (inaction robot1))
+   Effects:
+     (at-location paperTowelRoll CounterTop3)
+     (not (holding robot1 paperTowelRoll))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location paperTowelRoll CounterTop3)
+
+# Task Move the PaperTowelRoll to the CounterTop is done.

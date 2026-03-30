@@ -1,0 +1,10 @@
+{
+  "10": {
+    "state": "FAILED",
+    "error_message": "Can't place an object if Agent isn't holding anything",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 countertop2 (1)"
+    ]
+  }
+}

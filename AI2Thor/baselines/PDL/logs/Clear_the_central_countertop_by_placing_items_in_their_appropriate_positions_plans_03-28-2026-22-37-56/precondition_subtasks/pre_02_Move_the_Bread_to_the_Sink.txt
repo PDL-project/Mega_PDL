@@ -1,0 +1,51 @@
+# Task Description: Move the Bread to the Sink.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding ButterKnife.
+# 2. Robot not at ButterKnife location.
+
+# SubTask 2: Move the Bread to the Sink.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: bread(Location=CounterTop), Sink(Location=Floor)
+
+GoToObject(robot1, bread)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 bread)
+
+PickupObject(robot1, bread, CounterTop)
+   Preconditions:
+     (at-location bread CounterTop)
+     (at robot1 bread)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 bread)
+     (not (hand-empty robot1))
+     (not (at-location bread CounterTop))
+
+GoToObject(robot1, Sink)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sink)
+
+PutObject(robot1, bread, Sink)
+   Preconditions:
+     (holding robot1 bread)
+     (at robot1 Sink)
+     (not (inaction robot1))
+   Effects:
+     (at-location bread Sink)
+     (not (holding robot1 bread))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location bread Sink)
+
+# Task Move the Bread to the Sink is done.

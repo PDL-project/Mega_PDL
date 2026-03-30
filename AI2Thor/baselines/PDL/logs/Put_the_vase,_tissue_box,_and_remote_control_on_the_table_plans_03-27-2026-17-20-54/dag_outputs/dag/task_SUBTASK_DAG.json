@@ -1,0 +1,72 @@
+{
+  "task_name": "task",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Put_the_Vase_on_the_CoffeeTable",
+      "objects": [
+        "robot1",
+        "vase",
+        "sidetable1",
+        "coffeetable"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Robot1's hand is empty.",
+        "Vase is on SideTable1."
+      ],
+      "effects": [
+        "Vase is on the CoffeeTable.",
+        "Robot1's hand is empty."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Put_the_TissueBox_on_the_CoffeeTable",
+      "objects": [
+        "robot1",
+        "tissuebox",
+        "tvstand",
+        "coffeetable"
+      ],
+      "preconds": [
+        "Robot1 is not holding any object.",
+        "Robot1 is located in the kitchen.",
+        "TissueBox is located on the TVStand."
+      ],
+      "effects": [
+        "TissueBox is placed on the CoffeeTable.",
+        "Robot1 is not holding any object."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Put_the_RemoteControl_on_the_CoffeeTable",
+      "objects": [
+        "robot1",
+        "remotecontrol",
+        "sidetable2",
+        "coffeetable"
+      ],
+      "preconds": [
+        "Robot1 is not in action.",
+        "Robot1 is in the kitchen.",
+        "Robot1's hand is empty.",
+        "RemoteControl is on SideTable2."
+      ],
+      "effects": [
+        "RemoteControl is on the CoffeeTable.",
+        "Robot1's hand is empty."
+      ]
+    }
+  ],
+  "edges": [],
+  "parallel_groups": {
+    "0": [
+      1,
+      2,
+      3
+    ]
+  }
+}

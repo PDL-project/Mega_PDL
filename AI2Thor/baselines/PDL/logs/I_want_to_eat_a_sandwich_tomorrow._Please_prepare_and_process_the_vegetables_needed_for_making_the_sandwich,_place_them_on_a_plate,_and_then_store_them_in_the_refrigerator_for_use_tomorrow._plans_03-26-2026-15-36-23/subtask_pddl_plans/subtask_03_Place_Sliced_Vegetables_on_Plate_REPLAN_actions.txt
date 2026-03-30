@@ -1,0 +1,2 @@
+gotoobject robot1 plate (1)
+drophandobject robot1 lettuce plate (1)

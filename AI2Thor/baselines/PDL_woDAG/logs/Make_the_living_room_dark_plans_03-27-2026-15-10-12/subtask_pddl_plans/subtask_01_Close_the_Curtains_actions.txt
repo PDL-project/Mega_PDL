@@ -1,0 +1,2 @@
+gotoobject robot1 curtains (1)
+closeobject robot1 curtains (1)

@@ -157,7 +157,7 @@ class DAGGenerator:
             objs = sorted(list({x for x in objs if x}))
             return SubtaskSummary(id=subtask_id, name=subtask_name, objects=objs, preconds=[], effects=[])
 
-    def _create_subtask_dag_prompt(self, task_name: str, summaries: List[SubtaskSummary]) -> str:
+    def _create_subtask_dag_prompt(self, task_name: str, summaries: List[SubtaskSummary], task_goal: str = "") -> str:
         lines = []
         for s in summaries:
             lines.append(
@@ -214,7 +214,9 @@ class DAGGenerator:
             "You are a multi-agent task planner.\n"
             "Given a list of SUBTASK summaries, determine subtask-level dependencies.\n"
             "Robot labels like 'robot1' are placeholders and MUST NOT create dependencies by themselves.\n\n"
-            f"TASK NAME: {task_name}\n\n"
+            f"OVERALL TASK GOAL: {task_goal if task_goal else task_name}\n"
+            "Use the overall task goal to understand the intended high-level order of operations "
+            "when PDDL preconditions alone are insufficient to capture semantic dependencies.\n\n"
             f"{fewshot}"
             "SUBTASK SUMMARIES:\n"
             f"{summaries_txt}\n\n"
@@ -246,9 +248,9 @@ class DAGGenerator:
         )
         return prompt
 
-    def build_subtask_dag(self, task_name: str, summaries: List[SubtaskSummary]) -> SubtaskDAG:
+    def build_subtask_dag(self, task_name: str, summaries: List[SubtaskSummary], task_goal: str = "") -> SubtaskDAG:
         """서브태스크 요약본을 비교하여 전체적인 실행 순서(Subtask DAG) 구축"""
-        prompt = self._create_subtask_dag_prompt(task_name, summaries)
+        prompt = self._create_subtask_dag_prompt(task_name, summaries, task_goal=task_goal)
         try:
             response = openai.chat.completions.create(
                 model=self.gpt_version,

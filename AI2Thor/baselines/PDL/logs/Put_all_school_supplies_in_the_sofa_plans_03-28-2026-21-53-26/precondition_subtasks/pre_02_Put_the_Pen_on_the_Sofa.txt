@@ -1,0 +1,51 @@
+# Task Description: Put the Pen on the Sofa.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding Pen
+#2. Robot not at Pen location
+
+# SubTask 2: Put the Pen on the Sofa.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: Pen(Location=Chair), Sofa(Location=Floor)
+
+GoToObject(robot1, Pen)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Pen)
+
+PickupObject(robot1, Pen, Chair)
+   Preconditions:
+     (at-location Pen Chair)
+     (at robot1 Pen)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 Pen)
+     (not (hand-empty robot1))
+     (not (at-location Pen Chair))
+
+GoToObject(robot1, Sofa)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Sofa)
+
+PutObject(robot1, Pen, Sofa)
+   Preconditions:
+     (holding robot1 Pen)
+     (at robot1 Sofa)
+     (not (inaction robot1))
+   Effects:
+     (at-location Pen Sofa)
+     (not (holding robot1 Pen))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location Pen Sofa)
+
+# Task Put the Pen on the Sofa is done.

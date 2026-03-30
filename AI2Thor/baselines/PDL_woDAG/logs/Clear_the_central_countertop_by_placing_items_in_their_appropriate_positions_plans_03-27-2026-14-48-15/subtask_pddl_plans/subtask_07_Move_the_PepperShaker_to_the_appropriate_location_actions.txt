@@ -1,0 +1,6 @@
+gotoobject robot1 peppershaker (1)
+pickupobject robot1 peppershaker countertop (1)
+gotoobject robot1 cabinet5 (1)
+openobject robot1 cabinet5 (1)
+drophandobject robot1 peppershaker cabinet5 (1)
+closeobject robot1 cabinet5 (1)

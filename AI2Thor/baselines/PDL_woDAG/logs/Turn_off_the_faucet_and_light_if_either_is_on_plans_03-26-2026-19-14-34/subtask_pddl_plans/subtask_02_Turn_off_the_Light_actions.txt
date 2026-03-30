@@ -1,0 +1,2 @@
+gotoobject robot1 lightswitch (1)
+switchoff robot1 lightswitch (1)

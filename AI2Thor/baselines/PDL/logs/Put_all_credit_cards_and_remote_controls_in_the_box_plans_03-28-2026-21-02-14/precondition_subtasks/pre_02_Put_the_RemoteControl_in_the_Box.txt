@@ -1,0 +1,52 @@
+# Task Description: Put the RemoteControl in the Box.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at RemoteControl location
+#2. Robot not holding RemoteControl
+#3. Box is on the Floor
+
+# SubTask 2: Put the RemoteControl in the Box.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: RemoteControl(Location=SideTable), Box(Location=Floor)
+
+GoToObject(robot1, RemoteControl)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 RemoteControl)
+
+PickupObject(robot1, RemoteControl, SideTable)
+   Preconditions:
+     (at-location RemoteControl SideTable)
+     (at robot1 RemoteControl)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 RemoteControl)
+     (not (hand-empty robot1))
+     (not (at-location RemoteControl SideTable))
+
+GoToObject(robot1, Box)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Box)
+
+PutObject(robot1, RemoteControl, Box)
+   Preconditions:
+     (holding robot1 RemoteControl)
+     (at robot1 Box)
+     (not (inaction robot1))
+   Effects:
+     (at-location RemoteControl Box)
+     (not (holding robot1 RemoteControl))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location RemoteControl Box)
+
+# Task Put the RemoteControl in the Box is done.

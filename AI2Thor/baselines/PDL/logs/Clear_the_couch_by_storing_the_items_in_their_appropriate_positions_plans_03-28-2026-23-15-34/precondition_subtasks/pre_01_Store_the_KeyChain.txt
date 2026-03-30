@@ -1,0 +1,51 @@
+# Task Description: Store the KeyChain.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding KeyChain
+#2. Robot not at KeyChain location
+
+# SubTask 1: Store the KeyChain.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: keychain(Location=sofa), sidetable1(Location=floor)
+
+GoToObject(robot1, keychain)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 keychain)
+
+PickupObject(robot1, keychain, sofa)
+   Preconditions:
+     (at-location keychain sofa)
+     (at robot1 keychain)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 keychain)
+     (not (hand-empty robot1))
+     (not (at-location keychain sofa))
+
+GoToObject(robot1, sidetable1)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 sidetable1)
+
+PutObject(robot1, keychain, sidetable1)
+   Preconditions:
+     (holding robot1 keychain)
+     (at robot1 sidetable1)
+     (not (inaction robot1))
+   Effects:
+     (at-location keychain sidetable1)
+     (not (holding robot1 keychain))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location keychain sidetable1)
+
+# Task Store the KeyChain is done.

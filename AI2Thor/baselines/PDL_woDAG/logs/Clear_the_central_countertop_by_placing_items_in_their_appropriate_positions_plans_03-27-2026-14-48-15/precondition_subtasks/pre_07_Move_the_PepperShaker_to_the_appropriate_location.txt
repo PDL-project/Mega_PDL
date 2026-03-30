@@ -1,0 +1,51 @@
+# Task Description: Move the PepperShaker to the appropriate location.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not at PepperShaker location
+#2. Robot not holding PepperShaker
+
+# SubTask 7: Move the PepperShaker to the appropriate location.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: pepperShaker(Location=CounterTop), cabinet5(Location=Floor)
+
+GoToObject(robot1, pepperShaker)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 pepperShaker)
+
+PickupObject(robot1, pepperShaker, counterTop)
+   Preconditions:
+     (at-location pepperShaker counterTop)
+     (at robot1 pepperShaker)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 pepperShaker)
+     (not (hand-empty robot1))
+     (not (at-location pepperShaker counterTop))
+
+GoToObject(robot1, cabinet5)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 cabinet5)
+
+PutObject(robot1, pepperShaker, cabinet5)
+   Preconditions:
+     (holding robot1 pepperShaker)
+     (at robot1 cabinet5)
+     (not (inaction robot1))
+   Effects:
+     (at-location pepperShaker cabinet5)
+     (not (holding robot1 pepperShaker))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location pepperShaker cabinet5)
+
+# Task Move the PepperShaker to the appropriate location is done.

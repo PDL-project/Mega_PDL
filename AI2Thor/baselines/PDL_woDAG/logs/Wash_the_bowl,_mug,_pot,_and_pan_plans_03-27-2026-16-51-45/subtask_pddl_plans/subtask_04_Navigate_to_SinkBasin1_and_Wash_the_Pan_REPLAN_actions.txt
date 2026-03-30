@@ -1,0 +1,5 @@
+gotoobject robot1 faucet (1)
+switchon robot1 faucet (1)
+gotoobject robot1 sinkbasin1 (1)
+cleanobject robot1 pan sinkbasin1 (1)
+drophandobject robot1 pan sinkbasin1 (1)

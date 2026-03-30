@@ -1,0 +1,11 @@
+{
+  "7": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 drawer7 (1)",
+      "openobject robot1 drawer7 (1)"
+    ]
+  }
+}

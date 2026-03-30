@@ -1,0 +1,4 @@
+gotoobject robot1 vase2 (1)
+pickupobject robot1 vase2 shelf2 (1)
+gotoobject robot1 countertop2 (1)
+drophandobject robot1 vase2 countertop2 (1)

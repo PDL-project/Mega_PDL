@@ -1,0 +1,10 @@
+{
+  "4": {
+    "state": "FAILED",
+    "error_message": "can't toggle object on if it's already on!",
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 faucet (1)"
+    ]
+  }
+}

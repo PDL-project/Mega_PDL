@@ -1,0 +1,4 @@
+gotoobject robot1 spatula (1)
+pickupobject robot1 spatula countertop (1)
+gotoobject robot1 countertop2 (1)
+drophandobject robot1 spatula countertop2 (1)

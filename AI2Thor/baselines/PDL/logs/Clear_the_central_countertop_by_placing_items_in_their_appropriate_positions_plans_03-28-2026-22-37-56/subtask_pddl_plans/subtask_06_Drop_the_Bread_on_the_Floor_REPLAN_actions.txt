@@ -1,0 +1,1 @@
+drophandobject robot1 bread floor (1)

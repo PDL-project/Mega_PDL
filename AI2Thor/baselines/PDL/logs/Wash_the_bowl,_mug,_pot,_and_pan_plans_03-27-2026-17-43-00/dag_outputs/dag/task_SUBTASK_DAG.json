@@ -1,0 +1,139 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "subtask_01_Wash_the_Bowl",
+      "objects": [
+        "robot1",
+        "bowl",
+        "sink",
+        "countertop",
+        "faucet"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the countertop",
+        "Robot's hand is empty",
+        "Bowl is at the countertop",
+        "Sink is on the floor",
+        "Faucet is on"
+      ],
+      "effects": [
+        "Bowl is cleaned",
+        "Bowl is at the countertop",
+        "Robot's hand is empty"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "subtask_02_Wash_the_Mug",
+      "objects": [
+        "robot1",
+        "mug",
+        "sink",
+        "faucet",
+        "countertop"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is at the kitchen",
+        "Robot's hand is empty",
+        "Mug is on the countertop",
+        "Sink and faucet are on the floor",
+        "Faucet is off"
+      ],
+      "effects": [
+        "Mug is cleaned",
+        "Mug is placed back on the countertop",
+        "Robot's hand is empty"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "subtask_03_Wash_the_Pot_REPLAN",
+      "objects": [
+        "robot1",
+        "pot",
+        "faucet",
+        "sink",
+        "countertop3"
+      ],
+      "preconds": [
+        "Robot is at the pot location.",
+        "Robot is not holding the pot.",
+        "Faucet is on."
+      ],
+      "effects": [
+        "Robot has cleaned the pot."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "subtask_04_Wash_the_Pan_REPLAN",
+      "objects": [
+        "robot1",
+        "pan",
+        "faucet",
+        "sink",
+        "countertop1",
+        "kitchen"
+      ],
+      "preconds": [
+        "Robot is not in action",
+        "Robot is in the kitchen",
+        "Robot's hand is empty",
+        "Pan is on countertop1",
+        "Faucet is on"
+      ],
+      "effects": [
+        "Robot is holding the pan",
+        "Robot's hand is not empty",
+        "Pan is cleaned"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_id": 1,
+      "to_id": 2,
+      "dependency_type": "resource",
+      "reason": "Same faucet object - cannot be manipulated in parallel"
+    },
+    {
+      "from_id": 1,
+      "to_id": 3
+    },
+    {
+      "from_id": 2,
+      "to_id": 3
+    },
+    {
+      "from_id": 1,
+      "to_id": 4
+    },
+    {
+      "from_id": 2,
+      "to_id": 4
+    },
+    {
+      "from_id": 3,
+      "to_id": 4,
+      "dependency_type": "resource",
+      "reason": "Same faucet object - cannot be manipulated in parallel"
+    }
+  ],
+  "parallel_groups": {
+    "0": [
+      1
+    ],
+    "1": [
+      2
+    ],
+    "2": [
+      3
+    ],
+    "3": [
+      4
+    ]
+  }
+}

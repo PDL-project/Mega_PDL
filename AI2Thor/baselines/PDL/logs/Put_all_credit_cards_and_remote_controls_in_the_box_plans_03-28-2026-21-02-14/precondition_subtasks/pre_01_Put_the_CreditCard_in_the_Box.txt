@@ -1,0 +1,51 @@
+# Task Description: Put the CreditCard in the Box.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+#1. Robot not holding RemoteControl
+#2. Box is open
+
+# SubTask 1: Put the CreditCard in the Box.
+    Skills Required: GoToObject, PickupObject, PutObject
+    Related Objects: CreditCard(Location=DiningTable), Box(Location=Floor)
+
+GoToObject(robot1, CreditCard)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CreditCard)
+
+PickupObject(robot1, CreditCard, DiningTable)
+   Preconditions:
+     (at-location CreditCard DiningTable)
+     (at robot1 CreditCard)
+     (not (inaction robot1))
+     (hand-empty robot1)
+   Effects:
+     (holding robot1 CreditCard)
+     (not (hand-empty robot1))
+     (not (at-location CreditCard DiningTable))
+
+GoToObject(robot1, Box)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 Box)
+
+PutObject(robot1, CreditCard, Box)
+   Preconditions:
+     (holding robot1 CreditCard)
+     (at robot1 Box)
+     (not (inaction robot1))
+   Effects:
+     (at-location CreditCard Box)
+     (not (holding robot1 CreditCard))
+     (hand-empty robot1)
+
+Goal condition:
+(at-location CreditCard Box)
+
+# Task Put the CreditCard in the Box is done.

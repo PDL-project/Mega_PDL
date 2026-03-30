@@ -1,0 +1,57 @@
+# Task Description: Slice the Bread.
+
+# GENERAL TASK DECOMPOSITION 
+# Decompose and parallel subtasks where ever possible
+# Independent subtasks:
+
+# Initial condition analyze due to previous subtask:
+# 1. Robot not holding plate.
+# 2. Robot not at plate location.
+
+# SubTask 3: Slice the Bread.
+    Skills Required: GoToObject, PickupObject, SliceObject, PutObject
+    Related Objects: knife(Location=CounterTop), bread(Location=CounterTop)
+
+GoToObject(robot1, bread)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 bread)
+
+SliceObject(robot1, bread, CounterTop)
+   Preconditions:
+     (at-location bread CounterTop)
+     (at robot1 bread)
+     (not (inaction robot1))
+   Effects:
+     (sliced bread)
+
+PickupObject(robot1, bread, CounterTop)
+   Preconditions:
+     (at-location bread CounterTop)
+     (at robot1 bread)
+     (not (inaction robot1))
+   Effects:
+     (holding robot1 bread)
+     (not (at-location bread CounterTop))
+
+GoToObject(robot1, CounterTop)
+   Preconditions:
+     (not (inaction robot1))
+   Effects:
+     (at robot1 CounterTop)
+
+PutObject(robot1, bread, CounterTop)
+   Preconditions:
+     (holding robot1 bread)
+     (at robot1 CounterTop)
+     (not (inaction robot1))
+   Effects:
+     (at-location bread CounterTop)
+     (not (holding robot1 bread))
+
+Goal condition:
+(sliced bread)
+(at-location bread CounterTop)
+
+# Task Slice the Bread is done.

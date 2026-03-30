@@ -1,0 +1,15 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 plate (1)",
+      "pickupobject robot1 plate countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 plate fridge (1)",
+      "closeobject robot1 fridge (1)"
+    ]
+  }
+}

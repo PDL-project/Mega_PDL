@@ -1,0 +1,20 @@
+{
+  "1": {
+    "state": "SUCCESS",
+    "error_message": null,
+    "effects": null,
+    "completed_actions": [
+      "gotoobject robot1 saltshaker (1)",
+      "pickupobject robot1 saltshaker countertop (1)",
+      "gotoobject robot1 fridge (1)",
+      "openfridge robot1 fridge (1)",
+      "putobjectinfridge robot1 saltshaker fridge (1)",
+      "closeobject robot1 fridge (1)"
+    ]
+  },
+  "2": {
+    "state": "FAILED",
+    "error_message": "GoToObject: navigation timeout for 'Fridge' (dist=1.10)",
+    "effects": null
+  }
+}
